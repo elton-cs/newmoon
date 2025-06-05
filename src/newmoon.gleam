@@ -114,7 +114,7 @@ fn view(model: Model) -> Element(Msg) {
   html.div(
     [
       attribute.class(
-        "min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4",
+        "min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4",
       ),
     ],
     [view_game_card(model)],
@@ -125,7 +125,7 @@ fn view_game_card(model: Model) -> Element(Msg) {
   html.div(
     [
       attribute.class(
-        "bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-700",
+        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200",
       ),
     ],
     [view_header(), view_game_stats(model), view_game_content(model)],
@@ -133,55 +133,53 @@ fn view_game_card(model: Model) -> Element(Msg) {
 }
 
 fn view_header() -> Element(Msg) {
-  html.h1(
-    [
-      attribute.class(
-        "text-4xl font-bold text-white mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent",
-      ),
-    ],
-    [html.text("NEWMOON")],
-  )
+  html.div([], [
+    html.h1(
+      [attribute.class("text-3xl font-light text-black mb-2 tracking-wide")],
+      [html.text("NEW MOON")],
+    ),
+    html.p(
+      [attribute.class("text-sm text-gray-500 mb-6 font-light tracking-wider")],
+      [html.text("DEEP SPACE EXPLORATION")],
+    ),
+  ])
 }
 
 fn view_game_stats(model: Model) -> Element(Msg) {
-  html.div([attribute.class("grid grid-cols-2 gap-4 mb-6")], [
-    view_stat_card("❤️", "Health", int.to_string(model.health), "text-red-400"),
+  html.div([attribute.class("grid grid-cols-2 gap-3 mb-8")], [
+    view_stat_card("○", "SYSTEMS", int.to_string(model.health), "text-black"),
+    view_stat_card("●", "DATA", int.to_string(model.points), "text-gray-700"),
     view_stat_card(
-      "⭐",
-      "Points",
-      int.to_string(model.points),
-      "text-yellow-400",
-    ),
-    view_stat_card(
-      "🎯",
-      "Goal",
+      "◎",
+      "TARGET",
       int.to_string(model.milestone),
-      "text-green-400",
+      "text-gray-600",
     ),
-    view_stat_card("📊", "Level", int.to_string(model.level), "text-blue-400"),
+    view_stat_card("◉", "SECTOR", int.to_string(model.level), "text-gray-500"),
   ])
 }
 
 fn view_stat_card(
-  emoji: String,
+  symbol: String,
   label: String,
   value: String,
   color_class: String,
 ) -> Element(Msg) {
-  html.div(
-    [attribute.class("bg-gray-800 rounded-lg p-3 border border-gray-600")],
-    [
-      html.div([attribute.class("text-lg")], [html.text(emoji)]),
-      html.div(
-        [attribute.class("text-xs text-gray-400 uppercase tracking-wide")],
-        [html.text(label)],
-      ),
-      html.div(
-        [attribute.class(string.concat(["text-xl font-bold ", color_class]))],
-        [html.text(value)],
-      ),
-    ],
-  )
+  html.div([attribute.class("bg-gray-50 rounded border border-gray-100 p-4")], [
+    html.div([attribute.class("text-lg font-light mb-1")], [html.text(symbol)]),
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light",
+        ),
+      ],
+      [html.text(label)],
+    ),
+    html.div(
+      [attribute.class(string.concat(["text-2xl font-light ", color_class]))],
+      [html.text(value)],
+    ),
+  ])
 }
 
 fn view_game_content(model: Model) -> Element(Msg) {
@@ -202,30 +200,22 @@ fn view_playing_state(model: Model) -> Element(Msg) {
 
 fn view_last_orb_result(model: Model) -> Element(Msg) {
   case model.last_orb {
-    None -> html.div([attribute.class("h-12")], [])
+    None -> html.div([attribute.class("h-8 mb-4")], [])
     Some(PointOrb) ->
       html.div(
+        [attribute.class("mb-4 p-3 bg-gray-50 border border-gray-200 rounded")],
         [
-          attribute.class(
-            "mb-4 p-3 bg-green-900 border border-green-600 rounded-lg",
-          ),
-        ],
-        [
-          html.p([attribute.class("text-green-300 font-bold")], [
-            html.text("🌟 Point Orb! +1 Point"),
+          html.p([attribute.class("text-gray-700 font-light text-sm")], [
+            html.text("● DATA ACQUIRED +1"),
           ]),
         ],
       )
     Some(BombOrb) ->
       html.div(
+        [attribute.class("mb-4 p-3 bg-gray-100 border border-gray-300 rounded")],
         [
-          attribute.class(
-            "mb-4 p-3 bg-red-900 border border-red-600 rounded-lg",
-          ),
-        ],
-        [
-          html.p([attribute.class("text-red-300 font-bold")], [
-            html.text("💥 Bomb Orb! -1 Health"),
+          html.p([attribute.class("text-gray-800 font-light text-sm")], [
+            html.text("○ SYSTEM DAMAGE -1"),
           ]),
         ],
       )
@@ -236,13 +226,14 @@ fn view_bag_info(model: Model) -> Element(Msg) {
   let orbs_left = list.length(model.bag)
 
   html.div(
-    [attribute.class("mb-6 p-4 bg-gray-800 rounded-lg border border-gray-600")],
+    [attribute.class("mb-6 p-4 bg-gray-50 rounded border border-gray-100")],
     [
-      html.p([attribute.class("text-gray-300 mb-2")], [
-        html.text("🎒 Mystical Bag"),
-      ]),
-      html.p([attribute.class("text-2xl font-bold text-purple-400")], [
-        html.text(string.concat([int.to_string(orbs_left), " orbs remaining"])),
+      html.p(
+        [attribute.class("text-gray-500 mb-2 text-sm font-light tracking-wide")],
+        [html.text("SAMPLE CONTAINER")],
+      ),
+      html.p([attribute.class("text-2xl font-light text-black")], [
+        html.text(string.concat([int.to_string(orbs_left), " specimens"])),
       ]),
     ],
   )
@@ -251,42 +242,40 @@ fn view_bag_info(model: Model) -> Element(Msg) {
 fn view_pull_orb_button(model: Model) -> Element(Msg) {
   let is_disabled = list.is_empty(model.bag)
   let button_classes = case is_disabled {
-    True -> "bg-gray-600 cursor-not-allowed text-gray-400"
-    False -> "bg-purple-600 hover:bg-purple-700 text-white hover:scale-105"
+    True -> "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200"
+    False ->
+      "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02]"
   }
 
   html.button(
     [
       attribute.class(
         string.concat([
-          "w-full py-4 px-6 rounded-lg font-bold text-lg transition transform ",
+          "w-full py-4 px-6 rounded border font-light text-sm tracking-wider transition transform ",
           button_classes,
         ]),
       ),
       event.on_click(PullOrb),
     ],
-    [html.text("🔮 Pull an Orb")],
+    [html.text("EXTRACT SAMPLE")],
   )
 }
 
 fn view_won_state(model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.div(
+      [attribute.class("mb-6 p-6 bg-gray-50 border border-gray-200 rounded")],
       [
-        attribute.class(
-          "mb-6 p-6 bg-green-900 border border-green-600 rounded-lg",
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("SECTOR COMPLETE")],
         ),
-      ],
-      [
-        html.h2([attribute.class("text-2xl font-bold text-green-300 mb-2")], [
-          html.text("🎉 Level Complete!"),
-        ]),
-        html.p([attribute.class("text-green-400")], [
+        html.p([attribute.class("text-gray-600 text-sm font-light")], [
           html.text(
             string.concat([
-              "You reached ",
+              "Data target achieved: ",
               int.to_string(model.milestone),
-              " points!",
+              " units",
             ]),
           ),
         ]),
@@ -295,11 +284,11 @@ fn view_won_state(model: Model) -> Element(Msg) {
     html.button(
       [
         attribute.class(
-          "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition transform hover:scale-105",
+          "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
         ),
         event.on_click(NextLevel),
       ],
-      [html.text("🚀 Next Level")],
+      [html.text("ADVANCE TO NEXT SECTOR")],
     ),
   ])
 }
@@ -307,20 +296,21 @@ fn view_won_state(model: Model) -> Element(Msg) {
 fn view_lost_state() -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-red-900 border border-red-600 rounded-lg")],
+      [attribute.class("mb-6 p-6 bg-gray-100 border border-gray-300 rounded")],
       [
-        html.h2([attribute.class("text-2xl font-bold text-red-300 mb-2")], [
-          html.text("💀 Game Over!"),
-        ]),
-        html.p([attribute.class("text-red-400")], [
-          html.text("Your health reached zero. Try again!"),
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("MISSION FAILED")],
+        ),
+        html.p([attribute.class("text-gray-700 text-sm font-light")], [
+          html.text("All systems compromised. Initiating reset protocol."),
         ]),
       ],
     ),
     html.button(
       [
         attribute.class(
-          "w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition transform hover:scale-105",
+          "w-full bg-gray-800 hover:bg-black text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
         ),
         event.on_click(RestartGame),
       ],

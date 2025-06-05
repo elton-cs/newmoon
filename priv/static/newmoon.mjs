@@ -4655,35 +4655,46 @@ function update2(model, msg) {
   }
 }
 function view_header() {
-  return h1(
+  return div(
+    toList([]),
     toList([
-      class$(
-        "text-4xl font-bold text-white mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
+      h1(
+        toList([
+          class$("text-3xl font-light text-black mb-2 tracking-wide")
+        ]),
+        toList([text3("NEW MOON")])
+      ),
+      p(
+        toList([
+          class$(
+            "text-sm text-gray-500 mb-6 font-light tracking-wider"
+          )
+        ]),
+        toList([text3("DEEP SPACE EXPLORATION")])
       )
-    ]),
-    toList([text3("NEWMOON")])
+    ])
   );
 }
-function view_stat_card(emoji, label, value, color_class) {
+function view_stat_card(symbol, label, value, color_class) {
   return div(
-    toList([
-      class$("bg-gray-800 rounded-lg p-3 border border-gray-600")
-    ]),
+    toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
     toList([
       div(
-        toList([class$("text-lg")]),
-        toList([text3(emoji)])
+        toList([class$("text-lg font-light mb-1")]),
+        toList([text3(symbol)])
       ),
       div(
         toList([
-          class$("text-xs text-gray-400 uppercase tracking-wide")
+          class$(
+            "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light"
+          )
         ]),
         toList([text3(label)])
       ),
       div(
         toList([
           class$(
-            concat2(toList(["text-xl font-bold ", color_class]))
+            concat2(toList(["text-2xl font-light ", color_class]))
           )
         ]),
         toList([text3(value)])
@@ -4693,27 +4704,22 @@ function view_stat_card(emoji, label, value, color_class) {
 }
 function view_game_stats(model) {
   return div(
-    toList([class$("grid grid-cols-2 gap-4 mb-6")]),
+    toList([class$("grid grid-cols-2 gap-3 mb-8")]),
     toList([
+      view_stat_card("\u25CB", "SYSTEMS", to_string(model.health), "text-black"),
+      view_stat_card("\u25CF", "DATA", to_string(model.points), "text-gray-700"),
       view_stat_card(
-        "\u2764\uFE0F",
-        "Health",
-        to_string(model.health),
-        "text-red-400"
-      ),
-      view_stat_card(
-        "\u2B50",
-        "Points",
-        to_string(model.points),
-        "text-yellow-400"
-      ),
-      view_stat_card(
-        "\u{1F3AF}",
-        "Goal",
+        "\u25CE",
+        "TARGET",
         to_string(model.milestone),
-        "text-green-400"
+        "text-gray-600"
       ),
-      view_stat_card("\u{1F4CA}", "Level", to_string(model.level), "text-blue-400")
+      view_stat_card(
+        "\u25C9",
+        "SECTOR",
+        to_string(model.level),
+        "text-gray-500"
+      )
     ])
   );
 }
@@ -4725,13 +4731,13 @@ function view_last_orb_result(model) {
       return div(
         toList([
           class$(
-            "mb-4 p-3 bg-green-900 border border-green-600 rounded-lg"
+            "mb-4 p-3 bg-gray-50 border border-gray-200 rounded"
           )
         ]),
         toList([
           p(
-            toList([class$("text-green-300 font-bold")]),
-            toList([text3("\u{1F31F} Point Orb! +1 Point")])
+            toList([class$("text-gray-700 font-light text-sm")]),
+            toList([text3("\u25CF DATA ACQUIRED +1")])
           )
         ])
       );
@@ -4739,41 +4745,41 @@ function view_last_orb_result(model) {
       return div(
         toList([
           class$(
-            "mb-4 p-3 bg-red-900 border border-red-600 rounded-lg"
+            "mb-4 p-3 bg-gray-100 border border-gray-300 rounded"
           )
         ]),
         toList([
           p(
-            toList([class$("text-red-300 font-bold")]),
-            toList([text3("\u{1F4A5} Bomb Orb! -1 Health")])
+            toList([class$("text-gray-800 font-light text-sm")]),
+            toList([text3("\u25CB SYSTEM DAMAGE -1")])
           )
         ])
       );
     }
   } else {
-    return div(toList([class$("h-12")]), toList([]));
+    return div(toList([class$("h-8 mb-4")]), toList([]));
   }
 }
 function view_bag_info(model) {
   let orbs_left = length(model.bag);
   return div(
     toList([
-      class$(
-        "mb-6 p-4 bg-gray-800 rounded-lg border border-gray-600"
-      )
+      class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
     ]),
     toList([
       p(
-        toList([class$("text-gray-300 mb-2")]),
-        toList([text3("\u{1F392} Mystical Bag")])
+        toList([
+          class$(
+            "text-gray-500 mb-2 text-sm font-light tracking-wide"
+          )
+        ]),
+        toList([text3("SAMPLE CONTAINER")])
       ),
       p(
-        toList([class$("text-2xl font-bold text-purple-400")]),
+        toList([class$("text-2xl font-light text-black")]),
         toList([
           text3(
-            concat2(
-              toList([to_string(orbs_left), " orbs remaining"])
-            )
+            concat2(toList([to_string(orbs_left), " specimens"]))
           )
         ])
       )
@@ -4784,9 +4790,9 @@ function view_pull_orb_button(model) {
   let is_disabled = is_empty(model.bag);
   let _block;
   if (is_disabled) {
-    _block = "bg-gray-600 cursor-not-allowed text-gray-400";
+    _block = "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200";
   } else {
-    _block = "bg-purple-600 hover:bg-purple-700 text-white hover:scale-105";
+    _block = "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02]";
   }
   let button_classes = _block;
   return button(
@@ -4794,14 +4800,14 @@ function view_pull_orb_button(model) {
       class$(
         concat2(
           toList([
-            "w-full py-4 px-6 rounded-lg font-bold text-lg transition transform ",
+            "w-full py-4 px-6 rounded border font-light text-sm tracking-wider transition transform ",
             button_classes
           ])
         )
       ),
       on_click(new PullOrb())
     ]),
-    toList([text3("\u{1F52E} Pull an Orb")])
+    toList([text3("EXTRACT SAMPLE")])
   );
 }
 function view_playing_state(model) {
@@ -4821,23 +4827,27 @@ function view_won_state(model) {
       div(
         toList([
           class$(
-            "mb-6 p-6 bg-green-900 border border-green-600 rounded-lg"
+            "mb-6 p-6 bg-gray-50 border border-gray-200 rounded"
           )
         ]),
         toList([
           h2(
-            toList([class$("text-2xl font-bold text-green-300 mb-2")]),
-            toList([text3("\u{1F389} Level Complete!")])
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("SECTOR COMPLETE")])
           ),
           p(
-            toList([class$("text-green-400")]),
+            toList([class$("text-gray-600 text-sm font-light")]),
             toList([
               text3(
                 concat2(
                   toList([
-                    "You reached ",
+                    "Data target achieved: ",
                     to_string(model.milestone),
-                    " points!"
+                    " units"
                   ])
                 )
               )
@@ -4848,11 +4858,11 @@ function view_won_state(model) {
       button(
         toList([
           class$(
-            "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition transform hover:scale-105"
+            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
           ),
           on_click(new NextLevel())
         ]),
-        toList([text3("\u{1F680} Next Level")])
+        toList([text3("ADVANCE TO NEXT SECTOR")])
       )
     ])
   );
@@ -4864,24 +4874,30 @@ function view_lost_state() {
       div(
         toList([
           class$(
-            "mb-6 p-6 bg-red-900 border border-red-600 rounded-lg"
+            "mb-6 p-6 bg-gray-100 border border-gray-300 rounded"
           )
         ]),
         toList([
           h2(
-            toList([class$("text-2xl font-bold text-red-300 mb-2")]),
-            toList([text3("\u{1F480} Game Over!")])
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("MISSION FAILED")])
           ),
           p(
-            toList([class$("text-red-400")]),
-            toList([text3("Your health reached zero. Try again!")])
+            toList([class$("text-gray-700 text-sm font-light")]),
+            toList([
+              text3("All systems compromised. Initiating reset protocol.")
+            ])
           )
         ])
       ),
       button(
         toList([
           class$(
-            "w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition transform hover:scale-105"
+            "w-full bg-gray-800 hover:bg-black text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
           ),
           on_click(new RestartGame())
         ]),
@@ -4904,7 +4920,7 @@ function view_game_card(model) {
   return div(
     toList([
       class$(
-        "bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-700"
+        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200"
       )
     ]),
     toList([view_header(), view_game_stats(model), view_game_content(model)])
@@ -4914,7 +4930,7 @@ function view(model) {
   return div(
     toList([
       class$(
-        "min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4"
+        "min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4"
       )
     ]),
     toList([view_game_card(model)])
