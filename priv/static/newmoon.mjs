@@ -1832,6 +1832,9 @@ function event(name, handler, include, prevent_default, stop_propagation, immedi
 function attribute2(name, value) {
   return attribute(name, value);
 }
+function class$(name) {
+  return attribute2("class", name);
+}
 
 // build/dev/javascript/lustre/lustre/effect.mjs
 var Effect = class extends CustomType {
@@ -4290,6 +4293,9 @@ function fragment2(children) {
 function text3(content) {
   return text2(content);
 }
+function h1(attrs, children) {
+  return element2("h1", attrs, children);
+}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
@@ -4481,16 +4487,74 @@ function update2(model, msg) {
 function view(model) {
   let count = to_string(model);
   return div(
-    toList([]),
     toList([
-      button(
-        toList([on_click(new UserClickedDecrement())]),
-        toList([text3("-")])
-      ),
-      p(toList([]), toList([text3("Count: "), text3(count)])),
-      button(
-        toList([on_click(new UserClickedIncrement())]),
-        toList([text3("+")])
+      class$(
+        "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
+      )
+    ]),
+    toList([
+      div(
+        toList([
+          class$(
+            "bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center"
+          )
+        ]),
+        toList([
+          h1(
+            toList([class$("text-3xl font-bold text-gray-800 mb-8")]),
+            toList([text3("Counter App")])
+          ),
+          div(
+            toList([
+              class$(
+                "flex items-center justify-center space-x-6 mb-8"
+              )
+            ]),
+            toList([
+              button(
+                toList([
+                  class$(
+                    "bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
+                  ),
+                  on_click(new UserClickedDecrement())
+                ]),
+                toList([text3("\u2212")])
+              ),
+              div(
+                toList([
+                  class$(
+                    "bg-gray-50 rounded-xl px-6 py-4 min-w-[120px]"
+                  )
+                ]),
+                toList([
+                  p(
+                    toList([
+                      class$(
+                        "text-sm font-medium text-gray-500 uppercase tracking-wide"
+                      )
+                    ]),
+                    toList([text3("Count")])
+                  ),
+                  p(
+                    toList([
+                      class$("text-4xl font-bold text-gray-800 mt-1")
+                    ]),
+                    toList([text3(count)])
+                  )
+                ])
+              ),
+              button(
+                toList([
+                  class$(
+                    "bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
+                  ),
+                  on_click(new UserClickedIncrement())
+                ]),
+                toList([text3("+")])
+              )
+            ])
+          )
+        ])
       )
     ])
   );
@@ -4505,10 +4569,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      8,
+      9,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 141, end: 226, pattern_start: 152, pattern_end: 157 }
+      { value: $, start: 165, end: 250, pattern_start: 176, pattern_end: 181 }
     );
   }
   return void 0;
