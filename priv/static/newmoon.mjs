@@ -4805,24 +4805,66 @@ function view_stat_card(symbol, label, value, color_class) {
     ])
   );
 }
+function view_multiplier_status(model) {
+  let $ = model.current_multiplier > 1;
+  if ($) {
+    return div(
+      toList([
+        class$(
+          "mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-center"
+        )
+      ]),
+      toList([
+        p(
+          toList([class$("text-yellow-700 font-light text-sm")]),
+          toList([
+            text3(
+              "\u2731 SIGNAL AMPLIFICATION ACTIVE: " + to_string(
+                model.current_multiplier
+              ) + "\xD7 DATA BOOST"
+            )
+          ])
+        )
+      ])
+    );
+  } else {
+    return div(toList([]), toList([]));
+  }
+}
 function view_game_stats(model) {
   return div(
-    toList([class$("grid grid-cols-2 gap-3 mb-8")]),
+    toList([]),
     toList([
-      view_stat_card("\u25CB", "SYSTEMS", to_string(model.health), "text-black"),
-      view_stat_card("\u25CF", "DATA", to_string(model.points), "text-gray-700"),
-      view_stat_card(
-        "\u25CE",
-        "TARGET",
-        to_string(model.milestone),
-        "text-gray-600"
+      div(
+        toList([class$("grid grid-cols-2 gap-3 mb-4")]),
+        toList([
+          view_stat_card(
+            "\u25CB",
+            "SYSTEMS",
+            to_string(model.health),
+            "text-black"
+          ),
+          view_stat_card(
+            "\u25CF",
+            "DATA",
+            to_string(model.points),
+            "text-gray-700"
+          ),
+          view_stat_card(
+            "\u25CE",
+            "TARGET",
+            to_string(model.milestone),
+            "text-gray-600"
+          ),
+          view_stat_card(
+            "\u25C9",
+            "SECTOR",
+            to_string(model.level),
+            "text-gray-500"
+          )
+        ])
       ),
-      view_stat_card(
-        "\u25C9",
-        "SECTOR",
-        to_string(model.level),
-        "text-gray-500"
-      )
+      view_multiplier_status(model)
     ])
   );
 }
@@ -4841,12 +4883,29 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-gray-800 font-light text-sm")]),
-            toList([text3("\u25CB SYSTEM DAMAGE -" + to_string(damage))])
+            toList([
+              text3(
+                "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
+                  damage
+                ) + " SYS"
+              )
+            ])
           )
         ])
       );
     } else if ($1 instanceof Point) {
       let value = $1[0];
+      let multiplied_value = value * model.current_multiplier;
+      let _block;
+      let $2 = model.current_multiplier > 1;
+      if ($2) {
+        _block = "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
+          model.current_multiplier
+        ) + "] +" + to_string(multiplied_value);
+      } else {
+        _block = "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
+      }
+      let message = _block;
       return div(
         toList([
           class$(
@@ -4856,7 +4915,7 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-gray-700 font-light text-sm")]),
-            toList([text3("\u25CF DATA ACQUIRED +" + to_string(value))])
+            toList([text3(message)])
           )
         ])
       );
@@ -4871,11 +4930,29 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-green-700 font-light text-sm")]),
-            toList([text3("+ SYSTEMS REPAIRED +" + to_string(value))])
+            toList([
+              text3(
+                "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
+                  value
+                ) + " SYS"
+              )
+            ])
           )
         ])
       );
     } else if ($1 instanceof Collector) {
+      let base_points = length(model.bag);
+      let multiplied_points = base_points * model.current_multiplier;
+      let _block;
+      let $2 = model.current_multiplier > 1;
+      if ($2) {
+        _block = "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
+          model.current_multiplier
+        ) + "] +" + to_string(multiplied_points);
+      } else {
+        _block = "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
+      }
+      let message = _block;
       return div(
         toList([
           class$(
@@ -4885,11 +4962,23 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-blue-700 font-light text-sm")]),
-            toList([text3("\u25EF COLLECTOR ACTIVATED - SPECIMENS COUNTED")])
+            toList([text3(message)])
           )
         ])
       );
     } else if ($1 instanceof Survivor) {
+      let base_points = model.bombs_pulled_this_level;
+      let multiplied_points = base_points * model.current_multiplier;
+      let _block;
+      let $2 = model.current_multiplier > 1;
+      if ($2) {
+        _block = "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
+          model.current_multiplier
+        ) + "] +" + to_string(multiplied_points);
+      } else {
+        _block = "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
+      }
+      let message = _block;
       return div(
         toList([
           class$(
@@ -4899,7 +4988,7 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-purple-700 font-light text-sm")]),
-            toList([text3("\u25C8 SURVIVOR BONUS - DAMAGE ASSESSED")])
+            toList([text3(message)])
           )
         ])
       );
@@ -4913,7 +5002,11 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-yellow-700 font-light text-sm")]),
-            toList([text3("\u2731 SIGNAL AMPLIFIER ENGAGED")])
+            toList([
+              text3(
+                "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]"
+              )
+            ])
           )
         ])
       );

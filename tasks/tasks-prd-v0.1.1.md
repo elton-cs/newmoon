@@ -43,14 +43,14 @@
   - [x] 3.6 Implement 2x Multiplier Orb logic with multiplicative stacking (2x,
         4x, 8x, etc.)
   - [x] 3.7 Update bomb tracking increment when any bomb orb is pulled
-- [ ] 4.0 Enhance Visual Representation
-  - [ ] 4.1 Update `view_last_orb_result` to display appropriate space-themed
+- [x] 4.0 Enhance Visual Representation
+  - [x] 4.1 Update `view_last_orb_result` to display appropriate space-themed
         messages for each new orb type
-  - [ ] 4.2 Create orb display function that shows orb type and value (e.g.,
+  - [x] 4.2 Create orb display function that shows orb type and value (e.g.,
         "BOMB-2", "DATA-7", "HEALTH+1")
-  - [ ] 4.3 Update result messages to maintain space exploration theme (e.g.,
+  - [x] 4.3 Update result messages to maintain space exploration theme (e.g.,
         "SYSTEM DAMAGE -2", "DATA COLLECTED +7")
-  - [ ] 4.4 Add multiplier status display in game stats when active multiplier >
+  - [x] 4.4 Add multiplier status display in game stats when active multiplier >
         1
 - [ ] 5.0 Configure Level Bag Compositions
   - [ ] 5.1 Define `create_level_bag(level: Int) -> List(Orb)` function with

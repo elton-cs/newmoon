@@ -96,6 +96,29 @@ fn get_orb_value(orb: Orb) -> Int {
   }
 }
 
+fn display_orb(orb: Orb) -> String {
+  case orb {
+    Bomb(damage) -> "BREACH-" <> int.to_string(damage)
+    Point(points) -> "DATA-" <> int.to_string(points)
+    Health(healing) -> "REPAIR+" <> int.to_string(healing)
+    Collector -> "SCANNER"
+    Survivor -> "ANALYZER"
+    Multiplier -> "AMPLIFIER"
+  }
+}
+
+fn display_orb_detailed(orb: Orb) -> String {
+  case orb {
+    Bomb(damage) -> "HULL BREACH [SEVERITY-" <> int.to_string(damage) <> "]"
+    Point(points) -> "DATA PACKET [VALUE-" <> int.to_string(points) <> "]"
+    Health(healing) ->
+      "NANO-REPAIR [EFFICIENCY-" <> int.to_string(healing) <> "]"
+    Collector -> "DEEP SCANNER [REMAINING SPECIMENS]"
+    Survivor -> "DAMAGE ANALYZER [PREVIOUS BREACHES]"
+    Multiplier -> "SIGNAL AMPLIFIER [2× BOOST]"
+  }
+}
+
 type GameStatus {
   Playing
   Won
@@ -258,16 +281,21 @@ fn view_header() -> Element(Msg) {
 }
 
 fn view_game_stats(model: Model) -> Element(Msg) {
-  html.div([attribute.class("grid grid-cols-2 gap-3 mb-8")], [
-    view_stat_card("○", "SYSTEMS", int.to_string(model.health), "text-black"),
-    view_stat_card("●", "DATA", int.to_string(model.points), "text-gray-700"),
-    view_stat_card(
-      "◎",
-      "TARGET",
-      int.to_string(model.milestone),
-      "text-gray-600",
-    ),
-    view_stat_card("◉", "SECTOR", int.to_string(model.level), "text-gray-500"),
+  html.div([], [
+    // Main stats grid
+    html.div([attribute.class("grid grid-cols-2 gap-3 mb-4")], [
+      view_stat_card("○", "SYSTEMS", int.to_string(model.health), "text-black"),
+      view_stat_card("●", "DATA", int.to_string(model.points), "text-gray-700"),
+      view_stat_card(
+        "◎",
+        "TARGET",
+        int.to_string(model.milestone),
+        "text-gray-600",
+      ),
+      view_stat_card("◉", "SECTOR", int.to_string(model.level), "text-gray-500"),
+    ]),
+    // Multiplier status (only shown when active)
+    view_multiplier_status(model),
   ])
 }
 
@@ -294,6 +322,29 @@ fn view_stat_card(
   ])
 }
 
+fn view_multiplier_status(model: Model) -> Element(Msg) {
+  case model.current_multiplier > 1 {
+    True ->
+      html.div(
+        [
+          attribute.class(
+            "mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-center",
+          ),
+        ],
+        [
+          html.p([attribute.class("text-yellow-700 font-light text-sm")], [
+            html.text(
+              "✱ SIGNAL AMPLIFICATION ACTIVE: "
+              <> int.to_string(model.current_multiplier)
+              <> "× DATA BOOST",
+            ),
+          ]),
+        ],
+      )
+    False -> html.div([], [])
+  }
+}
+
 fn view_game_content(model: Model) -> Element(Msg) {
   case model.status {
     Playing -> view_playing_state(model)
@@ -313,21 +364,39 @@ fn view_playing_state(model: Model) -> Element(Msg) {
 fn view_last_orb_result(model: Model) -> Element(Msg) {
   case model.last_orb {
     None -> html.div([attribute.class("h-8 mb-4")], [])
-    Some(Point(value)) ->
+    Some(Point(value)) -> {
+      let multiplied_value = value * model.current_multiplier
+      let message = case model.current_multiplier > 1 {
+        True ->
+          "● DATA PACKET ["
+          <> int.to_string(value)
+          <> "×"
+          <> int.to_string(model.current_multiplier)
+          <> "] +"
+          <> int.to_string(multiplied_value)
+        False -> "● DATA PACKET ACQUIRED +" <> int.to_string(value)
+      }
       html.div(
         [attribute.class("mb-4 p-3 bg-gray-50 border border-gray-200 rounded")],
         [
           html.p([attribute.class("text-gray-700 font-light text-sm")], [
-            html.text("● DATA ACQUIRED +" <> int.to_string(value)),
+            html.text(message),
           ]),
         ],
       )
+    }
     Some(Bomb(damage)) ->
       html.div(
         [attribute.class("mb-4 p-3 bg-gray-100 border border-gray-300 rounded")],
         [
           html.p([attribute.class("text-gray-800 font-light text-sm")], [
-            html.text("○ SYSTEM DAMAGE -" <> int.to_string(damage)),
+            html.text(
+              "○ HULL BREACH [SEVERITY-"
+              <> int.to_string(damage)
+              <> "] -"
+              <> int.to_string(damage)
+              <> " SYS",
+            ),
           ]),
         ],
       )
@@ -340,20 +409,51 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-green-700 font-light text-sm")], [
-            html.text("+ SYSTEMS REPAIRED +" <> int.to_string(value)),
+            html.text(
+              "+ NANO-REPAIR DEPLOYED [EFFICIENCY-"
+              <> int.to_string(value)
+              <> "] +"
+              <> int.to_string(value)
+              <> " SYS",
+            ),
           ]),
         ],
       )
-    Some(Collector) ->
+    Some(Collector) -> {
+      let base_points = list.length(model.bag)
+      let multiplied_points = base_points * model.current_multiplier
+      let message = case model.current_multiplier > 1 {
+        True ->
+          "◯ DEEP SCAN ["
+          <> int.to_string(base_points)
+          <> "×"
+          <> int.to_string(model.current_multiplier)
+          <> "] +"
+          <> int.to_string(multiplied_points)
+        False -> "◯ DEEP SCAN COMPLETE +" <> int.to_string(base_points)
+      }
       html.div(
         [attribute.class("mb-4 p-3 bg-blue-50 border border-blue-200 rounded")],
         [
           html.p([attribute.class("text-blue-700 font-light text-sm")], [
-            html.text("◯ COLLECTOR ACTIVATED - SPECIMENS COUNTED"),
+            html.text(message),
           ]),
         ],
       )
-    Some(Survivor) ->
+    }
+    Some(Survivor) -> {
+      let base_points = model.bombs_pulled_this_level
+      let multiplied_points = base_points * model.current_multiplier
+      let message = case model.current_multiplier > 1 {
+        True ->
+          "◈ DAMAGE ANALYSIS ["
+          <> int.to_string(base_points)
+          <> "×"
+          <> int.to_string(model.current_multiplier)
+          <> "] +"
+          <> int.to_string(multiplied_points)
+        False -> "◈ DAMAGE ANALYSIS +" <> int.to_string(base_points)
+      }
       html.div(
         [
           attribute.class(
@@ -362,10 +462,11 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-purple-700 font-light text-sm")], [
-            html.text("◈ SURVIVOR BONUS - DAMAGE ASSESSED"),
+            html.text(message),
           ]),
         ],
       )
+    }
     Some(Multiplier) ->
       html.div(
         [
@@ -375,7 +476,11 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-yellow-700 font-light text-sm")], [
-            html.text("✱ SIGNAL AMPLIFIER ENGAGED"),
+            html.text(
+              "✱ SIGNAL BOOST ["
+              <> int.to_string(model.current_multiplier)
+              <> "× AMPLIFICATION ACTIVE]",
+            ),
           ]),
         ],
       )
