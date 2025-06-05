@@ -4558,21 +4558,87 @@ var NextLevel = class extends CustomType {
 };
 var RestartGame = class extends CustomType {
 };
+function get_orb_result_message(orb, model) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    return "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
+      damage
+    ) + " SYS";
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let multiplied_value = value * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_value);
+    } else {
+      return "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
+    }
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    return "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
+      value
+    ) + " SYS";
+  } else if (orb instanceof Collector) {
+    let base_points = length(model.bag);
+    let multiplied_points = base_points * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_points);
+    } else {
+      return "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
+    }
+  } else if (orb instanceof Survivor) {
+    let base_points = model.bombs_pulled_this_level;
+    let multiplied_points = base_points * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_points);
+    } else {
+      return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
+    }
+  } else {
+    return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
+  }
+}
+function get_orb_result_color(orb) {
+  if (orb instanceof Bomb) {
+    return "default";
+  } else if (orb instanceof Point) {
+    return "gray";
+  } else if (orb instanceof Health) {
+    return "green";
+  } else if (orb instanceof Collector) {
+    return "blue";
+  } else if (orb instanceof Survivor) {
+    return "purple";
+  } else {
+    return "yellow";
+  }
+}
 function create_level_bag(loop$level) {
   while (true) {
     let level = loop$level;
     if (level === 1) {
       return toList([
+        new Collector(),
+        new Multiplier(),
+        new Survivor(),
         new Point(5),
         new Point(5),
+        new Collector(),
         new Point(7),
         new Point(8),
         new Bomb(1),
         new Bomb(1),
         new Bomb(2),
         new Health(1),
-        new Health(3),
-        new Collector()
+        new Health(3)
       ]);
     } else if (level === 2) {
       return toList([
@@ -4656,7 +4722,7 @@ function init(_) {
     5,
     0,
     1,
-    5,
+    100,
     create_level_bag(1),
     new Playing(),
     new None(),
@@ -4670,7 +4736,7 @@ function handle_next_level(model) {
     5,
     0,
     new_level,
-    model.milestone + 2,
+    model.milestone + 200,
     create_level_bag(new_level),
     new Playing(),
     new None(),
@@ -4887,27 +4953,64 @@ function view_stat_card(symbol, label, value, color_class) {
     ])
   );
 }
+function view_result_card(message, color, centered) {
+  let base_classes = "mb-4 p-3 rounded";
+  let _block;
+  if (centered) {
+    _block = " text-center";
+  } else {
+    _block = "";
+  }
+  let center_class = _block;
+  let _block$1;
+  if (color === "gray") {
+    _block$1 = " bg-gray-50 border border-gray-200";
+  } else if (color === "green") {
+    _block$1 = " bg-green-50 border border-green-200";
+  } else if (color === "blue") {
+    _block$1 = " bg-blue-50 border border-blue-200";
+  } else if (color === "purple") {
+    _block$1 = " bg-purple-50 border border-purple-200";
+  } else if (color === "yellow") {
+    _block$1 = " bg-yellow-50 border border-yellow-200";
+  } else {
+    _block$1 = " bg-gray-100 border border-gray-300";
+  }
+  let color_classes = _block$1;
+  let _block$2;
+  if (color === "gray") {
+    _block$2 = "text-gray-700";
+  } else if (color === "green") {
+    _block$2 = "text-green-700";
+  } else if (color === "blue") {
+    _block$2 = "text-blue-700";
+  } else if (color === "purple") {
+    _block$2 = "text-purple-700";
+  } else if (color === "yellow") {
+    _block$2 = "text-yellow-700";
+  } else {
+    _block$2 = "text-gray-800";
+  }
+  let text_color_class = _block$2;
+  return div(
+    toList([class$(base_classes + color_classes + center_class)]),
+    toList([
+      p(
+        toList([class$(text_color_class + " font-light text-sm")]),
+        toList([text3(message)])
+      )
+    ])
+  );
+}
 function view_multiplier_status(model) {
   let $ = model.current_multiplier > 1;
   if ($) {
-    return div(
-      toList([
-        class$(
-          "mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-center"
-        )
-      ]),
-      toList([
-        p(
-          toList([class$("text-yellow-700 font-light text-sm")]),
-          toList([
-            text3(
-              "\u2731 SIGNAL AMPLIFICATION ACTIVE: " + to_string(
-                model.current_multiplier
-              ) + "\xD7 DATA BOOST"
-            )
-          ])
-        )
-      ])
+    return view_result_card(
+      "\u2731 SIGNAL AMPLIFICATION ACTIVE: " + to_string(
+        model.current_multiplier
+      ) + "\xD7 DATA BOOST",
+      "yellow",
+      true
     );
   } else {
     return div(toList([]), toList([]));
@@ -4953,146 +5056,10 @@ function view_game_stats(model) {
 function view_last_orb_result(model) {
   let $ = model.last_orb;
   if ($ instanceof Some) {
-    let $1 = $[0];
-    if ($1 instanceof Bomb) {
-      let damage = $1[0];
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-gray-100 border border-gray-300 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-gray-800 font-light text-sm")]),
-            toList([
-              text3(
-                "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
-                  damage
-                ) + " SYS"
-              )
-            ])
-          )
-        ])
-      );
-    } else if ($1 instanceof Point) {
-      let value = $1[0];
-      let multiplied_value = value * model.current_multiplier;
-      let _block;
-      let $2 = model.current_multiplier > 1;
-      if ($2) {
-        _block = "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
-          model.current_multiplier
-        ) + "] +" + to_string(multiplied_value);
-      } else {
-        _block = "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
-      }
-      let message = _block;
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-gray-50 border border-gray-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-gray-700 font-light text-sm")]),
-            toList([text3(message)])
-          )
-        ])
-      );
-    } else if ($1 instanceof Health) {
-      let value = $1[0];
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-green-50 border border-green-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-green-700 font-light text-sm")]),
-            toList([
-              text3(
-                "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
-                  value
-                ) + " SYS"
-              )
-            ])
-          )
-        ])
-      );
-    } else if ($1 instanceof Collector) {
-      let base_points = length(model.bag);
-      let multiplied_points = base_points * model.current_multiplier;
-      let _block;
-      let $2 = model.current_multiplier > 1;
-      if ($2) {
-        _block = "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
-          model.current_multiplier
-        ) + "] +" + to_string(multiplied_points);
-      } else {
-        _block = "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
-      }
-      let message = _block;
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-blue-50 border border-blue-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-blue-700 font-light text-sm")]),
-            toList([text3(message)])
-          )
-        ])
-      );
-    } else if ($1 instanceof Survivor) {
-      let base_points = model.bombs_pulled_this_level;
-      let multiplied_points = base_points * model.current_multiplier;
-      let _block;
-      let $2 = model.current_multiplier > 1;
-      if ($2) {
-        _block = "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
-          model.current_multiplier
-        ) + "] +" + to_string(multiplied_points);
-      } else {
-        _block = "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
-      }
-      let message = _block;
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-purple-50 border border-purple-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-purple-700 font-light text-sm")]),
-            toList([text3(message)])
-          )
-        ])
-      );
-    } else {
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-yellow-700 font-light text-sm")]),
-            toList([
-              text3(
-                "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]"
-              )
-            ])
-          )
-        ])
-      );
-    }
+    let orb = $[0];
+    let message = get_orb_result_message(orb, model);
+    let color = get_orb_result_color(orb);
+    return view_result_card(message, color, false);
   } else {
     return div(toList([class$("h-8 mb-4")]), toList([]));
   }
@@ -5267,7 +5234,7 @@ function view(model) {
   return div(
     toList([
       class$(
-        "min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4"
+        "min-h-screen bg-gradient-to-br from-gray-500 via-black to-gray-800 flex items-center justify-center p-4"
       )
     ]),
     toList([view_game_card(model)])
