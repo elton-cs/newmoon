@@ -1618,6 +1618,16 @@ function map_insert(key, value, map4) {
   return map4.set(key, value);
 }
 
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function min(a, b) {
+  let $ = a < b;
+  if ($) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
 function guard(requirement, consequence, alternative) {
   if (requirement) {
@@ -4516,9 +4526,27 @@ function on_click(msg) {
 
 // build/dev/javascript/newmoon/newmoon.mjs
 var FILEPATH = "src/newmoon.gleam";
-var PointOrb = class extends CustomType {
+var Bomb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
-var BombOrb = class extends CustomType {
+var Point = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var Health = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var Collector = class extends CustomType {
+};
+var Survivor = class extends CustomType {
 };
 var Playing = class extends CustomType {
 };
@@ -4546,8 +4574,8 @@ var RestartGame = class extends CustomType {
 };
 function create_bag() {
   return append(
-    repeat(new PointOrb(), 5),
-    repeat(new BombOrb(), 5)
+    repeat(new Point(1), 5),
+    repeat(new Bomb(1), 5)
   );
 }
 function init(_) {
@@ -4603,21 +4631,11 @@ function handle_pull_orb(model) {
       let first_orb = $1.head;
       let rest = $1.tail;
       let _block;
-      if (first_orb instanceof PointOrb) {
+      if (first_orb instanceof Bomb) {
+        let damage = first_orb[0];
         let _record2 = model;
         _block = new Model(
-          _record2.health,
-          model.points + 1,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb
-        );
-      } else {
-        let _record2 = model;
-        _block = new Model(
-          model.health - 1,
+          model.health - damage,
           _record2.points,
           _record2.level,
           _record2.milestone,
@@ -4625,6 +4643,51 @@ function handle_pull_orb(model) {
           _record2.status,
           _record2.last_orb
         );
+      } else if (first_orb instanceof Point) {
+        let value = first_orb[0];
+        let _record2 = model;
+        _block = new Model(
+          _record2.health,
+          model.points + value,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb
+        );
+      } else if (first_orb instanceof Health) {
+        let value = first_orb[0];
+        let $2 = model.health < 5;
+        if ($2) {
+          let _record2 = model;
+          _block = new Model(
+            min(5, model.health + value),
+            _record2.points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.status,
+            _record2.last_orb
+          );
+        } else {
+          _block = model;
+        }
+      } else if (first_orb instanceof Collector) {
+        let remaining_orbs = length(model.bag) - 1;
+        let _record2 = model;
+        _block = new Model(
+          _record2.health,
+          model.points + remaining_orbs,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb
+        );
+      } else if (first_orb instanceof Survivor) {
+        _block = model;
+      } else {
+        _block = model;
       }
       let new_model = _block;
       let _block$1;
@@ -4727,21 +4790,8 @@ function view_last_orb_result(model) {
   let $ = model.last_orb;
   if ($ instanceof Some) {
     let $1 = $[0];
-    if ($1 instanceof PointOrb) {
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-gray-50 border border-gray-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-gray-700 font-light text-sm")]),
-            toList([text3("\u25CF DATA ACQUIRED +1")])
-          )
-        ])
-      );
-    } else {
+    if ($1 instanceof Bomb) {
+      let damage = $1[0];
       return div(
         toList([
           class$(
@@ -4751,7 +4801,79 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-gray-800 font-light text-sm")]),
-            toList([text3("\u25CB SYSTEM DAMAGE -1")])
+            toList([text3("\u25CB SYSTEM DAMAGE -" + to_string(damage))])
+          )
+        ])
+      );
+    } else if ($1 instanceof Point) {
+      let value = $1[0];
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-gray-50 border border-gray-200 rounded"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-gray-700 font-light text-sm")]),
+            toList([text3("\u25CF DATA ACQUIRED +" + to_string(value))])
+          )
+        ])
+      );
+    } else if ($1 instanceof Health) {
+      let value = $1[0];
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-green-50 border border-green-200 rounded"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-green-700 font-light text-sm")]),
+            toList([text3("+ HEALTH RESTORED +" + to_string(value))])
+          )
+        ])
+      );
+    } else if ($1 instanceof Collector) {
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-blue-50 border border-blue-200 rounded"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-blue-700 font-light text-sm")]),
+            toList([text3("\u25EF COLLECTOR ACTIVATED")])
+          )
+        ])
+      );
+    } else if ($1 instanceof Survivor) {
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-purple-50 border border-purple-200 rounded"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-purple-700 font-light text-sm")]),
+            toList([text3("\u25C8 SURVIVOR BONUS")])
+          )
+        ])
+      );
+    } else {
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-yellow-700 font-light text-sm")]),
+            toList([text3("\u2731 MULTIPLIER ACTIVE")])
           )
         ])
       );

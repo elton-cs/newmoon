@@ -13,13 +13,13 @@
 
 ## Tasks
 
-- [ ] 1.0 Expand Orb Type System
-  - [ ] 1.1 Replace current `Orb` type with comprehensive variant system
+- [x] 1.0 Expand Orb Type System
+  - [x] 1.1 Replace current `Orb` type with comprehensive variant system
         including Bomb(Int), Point(Int), Health(Int), Collector, Survivor, and
         Multiplier
-  - [ ] 1.2 Update all pattern matching throughout the codebase to handle new
+  - [x] 1.2 Update all pattern matching throughout the codebase to handle new
         orb variants
-  - [ ] 1.3 Add helper functions for orb categorization (is_bomb_orb,
+  - [x] 1.3 Add helper functions for orb categorization (is_bomb_orb,
         is_point_orb, etc.)
 - [ ] 2.0 Implement New Game State Management
   - [ ] 2.1 Add `bombs_pulled_this_level: Int` field to Model to track bomb

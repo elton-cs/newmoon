@@ -16,8 +16,84 @@ pub fn main() -> Nil {
 }
 
 type Orb {
-  PointOrb
-  BombOrb
+  Bomb(Int)
+  Point(Int)
+  Health(Int)
+  Collector
+  Survivor
+  Multiplier
+}
+
+// Orb categorization helper functions
+fn is_bomb_orb(orb: Orb) -> Bool {
+  case orb {
+    Bomb(_) -> True
+    _ -> False
+  }
+}
+
+fn is_point_orb(orb: Orb) -> Bool {
+  case orb {
+    Point(_) -> True
+    _ -> False
+  }
+}
+
+fn is_health_orb(orb: Orb) -> Bool {
+  case orb {
+    Health(_) -> True
+    _ -> False
+  }
+}
+
+fn is_collector_orb(orb: Orb) -> Bool {
+  case orb {
+    Collector -> True
+    _ -> False
+  }
+}
+
+fn is_survivor_orb(orb: Orb) -> Bool {
+  case orb {
+    Survivor -> True
+    _ -> False
+  }
+}
+
+fn is_multiplier_orb(orb: Orb) -> Bool {
+  case orb {
+    Multiplier -> True
+    _ -> False
+  }
+}
+
+fn is_beneficial_orb(orb: Orb) -> Bool {
+  case orb {
+    Point(_) -> True
+    Health(_) -> True
+    Collector -> True
+    Survivor -> True
+    Multiplier -> True
+    Bomb(_) -> False
+  }
+}
+
+fn is_harmful_orb(orb: Orb) -> Bool {
+  case orb {
+    Bomb(_) -> True
+    _ -> False
+  }
+}
+
+fn get_orb_value(orb: Orb) -> Int {
+  case orb {
+    Bomb(damage) -> damage
+    Point(points) -> points
+    Health(healing) -> healing
+    Collector -> 0
+    Survivor -> 0
+    Multiplier -> 0
+  }
 }
 
 type GameStatus {
@@ -51,7 +127,7 @@ fn init(_) -> Model {
 }
 
 fn create_bag() -> List(Orb) {
-  list.append(list.repeat(PointOrb, 5), list.repeat(BombOrb, 5))
+  list.append(list.repeat(Point(1), 5), list.repeat(Bomb(1), 5))
 }
 
 type Msg {
@@ -75,8 +151,30 @@ fn handle_pull_orb(model: Model) -> Model {
         [] -> model
         [first_orb, ..rest] -> {
           let new_model = case first_orb {
-            PointOrb -> Model(..model, points: model.points + 1)
-            BombOrb -> Model(..model, health: model.health - 1)
+            Point(value) -> Model(..model, points: model.points + value)
+            Bomb(damage) -> Model(..model, health: model.health - damage)
+            Health(value) -> {
+              // Basic health restoration logic - full implementation in task 3.5
+              case model.health < 5 {
+                True -> Model(..model, health: int.min(5, model.health + value))
+                False -> model
+              }
+            }
+            Collector -> {
+              // Basic collector logic - full implementation in task 3.3
+              let remaining_orbs = list.length(model.bag) - 1
+              Model(..model, points: model.points + remaining_orbs)
+            }
+            Survivor -> {
+              // Basic survivor logic - full implementation in task 3.4
+              // TODO: Need bomb tracking in model for proper implementation
+              model
+            }
+            Multiplier -> {
+              // Basic multiplier logic - full implementation in task 3.6
+              // TODO: Need multiplier tracking in model for proper implementation
+              model
+            }
           }
 
           let updated_model =
@@ -201,21 +299,69 @@ fn view_playing_state(model: Model) -> Element(Msg) {
 fn view_last_orb_result(model: Model) -> Element(Msg) {
   case model.last_orb {
     None -> html.div([attribute.class("h-8 mb-4")], [])
-    Some(PointOrb) ->
+    Some(Point(value)) ->
       html.div(
         [attribute.class("mb-4 p-3 bg-gray-50 border border-gray-200 rounded")],
         [
           html.p([attribute.class("text-gray-700 font-light text-sm")], [
-            html.text("● DATA ACQUIRED +1"),
+            html.text("● DATA ACQUIRED +" <> int.to_string(value)),
           ]),
         ],
       )
-    Some(BombOrb) ->
+    Some(Bomb(damage)) ->
       html.div(
         [attribute.class("mb-4 p-3 bg-gray-100 border border-gray-300 rounded")],
         [
           html.p([attribute.class("text-gray-800 font-light text-sm")], [
-            html.text("○ SYSTEM DAMAGE -1"),
+            html.text("○ SYSTEM DAMAGE -" <> int.to_string(damage)),
+          ]),
+        ],
+      )
+    Some(Health(value)) ->
+      html.div(
+        [
+          attribute.class(
+            "mb-4 p-3 bg-green-50 border border-green-200 rounded",
+          ),
+        ],
+        [
+          html.p([attribute.class("text-green-700 font-light text-sm")], [
+            html.text("+ HEALTH RESTORED +" <> int.to_string(value)),
+          ]),
+        ],
+      )
+    Some(Collector) ->
+      html.div(
+        [attribute.class("mb-4 p-3 bg-blue-50 border border-blue-200 rounded")],
+        [
+          html.p([attribute.class("text-blue-700 font-light text-sm")], [
+            html.text("◯ COLLECTOR ACTIVATED"),
+          ]),
+        ],
+      )
+    Some(Survivor) ->
+      html.div(
+        [
+          attribute.class(
+            "mb-4 p-3 bg-purple-50 border border-purple-200 rounded",
+          ),
+        ],
+        [
+          html.p([attribute.class("text-purple-700 font-light text-sm")], [
+            html.text("◈ SURVIVOR BONUS"),
+          ]),
+        ],
+      )
+    Some(Multiplier) ->
+      html.div(
+        [
+          attribute.class(
+            "mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded",
+          ),
+        ],
+        [
+          html.p([attribute.class("text-yellow-700 font-light text-sm")], [
+            html.text("✱ MULTIPLIER ACTIVE"),
           ]),
         ],
       )
