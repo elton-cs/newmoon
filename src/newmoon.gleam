@@ -155,29 +155,37 @@ fn handle_pull_orb(model: Model) -> Model {
         [] -> model
         [first_orb, ..rest] -> {
           let new_model = case first_orb {
-            Point(value) -> Model(..model, points: model.points + value)
-            Bomb(damage) -> Model(..model, health: model.health - damage)
+            Point(value) -> {
+              let multiplied_points = value * model.current_multiplier
+              Model(..model, points: model.points + multiplied_points)
+            }
+            Bomb(damage) ->
+              Model(
+                ..model,
+                health: model.health - damage,
+                bombs_pulled_this_level: model.bombs_pulled_this_level + 1,
+              )
             Health(value) -> {
-              // Basic health restoration logic - full implementation in task 3.5
-              case model.health < 5 {
-                True -> Model(..model, health: int.min(5, model.health + value))
-                False -> model
-              }
+              // Health orbs restore health up to maximum of 5, consumed even if no healing occurs
+              let new_health = int.min(5, model.health + value)
+              Model(..model, health: new_health)
             }
             Collector -> {
-              // Basic collector logic - full implementation in task 3.3
+              // Collector grants 1 point per remaining orb (excluding itself) with multiplier
               let remaining_orbs = list.length(model.bag) - 1
-              Model(..model, points: model.points + remaining_orbs)
+              let collector_points = remaining_orbs * model.current_multiplier
+              Model(..model, points: model.points + collector_points)
             }
             Survivor -> {
-              // Basic survivor logic - full implementation in task 3.4
-              // TODO: Need bomb tracking in model for proper implementation
-              model
+              // Survivor grants 1 point per bomb previously pulled in current level with multiplier
+              let survivor_points =
+                model.bombs_pulled_this_level * model.current_multiplier
+              Model(..model, points: model.points + survivor_points)
             }
             Multiplier -> {
-              // Basic multiplier logic - full implementation in task 3.6
-              // TODO: Need multiplier tracking in model for proper implementation
-              model
+              // Multiplier doubles the current multiplier (1x → 2x → 4x → 8x, etc.)
+              let new_multiplier = model.current_multiplier * 2
+              Model(..model, current_multiplier: new_multiplier)
             }
           }
 
@@ -332,7 +340,7 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-green-700 font-light text-sm")], [
-            html.text("+ HEALTH RESTORED +" <> int.to_string(value)),
+            html.text("+ SYSTEMS REPAIRED +" <> int.to_string(value)),
           ]),
         ],
       )
@@ -341,7 +349,7 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         [attribute.class("mb-4 p-3 bg-blue-50 border border-blue-200 rounded")],
         [
           html.p([attribute.class("text-blue-700 font-light text-sm")], [
-            html.text("◯ COLLECTOR ACTIVATED"),
+            html.text("◯ COLLECTOR ACTIVATED - SPECIMENS COUNTED"),
           ]),
         ],
       )
@@ -354,7 +362,7 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-purple-700 font-light text-sm")], [
-            html.text("◈ SURVIVOR BONUS"),
+            html.text("◈ SURVIVOR BONUS - DAMAGE ASSESSED"),
           ]),
         ],
       )
@@ -367,7 +375,7 @@ fn view_last_orb_result(model: Model) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-yellow-700 font-light text-sm")], [
-            html.text("✱ MULTIPLIER ACTIVE"),
+            html.text("✱ SIGNAL AMPLIFIER ENGAGED"),
           ]),
         ],
       )

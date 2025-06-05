@@ -4650,15 +4650,16 @@ function handle_pull_orb(model) {
           _record2.bag,
           _record2.status,
           _record2.last_orb,
-          _record2.bombs_pulled_this_level,
+          model.bombs_pulled_this_level + 1,
           _record2.current_multiplier
         );
       } else if (first_orb instanceof Point) {
         let value = first_orb[0];
+        let multiplied_points = value * model.current_multiplier;
         let _record2 = model;
         _block = new Model(
           _record2.health,
-          model.points + value,
+          model.points + multiplied_points,
           _record2.level,
           _record2.milestone,
           _record2.bag,
@@ -4669,29 +4670,26 @@ function handle_pull_orb(model) {
         );
       } else if (first_orb instanceof Health) {
         let value = first_orb[0];
-        let $2 = model.health < 5;
-        if ($2) {
-          let _record2 = model;
-          _block = new Model(
-            min(5, model.health + value),
-            _record2.points,
-            _record2.level,
-            _record2.milestone,
-            _record2.bag,
-            _record2.status,
-            _record2.last_orb,
-            _record2.bombs_pulled_this_level,
-            _record2.current_multiplier
-          );
-        } else {
-          _block = model;
-        }
+        let new_health = min(5, model.health + value);
+        let _record2 = model;
+        _block = new Model(
+          new_health,
+          _record2.points,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb,
+          _record2.bombs_pulled_this_level,
+          _record2.current_multiplier
+        );
       } else if (first_orb instanceof Collector) {
         let remaining_orbs = length(model.bag) - 1;
+        let collector_points = remaining_orbs * model.current_multiplier;
         let _record2 = model;
         _block = new Model(
           _record2.health,
-          model.points + remaining_orbs,
+          model.points + collector_points,
           _record2.level,
           _record2.milestone,
           _record2.bag,
@@ -4701,9 +4699,33 @@ function handle_pull_orb(model) {
           _record2.current_multiplier
         );
       } else if (first_orb instanceof Survivor) {
-        _block = model;
+        let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
+        let _record2 = model;
+        _block = new Model(
+          _record2.health,
+          model.points + survivor_points,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb,
+          _record2.bombs_pulled_this_level,
+          _record2.current_multiplier
+        );
       } else {
-        _block = model;
+        let new_multiplier = model.current_multiplier * 2;
+        let _record2 = model;
+        _block = new Model(
+          _record2.health,
+          _record2.points,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb,
+          _record2.bombs_pulled_this_level,
+          new_multiplier
+        );
       }
       let new_model = _block;
       let _block$1;
@@ -4849,7 +4871,7 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-green-700 font-light text-sm")]),
-            toList([text3("+ HEALTH RESTORED +" + to_string(value))])
+            toList([text3("+ SYSTEMS REPAIRED +" + to_string(value))])
           )
         ])
       );
@@ -4863,7 +4885,7 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-blue-700 font-light text-sm")]),
-            toList([text3("\u25EF COLLECTOR ACTIVATED")])
+            toList([text3("\u25EF COLLECTOR ACTIVATED - SPECIMENS COUNTED")])
           )
         ])
       );
@@ -4877,7 +4899,7 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-purple-700 font-light text-sm")]),
-            toList([text3("\u25C8 SURVIVOR BONUS")])
+            toList([text3("\u25C8 SURVIVOR BONUS - DAMAGE ASSESSED")])
           )
         ])
       );
@@ -4891,7 +4913,7 @@ function view_last_orb_result(model) {
         toList([
           p(
             toList([class$("text-yellow-700 font-light text-sm")]),
-            toList([text3("\u2731 MULTIPLIER ACTIVE")])
+            toList([text3("\u2731 SIGNAL AMPLIFIER ENGAGED")])
           )
         ])
       );

@@ -29,20 +29,20 @@
   - [x] 2.3 Update `init` function to initialize new state fields
   - [x] 2.4 Update `handle_next_level` function to reset level-specific state
         (bombs_pulled, multiplier)
-- [ ] 3.0 Update Orb Effects Logic
-  - [ ] 3.1 Implement variable damage logic for Bomb(1), Bomb(2), Bomb(3) orbs
+- [x] 3.0 Update Orb Effects Logic
+  - [x] 3.1 Implement variable damage logic for Bomb(1), Bomb(2), Bomb(3) orbs
         in `handle_pull_orb`
-  - [ ] 3.2 Implement variable point logic for Point(5), Point(7), Point(8),
+  - [x] 3.2 Implement variable point logic for Point(5), Point(7), Point(8),
         Point(9) orbs with multiplier application
-  - [ ] 3.3 Implement Collector Orb logic to grant points equal to remaining
+  - [x] 3.3 Implement Collector Orb logic to grant points equal to remaining
         orbs in bag (excluding itself)
-  - [ ] 3.4 Implement Survivor Orb logic to grant points equal to bombs pulled
+  - [x] 3.4 Implement Survivor Orb logic to grant points equal to bombs pulled
         previously in current level
-  - [ ] 3.5 Implement Health Orb logic for Health(1) and Health(3) with proper
+  - [x] 3.5 Implement Health Orb logic for Health(1) and Health(3) with proper
         health capping at 5
-  - [ ] 3.6 Implement 2x Multiplier Orb logic with multiplicative stacking (2x,
+  - [x] 3.6 Implement 2x Multiplier Orb logic with multiplicative stacking (2x,
         4x, 8x, etc.)
-  - [ ] 3.7 Update bomb tracking increment when any bomb orb is pulled
+  - [x] 3.7 Update bomb tracking increment when any bomb orb is pulled
 - [ ] 4.0 Enhance Visual Representation
   - [ ] 4.1 Update `view_last_orb_result` to display appropriate space-themed
         messages for each new orb type
