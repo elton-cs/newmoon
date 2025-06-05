@@ -4484,79 +4484,84 @@ function update2(model, msg) {
     return model - 1;
   }
 }
-function view(model) {
+function view_header() {
+  return h1(
+    toList([class$("text-3xl font-bold text-gray-800 mb-8")]),
+    toList([text3("COUNTER")])
+  );
+}
+function view_decrement_button() {
+  return button(
+    toList([
+      class$(
+        "bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
+      ),
+      on_click(new UserClickedDecrement())
+    ]),
+    toList([text3("\u2212")])
+  );
+}
+function view_increment_button() {
+  return button(
+    toList([
+      class$(
+        "bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
+      ),
+      on_click(new UserClickedIncrement())
+    ]),
+    toList([text3("+")])
+  );
+}
+function view_counter_display(model) {
   let count = to_string(model);
+  return div(
+    toList([class$("bg-gray-50 rounded-xl px-6 py-4 min-w-[120px]")]),
+    toList([
+      p(
+        toList([
+          class$(
+            "text-sm font-medium text-gray-500 uppercase tracking-wide"
+          )
+        ]),
+        toList([text3("Count")])
+      ),
+      p(
+        toList([class$("text-4xl font-bold text-gray-800 mt-1")]),
+        toList([text3(count)])
+      )
+    ])
+  );
+}
+function view_counter_controls(model) {
+  return div(
+    toList([
+      class$("flex items-center justify-center space-x-6 mb-8")
+    ]),
+    toList([
+      view_decrement_button(),
+      view_counter_display(model),
+      view_increment_button()
+    ])
+  );
+}
+function view_counter_card(model) {
+  return div(
+    toList([
+      class$(
+        "bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center"
+      )
+    ]),
+    toList([view_header(), view_counter_controls(model)])
+  );
+}
+function view(model) {
   return div(
     toList([
       class$(
         "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
       )
     ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center"
-          )
-        ]),
-        toList([
-          h1(
-            toList([class$("text-3xl font-bold text-gray-800 mb-8")]),
-            toList([text3("Counter App")])
-          ),
-          div(
-            toList([
-              class$(
-                "flex items-center justify-center space-x-6 mb-8"
-              )
-            ]),
-            toList([
-              button(
-                toList([
-                  class$(
-                    "bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
-                  ),
-                  on_click(new UserClickedDecrement())
-                ]),
-                toList([text3("\u2212")])
-              ),
-              div(
-                toList([
-                  class$(
-                    "bg-gray-50 rounded-xl px-6 py-4 min-w-[120px]"
-                  )
-                ]),
-                toList([
-                  p(
-                    toList([
-                      class$(
-                        "text-sm font-medium text-gray-500 uppercase tracking-wide"
-                      )
-                    ]),
-                    toList([text3("Count")])
-                  ),
-                  p(
-                    toList([
-                      class$("text-4xl font-bold text-gray-800 mt-1")
-                    ]),
-                    toList([text3(count)])
-                  )
-                ])
-              ),
-              button(
-                toList([
-                  class$(
-                    "bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
-                  ),
-                  on_click(new UserClickedIncrement())
-                ]),
-                toList([text3("+")])
-              )
-            ])
-          )
-        ])
-      )
-    ])
+    toList([view_counter_card(model)])
   );
 }
 function main() {
