@@ -1500,24 +1500,6 @@ function sort(list4, compare4) {
     }
   }
 }
-function repeat_loop(loop$item, loop$times, loop$acc) {
-  while (true) {
-    let item = loop$item;
-    let times = loop$times;
-    let acc = loop$acc;
-    let $ = times <= 0;
-    if ($) {
-      return acc;
-    } else {
-      loop$item = item;
-      loop$times = times - 1;
-      loop$acc = prepend(item, acc);
-    }
-  }
-}
-function repeat(a, times) {
-  return repeat_loop(a, times, toList([]));
-}
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
 function concat_loop(loop$strings, loop$accumulator) {
@@ -4548,6 +4530,8 @@ var Collector = class extends CustomType {
 };
 var Survivor = class extends CustomType {
 };
+var Multiplier = class extends CustomType {
+};
 var Playing = class extends CustomType {
 };
 var Won = class extends CustomType {
@@ -4574,22 +4558,120 @@ var NextLevel = class extends CustomType {
 };
 var RestartGame = class extends CustomType {
 };
-function create_bag() {
-  return append(
-    repeat(new Point(1), 5),
-    repeat(new Bomb(1), 5)
-  );
+function create_level_bag(loop$level) {
+  while (true) {
+    let level = loop$level;
+    if (level === 1) {
+      return toList([
+        new Point(5),
+        new Point(5),
+        new Point(7),
+        new Point(8),
+        new Bomb(1),
+        new Bomb(1),
+        new Bomb(2),
+        new Health(1),
+        new Health(3),
+        new Collector()
+      ]);
+    } else if (level === 2) {
+      return toList([
+        new Point(7),
+        new Point(8),
+        new Point(8),
+        new Point(9),
+        new Bomb(1),
+        new Bomb(2),
+        new Bomb(3),
+        new Health(1),
+        new Health(3),
+        new Collector(),
+        new Multiplier(),
+        new Survivor()
+      ]);
+    } else if (level === 3) {
+      return toList([
+        new Point(7),
+        new Point(8),
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Bomb(2),
+        new Bomb(2),
+        new Bomb(3),
+        new Bomb(3),
+        new Health(1),
+        new Health(3),
+        new Collector(),
+        new Collector(),
+        new Multiplier()
+      ]);
+    } else if (level === 4) {
+      return toList([
+        new Point(8),
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Bomb(2),
+        new Bomb(3),
+        new Bomb(3),
+        new Bomb(3),
+        new Bomb(3),
+        new Health(1),
+        new Health(3),
+        new Health(3),
+        new Multiplier(),
+        new Multiplier(),
+        new Survivor()
+      ]);
+    } else if (level === 5) {
+      return toList([
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Point(9),
+        new Bomb(3),
+        new Bomb(3),
+        new Bomb(3),
+        new Bomb(3),
+        new Bomb(3),
+        new Bomb(3),
+        new Health(3),
+        new Health(3),
+        new Health(3),
+        new Collector(),
+        new Collector(),
+        new Survivor()
+      ]);
+    } else {
+      loop$level = 5;
+    }
+  }
 }
 function init(_) {
-  return new Model(5, 0, 1, 5, create_bag(), new Playing(), new None(), 0, 1);
-}
-function handle_next_level(model) {
   return new Model(
     5,
     0,
-    model.level + 1,
+    1,
+    5,
+    create_level_bag(1),
+    new Playing(),
+    new None(),
+    0,
+    1
+  );
+}
+function handle_next_level(model) {
+  let new_level = model.level + 1;
+  return new Model(
+    5,
+    0,
+    new_level,
     model.milestone + 2,
-    create_bag(),
+    create_level_bag(new_level),
     new Playing(),
     new None(),
     0,

@@ -52,12 +52,12 @@
         "SYSTEM DAMAGE -2", "DATA COLLECTED +7")
   - [x] 4.4 Add multiplier status display in game stats when active multiplier >
         1
-- [ ] 5.0 Configure Level Bag Compositions
-  - [ ] 5.1 Define `create_level_bag(level: Int) -> List(Orb)` function with
+- [x] 5.0 Configure Level Bag Compositions
+  - [x] 5.1 Define `create_level_bag(level: Int) -> List(Orb)` function with
         level-specific orb distributions
-  - [ ] 5.2 Update `handle_next_level` and `init` functions to use
+  - [x] 5.2 Update `handle_next_level` and `init` functions to use
         level-specific bag creation
-  - [ ] 5.3 Balance orb quantities across 5 levels with increasing difficulty
+  - [x] 5.3 Balance orb quantities across 5 levels with increasing difficulty
         and variety
-  - [ ] 5.4 Ensure each level has appropriate mix of risk/reward orbs for
+  - [x] 5.4 Ensure each level has appropriate mix of risk/reward orbs for
         strategic gameplay

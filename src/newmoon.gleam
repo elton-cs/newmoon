@@ -145,7 +145,7 @@ fn init(_) -> Model {
     points: 0,
     level: 1,
     milestone: 5,
-    bag: create_bag(),
+    bag: create_level_bag(1),
     status: Playing,
     last_orb: None,
     bombs_pulled_this_level: 0,
@@ -153,8 +153,121 @@ fn init(_) -> Model {
   )
 }
 
-fn create_bag() -> List(Orb) {
-  list.append(list.repeat(Point(1), 5), list.repeat(Bomb(1), 5))
+fn create_level_bag(level: Int) -> List(Orb) {
+  case level {
+    1 -> [
+      // Level 1: Basic introduction (10 orbs total)
+      // 4 Point orbs (low-medium values)
+      Point(5),
+      Point(5),
+      Point(7),
+      Point(8),
+      // 3 Bomb orbs (low damage)  
+      Bomb(1),
+      Bomb(1),
+      Bomb(2),
+      // 2 Health orbs
+      Health(1),
+      Health(3),
+      // 1 Collector for strategy
+      Collector,
+    ]
+
+    2 -> [
+      // Level 2: Adding multipliers (12 orbs total)
+      // 4 Point orbs (medium values)
+      Point(7),
+      Point(8),
+      Point(8),
+      Point(9),
+      // 3 Bomb orbs (mixed damage)
+      Bomb(1),
+      Bomb(2),
+      Bomb(3),
+      // 2 Health orbs
+      Health(1),
+      Health(3),
+      // 1 Collector, 1 Multiplier, 1 Survivor
+      Collector,
+      Multiplier,
+      Survivor,
+    ]
+
+    3 -> [
+      // Level 3: Balanced strategy (14 orbs total)
+      // 5 Point orbs (higher values)
+      Point(7),
+      Point(8),
+      Point(9),
+      Point(9),
+      Point(9),
+      // 4 Bomb orbs (increasing danger)
+      Bomb(2),
+      Bomb(2),
+      Bomb(3),
+      Bomb(3),
+      // 2 Health orbs
+      Health(1),
+      Health(3),
+      // 2 Collector, 1 Multiplier
+      Collector,
+      Collector,
+      Multiplier,
+    ]
+
+    4 -> [
+      // Level 4: High risk/reward (16 orbs total)
+      // 5 Point orbs (high values)
+      Point(8),
+      Point(9),
+      Point(9),
+      Point(9),
+      Point(9),
+      // 5 Bomb orbs (high danger)
+      Bomb(2),
+      Bomb(3),
+      Bomb(3),
+      Bomb(3),
+      Bomb(3),
+      // 3 Health orbs (more healing needed)
+      Health(1),
+      Health(3),
+      Health(3),
+      // 2 Multiplier, 1 Survivor
+      Multiplier,
+      Multiplier,
+      Survivor,
+    ]
+
+    5 -> [
+      // Level 5: Maximum challenge (18 orbs total)
+      // 6 Point orbs (maximum values)
+      Point(9),
+      Point(9),
+      Point(9),
+      Point(9),
+      Point(9),
+      Point(9),
+      // 6 Bomb orbs (maximum danger)
+      Bomb(3),
+      Bomb(3),
+      Bomb(3),
+      Bomb(3),
+      Bomb(3),
+      Bomb(3),
+      // 3 Health orbs
+      Health(3),
+      Health(3),
+      Health(3),
+      // 2 Collector, 1 Survivor
+      Collector,
+      Collector,
+      Survivor,
+    ]
+
+    _ -> create_level_bag(5)
+    // Default to level 5 for any level beyond 5
+  }
 }
 
 type Msg {
@@ -224,12 +337,13 @@ fn handle_pull_orb(model: Model) -> Model {
 }
 
 fn handle_next_level(model: Model) -> Model {
+  let new_level = model.level + 1
   Model(
     health: 5,
     points: 0,
-    level: model.level + 1,
+    level: new_level,
     milestone: model.milestone + 2,
-    bag: create_bag(),
+    bag: create_level_bag(new_level),
     status: Playing,
     last_orb: None,
     bombs_pulled_this_level: 0,
