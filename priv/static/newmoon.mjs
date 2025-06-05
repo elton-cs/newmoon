@@ -4555,7 +4555,7 @@ var Won = class extends CustomType {
 var Lost = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier) {
     super();
     this.health = health;
     this.points = points;
@@ -4564,6 +4564,8 @@ var Model = class extends CustomType {
     this.bag = bag;
     this.status = status;
     this.last_orb = last_orb;
+    this.bombs_pulled_this_level = bombs_pulled_this_level;
+    this.current_multiplier = current_multiplier;
   }
 };
 var PullOrb = class extends CustomType {
@@ -4579,7 +4581,7 @@ function create_bag() {
   );
 }
 function init(_) {
-  return new Model(5, 0, 1, 5, create_bag(), new Playing(), new None());
+  return new Model(5, 0, 1, 5, create_bag(), new Playing(), new None(), 0, 1);
 }
 function handle_next_level(model) {
   return new Model(
@@ -4589,7 +4591,9 @@ function handle_next_level(model) {
     model.milestone + 2,
     create_bag(),
     new Playing(),
-    new None()
+    new None(),
+    0,
+    1
   );
 }
 function check_game_status(model) {
@@ -4604,7 +4608,9 @@ function check_game_status(model) {
       _record.milestone,
       _record.bag,
       new Lost(),
-      _record.last_orb
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier
     );
   } else if ($1) {
     let _record = model;
@@ -4615,7 +4621,9 @@ function check_game_status(model) {
       _record.milestone,
       _record.bag,
       new Won(),
-      _record.last_orb
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier
     );
   } else {
     return model;
@@ -4641,7 +4649,9 @@ function handle_pull_orb(model) {
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.bombs_pulled_this_level,
+          _record2.current_multiplier
         );
       } else if (first_orb instanceof Point) {
         let value = first_orb[0];
@@ -4653,7 +4663,9 @@ function handle_pull_orb(model) {
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.bombs_pulled_this_level,
+          _record2.current_multiplier
         );
       } else if (first_orb instanceof Health) {
         let value = first_orb[0];
@@ -4667,7 +4679,9 @@ function handle_pull_orb(model) {
             _record2.milestone,
             _record2.bag,
             _record2.status,
-            _record2.last_orb
+            _record2.last_orb,
+            _record2.bombs_pulled_this_level,
+            _record2.current_multiplier
           );
         } else {
           _block = model;
@@ -4682,7 +4696,9 @@ function handle_pull_orb(model) {
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.bombs_pulled_this_level,
+          _record2.current_multiplier
         );
       } else if (first_orb instanceof Survivor) {
         _block = model;
@@ -4699,7 +4715,9 @@ function handle_pull_orb(model) {
         _record.milestone,
         rest,
         _record.status,
-        new Some(first_orb)
+        new Some(first_orb),
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier
       );
       let updated_model = _block$1;
       return check_game_status(updated_model);

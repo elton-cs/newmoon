@@ -21,13 +21,13 @@
         orb variants
   - [x] 1.3 Add helper functions for orb categorization (is_bomb_orb,
         is_point_orb, etc.)
-- [ ] 2.0 Implement New Game State Management
-  - [ ] 2.1 Add `bombs_pulled_this_level: Int` field to Model to track bomb
+- [x] 2.0 Implement New Game State Management
+  - [x] 2.1 Add `bombs_pulled_this_level: Int` field to Model to track bomb
         count for Survivor Orb
-  - [ ] 2.2 Add `current_multiplier: Int` field to Model to track active point
+  - [x] 2.2 Add `current_multiplier: Int` field to Model to track active point
         multiplier
-  - [ ] 2.3 Update `init` function to initialize new state fields
-  - [ ] 2.4 Update `handle_next_level` function to reset level-specific state
+  - [x] 2.3 Update `init` function to initialize new state fields
+  - [x] 2.4 Update `handle_next_level` function to reset level-specific state
         (bombs_pulled, multiplier)
 - [ ] 3.0 Update Orb Effects Logic
   - [ ] 3.1 Implement variable damage logic for Bomb(1), Bomb(2), Bomb(3) orbs

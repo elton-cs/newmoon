@@ -111,6 +111,8 @@ type Model {
     bag: List(Orb),
     status: GameStatus,
     last_orb: Option(Orb),
+    bombs_pulled_this_level: Int,
+    current_multiplier: Int,
   )
 }
 
@@ -123,6 +125,8 @@ fn init(_) -> Model {
     bag: create_bag(),
     status: Playing,
     last_orb: None,
+    bombs_pulled_this_level: 0,
+    current_multiplier: 1,
   )
 }
 
@@ -197,6 +201,8 @@ fn handle_next_level(model: Model) -> Model {
     bag: create_bag(),
     status: Playing,
     last_orb: None,
+    bombs_pulled_this_level: 0,
+    current_multiplier: 1,
   )
 }
 
