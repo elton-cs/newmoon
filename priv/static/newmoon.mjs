@@ -36,12 +36,12 @@ var List = class {
   // @internal
   countLength() {
     let current = this;
-    let length2 = 0;
+    let length3 = 0;
     while (current) {
       current = current.tail;
-      length2++;
+      length3++;
     }
-    return length2 - 1;
+    return length3 - 1;
   }
 };
 function prepend(element3, tail) {
@@ -374,6 +374,12 @@ var Gt = class extends CustomType {
 };
 
 // build/dev/javascript/gleam_stdlib/gleam/option.mjs
+var Some = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
 var None = class extends CustomType {
 };
 
@@ -1091,6 +1097,22 @@ var Ascending = class extends CustomType {
 };
 var Descending = class extends CustomType {
 };
+function length_loop(loop$list, loop$count) {
+  while (true) {
+    let list4 = loop$list;
+    let count = loop$count;
+    if (list4 instanceof Empty) {
+      return count;
+    } else {
+      let list$1 = list4.tail;
+      loop$list = list$1;
+      loop$count = count + 1;
+    }
+  }
+}
+function length(list4) {
+  return length_loop(list4, 0);
+}
 function reverse_and_prepend(loop$prefix, loop$suffix) {
   while (true) {
     let prefix = loop$prefix;
@@ -1107,6 +1129,9 @@ function reverse_and_prepend(loop$prefix, loop$suffix) {
 }
 function reverse(list4) {
   return reverse_and_prepend(list4, toList([]));
+}
+function is_empty(list4) {
+  return isEqual(list4, toList([]));
 }
 function append_loop(loop$first, loop$second) {
   while (true) {
@@ -1474,6 +1499,24 @@ function sort(list4, compare4) {
       return merge_all(sequences$1, new Ascending(), compare4);
     }
   }
+}
+function repeat_loop(loop$item, loop$times, loop$acc) {
+  while (true) {
+    let item = loop$item;
+    let times = loop$times;
+    let acc = loop$acc;
+    let $ = times <= 0;
+    if ($) {
+      return acc;
+    } else {
+      loop$item = item;
+      loop$times = times - 1;
+      loop$acc = prepend(item, acc);
+    }
+  }
+}
+function repeat(a, times) {
+  return repeat_loop(a, times, toList([]));
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
@@ -4296,6 +4339,9 @@ function text3(content) {
 function h1(attrs, children) {
   return element2("h1", attrs, children);
 }
+function h2(attrs, children) {
+  return element2("h2", attrs, children);
+}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
@@ -4470,98 +4516,408 @@ function on_click(msg) {
 
 // build/dev/javascript/newmoon/newmoon.mjs
 var FILEPATH = "src/newmoon.gleam";
-var UserClickedIncrement = class extends CustomType {
+var PointOrb = class extends CustomType {
 };
-var UserClickedDecrement = class extends CustomType {
+var BombOrb = class extends CustomType {
 };
+var Playing = class extends CustomType {
+};
+var Won = class extends CustomType {
+};
+var Lost = class extends CustomType {
+};
+var Model = class extends CustomType {
+  constructor(health, points, level, milestone, bag, status, last_orb) {
+    super();
+    this.health = health;
+    this.points = points;
+    this.level = level;
+    this.milestone = milestone;
+    this.bag = bag;
+    this.status = status;
+    this.last_orb = last_orb;
+  }
+};
+var PullOrb = class extends CustomType {
+};
+var NextLevel = class extends CustomType {
+};
+var RestartGame = class extends CustomType {
+};
+function create_bag() {
+  return append(
+    repeat(new PointOrb(), 5),
+    repeat(new BombOrb(), 5)
+  );
+}
 function init(_) {
-  return 0;
+  return new Model(5, 0, 1, 5, create_bag(), new Playing(), new None());
+}
+function handle_next_level(model) {
+  return new Model(
+    5,
+    0,
+    model.level + 1,
+    model.milestone + 2,
+    create_bag(),
+    new Playing(),
+    new None()
+  );
+}
+function check_game_status(model) {
+  let $ = model.health <= 0;
+  let $1 = model.points >= model.milestone;
+  if ($) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Lost(),
+      _record.last_orb
+    );
+  } else if ($1) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Won(),
+      _record.last_orb
+    );
+  } else {
+    return model;
+  }
+}
+function handle_pull_orb(model) {
+  let $ = model.status;
+  if ($ instanceof Playing) {
+    let $1 = model.bag;
+    if ($1 instanceof Empty) {
+      return model;
+    } else {
+      let first_orb = $1.head;
+      let rest = $1.tail;
+      let _block;
+      if (first_orb instanceof PointOrb) {
+        let _record2 = model;
+        _block = new Model(
+          _record2.health,
+          model.points + 1,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb
+        );
+      } else {
+        let _record2 = model;
+        _block = new Model(
+          model.health - 1,
+          _record2.points,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb
+        );
+      }
+      let new_model = _block;
+      let _block$1;
+      let _record = new_model;
+      _block$1 = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        rest,
+        _record.status,
+        new Some(first_orb)
+      );
+      let updated_model = _block$1;
+      return check_game_status(updated_model);
+    }
+  } else {
+    return model;
+  }
 }
 function update2(model, msg) {
-  if (msg instanceof UserClickedIncrement) {
-    return model + 1;
+  if (msg instanceof PullOrb) {
+    return handle_pull_orb(model);
+  } else if (msg instanceof NextLevel) {
+    return handle_next_level(model);
   } else {
-    return model - 1;
+    return init(void 0);
   }
 }
 function view_header() {
   return h1(
-    toList([class$("text-3xl font-bold text-gray-800 mb-8")]),
-    toList([text3("COUNTER")])
-  );
-}
-function view_decrement_button() {
-  return button(
     toList([
       class$(
-        "bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
-      ),
-      on_click(new UserClickedDecrement())
+        "text-4xl font-bold text-white mb-6 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
+      )
     ]),
-    toList([text3("\u2212")])
+    toList([text3("NEWMOON")])
   );
 }
-function view_increment_button() {
-  return button(
-    toList([
-      class$(
-        "bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 text-2xl w-16 h-16 flex items-center justify-center"
-      ),
-      on_click(new UserClickedIncrement())
-    ]),
-    toList([text3("+")])
-  );
-}
-function view_counter_display(model) {
-  let count = to_string(model);
+function view_stat_card(emoji, label, value, color_class) {
   return div(
-    toList([class$("bg-gray-50 rounded-xl px-6 py-4 min-w-[120px]")]),
     toList([
-      p(
+      class$("bg-gray-800 rounded-lg p-3 border border-gray-600")
+    ]),
+    toList([
+      div(
+        toList([class$("text-lg")]),
+        toList([text3(emoji)])
+      ),
+      div(
+        toList([
+          class$("text-xs text-gray-400 uppercase tracking-wide")
+        ]),
+        toList([text3(label)])
+      ),
+      div(
         toList([
           class$(
-            "text-sm font-medium text-gray-500 uppercase tracking-wide"
+            concat2(toList(["text-xl font-bold ", color_class]))
           )
         ]),
-        toList([text3("Count")])
-      ),
-      p(
-        toList([class$("text-4xl font-bold text-gray-800 mt-1")]),
-        toList([text3(count)])
+        toList([text3(value)])
       )
     ])
   );
 }
-function view_counter_controls(model) {
+function view_game_stats(model) {
   return div(
+    toList([class$("grid grid-cols-2 gap-4 mb-6")]),
     toList([
-      class$("flex items-center justify-center space-x-6 mb-8")
-    ]),
-    toList([
-      view_decrement_button(),
-      view_counter_display(model),
-      view_increment_button()
+      view_stat_card(
+        "\u2764\uFE0F",
+        "Health",
+        to_string(model.health),
+        "text-red-400"
+      ),
+      view_stat_card(
+        "\u2B50",
+        "Points",
+        to_string(model.points),
+        "text-yellow-400"
+      ),
+      view_stat_card(
+        "\u{1F3AF}",
+        "Goal",
+        to_string(model.milestone),
+        "text-green-400"
+      ),
+      view_stat_card("\u{1F4CA}", "Level", to_string(model.level), "text-blue-400")
     ])
   );
 }
-function view_counter_card(model) {
+function view_last_orb_result(model) {
+  let $ = model.last_orb;
+  if ($ instanceof Some) {
+    let $1 = $[0];
+    if ($1 instanceof PointOrb) {
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-green-900 border border-green-600 rounded-lg"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-green-300 font-bold")]),
+            toList([text3("\u{1F31F} Point Orb! +1 Point")])
+          )
+        ])
+      );
+    } else {
+      return div(
+        toList([
+          class$(
+            "mb-4 p-3 bg-red-900 border border-red-600 rounded-lg"
+          )
+        ]),
+        toList([
+          p(
+            toList([class$("text-red-300 font-bold")]),
+            toList([text3("\u{1F4A5} Bomb Orb! -1 Health")])
+          )
+        ])
+      );
+    }
+  } else {
+    return div(toList([class$("h-12")]), toList([]));
+  }
+}
+function view_bag_info(model) {
+  let orbs_left = length(model.bag);
   return div(
     toList([
       class$(
-        "bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center"
+        "mb-6 p-4 bg-gray-800 rounded-lg border border-gray-600"
       )
     ]),
-    toList([view_header(), view_counter_controls(model)])
+    toList([
+      p(
+        toList([class$("text-gray-300 mb-2")]),
+        toList([text3("\u{1F392} Mystical Bag")])
+      ),
+      p(
+        toList([class$("text-2xl font-bold text-purple-400")]),
+        toList([
+          text3(
+            concat2(
+              toList([to_string(orbs_left), " orbs remaining"])
+            )
+          )
+        ])
+      )
+    ])
+  );
+}
+function view_pull_orb_button(model) {
+  let is_disabled = is_empty(model.bag);
+  let _block;
+  if (is_disabled) {
+    _block = "bg-gray-600 cursor-not-allowed text-gray-400";
+  } else {
+    _block = "bg-purple-600 hover:bg-purple-700 text-white hover:scale-105";
+  }
+  let button_classes = _block;
+  return button(
+    toList([
+      class$(
+        concat2(
+          toList([
+            "w-full py-4 px-6 rounded-lg font-bold text-lg transition transform ",
+            button_classes
+          ])
+        )
+      ),
+      on_click(new PullOrb())
+    ]),
+    toList([text3("\u{1F52E} Pull an Orb")])
+  );
+}
+function view_playing_state(model) {
+  return div(
+    toList([]),
+    toList([
+      view_last_orb_result(model),
+      view_bag_info(model),
+      view_pull_orb_button(model)
+    ])
+  );
+}
+function view_won_state(model) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "mb-6 p-6 bg-green-900 border border-green-600 rounded-lg"
+          )
+        ]),
+        toList([
+          h2(
+            toList([class$("text-2xl font-bold text-green-300 mb-2")]),
+            toList([text3("\u{1F389} Level Complete!")])
+          ),
+          p(
+            toList([class$("text-green-400")]),
+            toList([
+              text3(
+                concat2(
+                  toList([
+                    "You reached ",
+                    to_string(model.milestone),
+                    " points!"
+                  ])
+                )
+              )
+            ])
+          )
+        ])
+      ),
+      button(
+        toList([
+          class$(
+            "w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition transform hover:scale-105"
+          ),
+          on_click(new NextLevel())
+        ]),
+        toList([text3("\u{1F680} Next Level")])
+      )
+    ])
+  );
+}
+function view_lost_state() {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "mb-6 p-6 bg-red-900 border border-red-600 rounded-lg"
+          )
+        ]),
+        toList([
+          h2(
+            toList([class$("text-2xl font-bold text-red-300 mb-2")]),
+            toList([text3("\u{1F480} Game Over!")])
+          ),
+          p(
+            toList([class$("text-red-400")]),
+            toList([text3("Your health reached zero. Try again!")])
+          )
+        ])
+      ),
+      button(
+        toList([
+          class$(
+            "w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition transform hover:scale-105"
+          ),
+          on_click(new RestartGame())
+        ]),
+        toList([text3("\u{1F504} Play Again")])
+      )
+    ])
+  );
+}
+function view_game_content(model) {
+  let $ = model.status;
+  if ($ instanceof Playing) {
+    return view_playing_state(model);
+  } else if ($ instanceof Won) {
+    return view_won_state(model);
+  } else {
+    return view_lost_state();
+  }
+}
+function view_game_card(model) {
+  return div(
+    toList([
+      class$(
+        "bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-700"
+      )
+    ]),
+    toList([view_header(), view_game_stats(model), view_game_content(model)])
   );
 }
 function view(model) {
   return div(
     toList([
       class$(
-        "min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
+        "min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4"
       )
     ]),
-    toList([view_counter_card(model)])
+    toList([view_game_card(model)])
   );
 }
 function main() {
@@ -4574,10 +4930,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      9,
+      12,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 165, end: 250, pattern_start: 176, pattern_end: 181 }
+      { value: $, start: 249, end: 334, pattern_start: 260, pattern_end: 265 }
     );
   }
   return void 0;
