@@ -365,14 +365,6 @@ function makeError(variant, file, module, line, fn, message, extra) {
   return error;
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/order.mjs
-var Lt = class extends CustomType {
-};
-var Eq = class extends CustomType {
-};
-var Gt = class extends CustomType {
-};
-
 // build/dev/javascript/gleam_stdlib/gleam/option.mjs
 var Some = class extends CustomType {
   constructor($0) {
@@ -1087,9 +1079,22 @@ var Dict = class _Dict {
 };
 var unequalDictSymbol = /* @__PURE__ */ Symbol();
 
-// build/dev/javascript/gleam_stdlib/gleam/dict.mjs
-function insert(dict2, key, value) {
-  return map_insert(key, value, dict2);
+// build/dev/javascript/gleam_stdlib/gleam/order.mjs
+var Lt = class extends CustomType {
+};
+var Eq = class extends CustomType {
+};
+var Gt = class extends CustomType {
+};
+
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function min(a, b) {
+  let $ = a < b;
+  if ($) {
+    return a;
+  } else {
+    return b;
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/list.mjs
@@ -1133,6 +1138,25 @@ function reverse(list4) {
 function is_empty(list4) {
   return isEqual(list4, toList([]));
 }
+function map_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return reverse(acc);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = prepend(fun(first$1), acc);
+    }
+  }
+}
+function map(list4, fun) {
+  return map_loop(list4, fun, toList([]));
+}
 function append_loop(loop$first, loop$second) {
   while (true) {
     let first = loop$first;
@@ -1163,6 +1187,25 @@ function fold(loop$list, loop$initial, loop$fun) {
       loop$list = rest$1;
       loop$initial = fun(initial, first$1);
       loop$fun = fun;
+    }
+  }
+}
+function find2(loop$list, loop$is_desired) {
+  while (true) {
+    let list4 = loop$list;
+    let is_desired = loop$is_desired;
+    if (list4 instanceof Empty) {
+      return new Error(void 0);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let $ = is_desired(first$1);
+      if ($) {
+        return new Ok(first$1);
+      } else {
+        loop$list = rest$1;
+        loop$is_desired = is_desired;
+      }
     }
   }
 }
@@ -1600,14 +1643,9 @@ function map_insert(key, value, map4) {
   return map4.set(key, value);
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/int.mjs
-function min(a, b) {
-  let $ = a < b;
-  if ($) {
-    return a;
-  } else {
-    return b;
-  }
+// build/dev/javascript/gleam_stdlib/gleam/dict.mjs
+function insert(dict2, key, value) {
+  return map_insert(key, value, dict2);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -4334,6 +4372,9 @@ function h1(attrs, children) {
 function h2(attrs, children) {
   return element2("h2", attrs, children);
 }
+function h3(attrs, children) {
+  return element2("h3", attrs, children);
+}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
@@ -4470,44 +4511,7 @@ function start3(app, selector, start_args) {
   );
 }
 
-// build/dev/javascript/lustre/lustre/event.mjs
-function is_immediate_event(name) {
-  if (name === "input") {
-    return true;
-  } else if (name === "change") {
-    return true;
-  } else if (name === "focus") {
-    return true;
-  } else if (name === "focusin") {
-    return true;
-  } else if (name === "focusout") {
-    return true;
-  } else if (name === "blur") {
-    return true;
-  } else if (name === "select") {
-    return true;
-  } else {
-    return false;
-  }
-}
-function on(name, handler) {
-  return event(
-    name,
-    handler,
-    empty_list,
-    false,
-    false,
-    is_immediate_event(name),
-    0,
-    0
-  );
-}
-function on_click(msg) {
-  return on("click", success(msg));
-}
-
-// build/dev/javascript/newmoon/newmoon.mjs
-var FILEPATH = "src/newmoon.gleam";
+// build/dev/javascript/newmoon/types.mjs
 var Bomb = class extends CustomType {
   constructor($0) {
     super();
@@ -4538,8 +4542,10 @@ var Won = class extends CustomType {
 };
 var Lost = class extends CustomType {
 };
+var InMarketplace = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits) {
     super();
     this.health = health;
     this.points = points;
@@ -4550,6 +4556,7 @@ var Model = class extends CustomType {
     this.last_orb = last_orb;
     this.bombs_pulled_this_level = bombs_pulled_this_level;
     this.current_multiplier = current_multiplier;
+    this.credits = credits;
   }
 };
 var PullOrb = class extends CustomType {
@@ -4558,69 +4565,26 @@ var NextLevel = class extends CustomType {
 };
 var RestartGame = class extends CustomType {
 };
-function get_orb_result_message(orb, model) {
-  if (orb instanceof Bomb) {
-    let damage = orb[0];
-    return "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
-      damage
-    ) + " SYS";
-  } else if (orb instanceof Point) {
-    let value = orb[0];
-    let multiplied_value = value * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
-    if ($) {
-      return "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
-        model.current_multiplier
-      ) + "] +" + to_string(multiplied_value);
-    } else {
-      return "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
-    }
-  } else if (orb instanceof Health) {
-    let value = orb[0];
-    return "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
-      value
-    ) + " SYS";
-  } else if (orb instanceof Collector) {
-    let base_points = length(model.bag);
-    let multiplied_points = base_points * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
-    if ($) {
-      return "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
-        model.current_multiplier
-      ) + "] +" + to_string(multiplied_points);
-    } else {
-      return "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
-    }
-  } else if (orb instanceof Survivor) {
-    let base_points = model.bombs_pulled_this_level;
-    let multiplied_points = base_points * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
-    if ($) {
-      return "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
-        model.current_multiplier
-      ) + "] +" + to_string(multiplied_points);
-    } else {
-      return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
-    }
-  } else {
-    return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
+var EnterMarketplace = class extends CustomType {
+};
+var ExitMarketplace = class extends CustomType {
+};
+var BuyOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
   }
-}
-function get_orb_result_color(orb) {
-  if (orb instanceof Bomb) {
-    return "default";
-  } else if (orb instanceof Point) {
-    return "gray";
-  } else if (orb instanceof Health) {
-    return "green";
-  } else if (orb instanceof Collector) {
-    return "blue";
-  } else if (orb instanceof Survivor) {
-    return "purple";
-  } else {
-    return "yellow";
+};
+var MarketItem = class extends CustomType {
+  constructor(orb, price, description) {
+    super();
+    this.orb = orb;
+    this.price = price;
+    this.description = description;
   }
-}
+};
+
+// build/dev/javascript/newmoon/level.mjs
 function create_level_bag(loop$level) {
   while (true) {
     let level = loop$level;
@@ -4717,194 +4681,406 @@ function create_level_bag(loop$level) {
     }
   }
 }
-function init(_) {
-  return new Model(
-    5,
-    0,
-    1,
-    100,
-    create_level_bag(1),
-    new Playing(),
-    new None(),
-    0,
-    1
-  );
+function get_milestone_for_level(level) {
+  return 100 + (level - 1) * 200;
 }
-function handle_next_level(model) {
-  let new_level = model.level + 1;
-  return new Model(
-    5,
-    0,
-    new_level,
-    model.milestone + 200,
-    create_level_bag(new_level),
-    new Playing(),
-    new None(),
-    0,
-    1
-  );
-}
-function check_game_status(model) {
-  let $ = model.health <= 0;
-  let $1 = model.points >= model.milestone;
-  if ($) {
-    let _record = model;
-    return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      new Lost(),
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier
-    );
-  } else if ($1) {
-    let _record = model;
-    return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      new Won(),
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier
-    );
+
+// build/dev/javascript/lustre/lustre/event.mjs
+function is_immediate_event(name) {
+  if (name === "input") {
+    return true;
+  } else if (name === "change") {
+    return true;
+  } else if (name === "focus") {
+    return true;
+  } else if (name === "focusin") {
+    return true;
+  } else if (name === "focusout") {
+    return true;
+  } else if (name === "blur") {
+    return true;
+  } else if (name === "select") {
+    return true;
   } else {
-    return model;
+    return false;
   }
 }
-function handle_pull_orb(model) {
-  let $ = model.status;
-  if ($ instanceof Playing) {
-    let $1 = model.bag;
-    if ($1 instanceof Empty) {
-      return model;
+function on(name, handler) {
+  return event(
+    name,
+    handler,
+    empty_list,
+    false,
+    false,
+    is_immediate_event(name),
+    0,
+    0
+  );
+}
+function on_click(msg) {
+  return on("click", success(msg));
+}
+
+// build/dev/javascript/newmoon/orb.mjs
+function get_orb_result_message(orb, model) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    return "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
+      damage
+    ) + " SYS";
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let multiplied_value = value * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_value);
     } else {
-      let first_orb = $1.head;
-      let rest = $1.tail;
-      let _block;
-      if (first_orb instanceof Bomb) {
-        let damage = first_orb[0];
-        let _record2 = model;
-        _block = new Model(
-          model.health - damage,
-          _record2.points,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb,
-          model.bombs_pulled_this_level + 1,
-          _record2.current_multiplier
-        );
-      } else if (first_orb instanceof Point) {
-        let value = first_orb[0];
-        let multiplied_points = value * model.current_multiplier;
-        let _record2 = model;
-        _block = new Model(
-          _record2.health,
-          model.points + multiplied_points,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb,
-          _record2.bombs_pulled_this_level,
-          _record2.current_multiplier
-        );
-      } else if (first_orb instanceof Health) {
-        let value = first_orb[0];
-        let new_health = min(5, model.health + value);
-        let _record2 = model;
-        _block = new Model(
-          new_health,
-          _record2.points,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb,
-          _record2.bombs_pulled_this_level,
-          _record2.current_multiplier
-        );
-      } else if (first_orb instanceof Collector) {
-        let remaining_orbs = length(model.bag) - 1;
-        let collector_points = remaining_orbs * model.current_multiplier;
-        let _record2 = model;
-        _block = new Model(
-          _record2.health,
-          model.points + collector_points,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb,
-          _record2.bombs_pulled_this_level,
-          _record2.current_multiplier
-        );
-      } else if (first_orb instanceof Survivor) {
-        let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
-        let _record2 = model;
-        _block = new Model(
-          _record2.health,
-          model.points + survivor_points,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb,
-          _record2.bombs_pulled_this_level,
-          _record2.current_multiplier
-        );
-      } else {
-        let new_multiplier = model.current_multiplier * 2;
-        let _record2 = model;
-        _block = new Model(
-          _record2.health,
-          _record2.points,
-          _record2.level,
-          _record2.milestone,
-          _record2.bag,
-          _record2.status,
-          _record2.last_orb,
-          _record2.bombs_pulled_this_level,
-          new_multiplier
-        );
-      }
-      let new_model = _block;
-      let _block$1;
-      let _record = new_model;
-      _block$1 = new Model(
+      return "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
+    }
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    return "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
+      value
+    ) + " SYS";
+  } else if (orb instanceof Collector) {
+    let base_points = length(model.bag);
+    let multiplied_points = base_points * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_points);
+    } else {
+      return "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
+    }
+  } else if (orb instanceof Survivor) {
+    let base_points = model.bombs_pulled_this_level;
+    let multiplied_points = base_points * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_points);
+    } else {
+      return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
+    }
+  } else {
+    return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
+  }
+}
+function get_orb_result_color(orb) {
+  if (orb instanceof Bomb) {
+    return "default";
+  } else if (orb instanceof Point) {
+    return "gray";
+  } else if (orb instanceof Health) {
+    return "green";
+  } else if (orb instanceof Collector) {
+    return "blue";
+  } else if (orb instanceof Survivor) {
+    return "purple";
+  } else {
+    return "yellow";
+  }
+}
+function apply_orb_effect(orb, model) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    let _record = model;
+    return new Model(
+      model.health - damage,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      model.bombs_pulled_this_level + 1,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let multiplied_points = value * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + multiplied_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    let new_health = min(5, model.health + value);
+    let _record = model;
+    return new Model(
+      new_health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else if (orb instanceof Collector) {
+    let remaining_orbs = length(model.bag) - 1;
+    let collector_points = remaining_orbs * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + collector_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else if (orb instanceof Survivor) {
+    let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + survivor_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else {
+    let new_multiplier = model.current_multiplier * 2;
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      new_multiplier,
+      _record.credits
+    );
+  }
+}
+function get_orb_name(orb) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    return "Bomb Orb (-" + to_string(damage) + " health)";
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    return "Point Orb (+" + to_string(value) + ")";
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    return "Health Orb (+" + to_string(value) + " health)";
+  } else if (orb instanceof Collector) {
+    return "Collector Orb";
+  } else if (orb instanceof Survivor) {
+    return "Survivor Orb";
+  } else {
+    return "Multiplier Orb";
+  }
+}
+
+// build/dev/javascript/newmoon/marketplace.mjs
+function get_market_items() {
+  return toList([
+    new MarketItem(new Point(5), 10, "Basic data packet - reliable points"),
+    new MarketItem(new Point(8), 15, "Advanced data packet - higher value"),
+    new MarketItem(new Health(2), 12, "Standard repair kit - moderate healing"),
+    new MarketItem(new Health(4), 20, "Enhanced repair kit - superior healing"),
+    new MarketItem(
+      new Collector(),
+      25,
+      "Deep scanner - points for remaining orbs"
+    ),
+    new MarketItem(
+      new Survivor(),
+      30,
+      "Damage analyzer - points for bombs survived"
+    ),
+    new MarketItem(
+      new Multiplier(),
+      35,
+      "Signal amplifier - doubles point multiplier"
+    ),
+    new MarketItem(new Bomb(1), 5, "Minor explosive - low risk training")
+  ]);
+}
+function can_afford(model, item) {
+  return model.credits >= item.price;
+}
+function purchase_orb(model, orb) {
+  let market_items = get_market_items();
+  let $ = find2(market_items, (item) => {
+    return isEqual(item.orb, orb);
+  });
+  if ($ instanceof Ok) {
+    let item = $[0];
+    let $1 = can_afford(model, item);
+    if ($1) {
+      let new_credits = model.credits - item.price;
+      let new_bag = prepend(orb, model.bag);
+      let _record = model;
+      return new Model(
         _record.health,
         _record.points,
         _record.level,
         _record.milestone,
-        rest,
+        new_bag,
         _record.status,
-        new Some(first_orb),
+        _record.last_orb,
         _record.bombs_pulled_this_level,
-        _record.current_multiplier
+        _record.current_multiplier,
+        new_credits
       );
-      let updated_model = _block$1;
-      return check_game_status(updated_model);
+    } else {
+      return model;
     }
   } else {
     return model;
   }
 }
-function update2(model, msg) {
-  if (msg instanceof PullOrb) {
-    return handle_pull_orb(model);
-  } else if (msg instanceof NextLevel) {
-    return handle_next_level(model);
+function view_market_item(model, item) {
+  let can_buy = can_afford(model, item);
+  let _block;
+  if (can_buy) {
+    _block = "bg-purple-600 hover:bg-purple-700 text-white";
   } else {
-    return init(void 0);
+    _block = "bg-gray-300 cursor-not-allowed text-gray-500";
   }
+  let button_classes = _block;
+  let _block$1;
+  if (can_buy) {
+    _block$1 = "text-purple-600";
+  } else {
+    _block$1 = "text-red-500";
+  }
+  let price_color = _block$1;
+  return div(
+    toList([class$("bg-white border border-gray-200 rounded p-4")]),
+    toList([
+      div(
+        toList([class$("text-left mb-3")]),
+        toList([
+          h3(
+            toList([class$("font-medium text-gray-800 mb-1")]),
+            toList([text3(get_orb_name(item.orb))])
+          ),
+          p(
+            toList([class$("text-xs text-gray-600 mb-2")]),
+            toList([text3(item.description)])
+          ),
+          p(
+            toList([class$("text-sm font-light " + price_color)]),
+            toList([
+              text3("Cost: " + to_string(item.price) + " credits")
+            ])
+          )
+        ])
+      ),
+      button(
+        toList([
+          class$(
+            concat2(
+              toList([
+                "w-full py-2 px-4 rounded text-sm font-light transition transform hover:scale-[1.02] ",
+                button_classes
+              ])
+            )
+          ),
+          on_click(new BuyOrb(item.orb))
+        ]),
+        toList([
+          text3(
+            (() => {
+              if (can_buy) {
+                return "PURCHASE";
+              } else {
+                return "INSUFFICIENT CREDITS";
+              }
+            })()
+          )
+        ])
+      )
+    ])
+  );
 }
+function view_marketplace(model) {
+  let market_items = get_market_items();
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "mb-6 p-6 bg-purple-50 border border-purple-200 rounded"
+          )
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("ORBITAL MARKETPLACE")])
+          ),
+          p(
+            toList([
+              class$("text-purple-700 text-sm font-light mb-2")
+            ]),
+            toList([text3("Enhance your exploration capabilities")])
+          ),
+          p(
+            toList([class$("text-purple-600 text-xs font-light")]),
+            toList([
+              text3("Credits available: " + to_string(model.credits))
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("space-y-3 mb-6 max-h-64 overflow-y-auto")]),
+        map(
+          market_items,
+          (item) => {
+            return view_market_item(model, item);
+          }
+        )
+      ),
+      button(
+        toList([
+          class$(
+            "w-full bg-gray-600 hover:bg-gray-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          ),
+          on_click(new ExitMarketplace())
+        ]),
+        toList([text3("RETURN TO SECTOR")])
+      )
+    ])
+  );
+}
+
+// build/dev/javascript/newmoon/view.mjs
 function view_header() {
   return div(
     toList([]),
@@ -4949,6 +5125,19 @@ function view_stat_card(symbol, label, value, color_class) {
           )
         ]),
         toList([text3(value)])
+      )
+    ])
+  );
+}
+function view_credit_display(model) {
+  return div(
+    toList([class$("mb-2")]),
+    toList([
+      view_stat_card(
+        "\u25C8",
+        "CREDITS",
+        to_string(model.credits),
+        "text-purple-600"
       )
     ])
   );
@@ -5049,6 +5238,7 @@ function view_game_stats(model) {
           )
         ])
       ),
+      view_credit_display(model),
       view_multiplier_status(model)
     ])
   );
@@ -5144,7 +5334,7 @@ function view_won_state(model) {
             toList([text3("SECTOR COMPLETE")])
           ),
           p(
-            toList([class$("text-gray-600 text-sm font-light")]),
+            toList([class$("text-gray-600 text-sm font-light mb-2")]),
             toList([
               text3(
                 concat2(
@@ -5156,17 +5346,37 @@ function view_won_state(model) {
                 )
               )
             ])
+          ),
+          p(
+            toList([class$("text-purple-600 text-sm font-light")]),
+            toList([
+              text3("Credits earned: +" + to_string(model.points))
+            ])
           )
         ])
       ),
-      button(
+      div(
+        toList([class$("space-y-3")]),
         toList([
-          class$(
-            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          button(
+            toList([
+              class$(
+                "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new EnterMarketplace())
+            ]),
+            toList([text3("VISIT MARKETPLACE")])
           ),
-          on_click(new NextLevel())
-        ]),
-        toList([text3("ADVANCE TO NEXT SECTOR")])
+          button(
+            toList([
+              class$(
+                "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new NextLevel())
+            ]),
+            toList([text3("ADVANCE TO NEXT SECTOR")])
+          )
+        ])
       )
     ])
   );
@@ -5216,8 +5426,10 @@ function view_game_content(model) {
     return view_playing_state(model);
   } else if ($ instanceof Won) {
     return view_won_state(model);
-  } else {
+  } else if ($ instanceof Lost) {
     return view_lost_state();
+  } else {
+    return view_marketplace(model);
   }
 }
 function view_game_card(model) {
@@ -5240,6 +5452,152 @@ function view(model) {
     toList([view_game_card(model)])
   );
 }
+
+// build/dev/javascript/newmoon/newmoon.mjs
+var FILEPATH = "src/newmoon.gleam";
+function init(_) {
+  return new Model(
+    5,
+    0,
+    1,
+    get_milestone_for_level(1),
+    create_level_bag(1),
+    new Playing(),
+    new None(),
+    0,
+    1,
+    0
+  );
+}
+function handle_next_level(model) {
+  let new_level = model.level + 1;
+  let earned_credits = model.points;
+  return new Model(
+    5,
+    0,
+    new_level,
+    get_milestone_for_level(new_level),
+    create_level_bag(new_level),
+    new Playing(),
+    new None(),
+    0,
+    1,
+    model.credits + earned_credits
+  );
+}
+function handle_enter_marketplace(model) {
+  let earned_credits = model.points;
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new InMarketplace(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    model.credits + earned_credits
+  );
+}
+function handle_exit_marketplace(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new Won(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits
+  );
+}
+function check_game_status(model) {
+  let $ = model.health <= 0;
+  let $1 = model.points >= model.milestone;
+  if ($) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Lost(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else if ($1) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Won(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits
+    );
+  } else {
+    return model;
+  }
+}
+function handle_pull_orb(model) {
+  let $ = model.status;
+  if ($ instanceof Playing) {
+    let $1 = model.bag;
+    if ($1 instanceof Empty) {
+      return model;
+    } else {
+      let first_orb = $1.head;
+      let rest = $1.tail;
+      let new_model = apply_orb_effect(first_orb, model);
+      let _block;
+      let _record = new_model;
+      _block = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        rest,
+        _record.status,
+        new Some(first_orb),
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits
+      );
+      let updated_model = _block;
+      return check_game_status(updated_model);
+    }
+  } else {
+    return model;
+  }
+}
+function update2(model, msg) {
+  if (msg instanceof PullOrb) {
+    return handle_pull_orb(model);
+  } else if (msg instanceof NextLevel) {
+    return handle_next_level(model);
+  } else if (msg instanceof RestartGame) {
+    return init(void 0);
+  } else if (msg instanceof EnterMarketplace) {
+    return handle_enter_marketplace(model);
+  } else if (msg instanceof ExitMarketplace) {
+    return handle_exit_marketplace(model);
+  } else {
+    let orb = msg[0];
+    return purchase_orb(model, orb);
+  }
+}
 function main() {
   let _block;
   let _pipe = simple(init, update2, view);
@@ -5250,10 +5608,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      12,
+      10,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 249, end: 334, pattern_start: 260, pattern_end: 265 }
+      { value: $, start: 258, end: 348, pattern_start: 269, pattern_end: 274 }
     );
   }
   return void 0;
