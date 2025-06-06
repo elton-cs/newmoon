@@ -1,7 +1,7 @@
 import gleam/float
 import gleam/int
 import gleam/list
-import gleam/option.{None, Some}
+import gleam/option
 import gleam/string
 import lustre/attribute
 import lustre/element.{type Element}
@@ -9,7 +9,15 @@ import lustre/element/html
 import lustre/event
 import marketplace
 import orb
-import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, RunningSimulations, ViewingResults}
+import types.{
+  type Model, type Msg, AddTestOrb, ConfiguringTest, ContinueGame,
+  ExitTestingGrounds, GameOver, GoToMainMenu, GoToMarketplace,
+  GoToTestingGrounds, InMarketplace, InTestingGrounds, LevelComplete, MainMenu,
+  NextLevel, PauseGame, Paused, Playing, PullOrb, RemoveTestOrb, ResetTestConfig,
+  RestartLevel, ResumeGame, RunningSimulations, ShowHowToPlay, StartNewGame,
+  StartSimulations, ToggleDevMode, ToggleShuffle, ViewTestResults,
+  ViewingResults,
+}
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div(
@@ -30,8 +38,16 @@ fn view_game_card(model: Model) -> Element(Msg) {
       ),
     ],
     case model.status {
-      Playing -> [view_header(), view_game_stats(model), view_game_content(model)]
-      Paused -> [view_header(), view_game_stats(model), view_game_content(model)]
+      Playing -> [
+        view_header(),
+        view_game_stats(model),
+        view_game_content(model),
+      ]
+      Paused -> [
+        view_header(),
+        view_game_stats(model),
+        view_game_content(model),
+      ]
       _ -> [view_game_content(model)]
     },
   )
@@ -66,13 +82,17 @@ fn view_game_stats(model: Model) -> Element(Msg) {
         "text-gray-600",
       ),
       view_stat_card("◉", "SECTOR", int.to_string(model.level), "text-gray-500"),
-      view_stat_card("◈", "CREDITS", int.to_string(model.credits), "text-purple-600"),
+      view_stat_card(
+        "◈",
+        "CREDITS",
+        int.to_string(model.credits),
+        "text-purple-600",
+      ),
     ]),
     // Multiplier status (only shown when active)
     view_multiplier_status(model),
   ])
 }
-
 
 fn view_stat_card(
   symbol: String,
@@ -164,23 +184,11 @@ fn view_playing_state(model: Model) -> Element(Msg) {
       False -> html.div([], [])
     },
     view_pause_button(),
-    view_last_orb_result(model),
     view_bag_info(model),
     view_shuffle_toggle(model),
     view_pull_orb_button(model),
     view_dev_mode_toggle(model),
   ])
-}
-
-fn view_last_orb_result(model: Model) -> Element(Msg) {
-  case model.last_orb {
-    None -> html.div([attribute.class("h-8 mb-4")], [])
-    Some(orb) -> {
-      let message = orb.get_orb_result_message(orb, model)
-      let color = orb.get_orb_result_color(orb)
-      view_result_card(message, color, False)
-    }
-  }
 }
 
 fn view_bag_info(model: Model) -> Element(Msg) {
@@ -189,14 +197,135 @@ fn view_bag_info(model: Model) -> Element(Msg) {
   html.div(
     [attribute.class("mb-6 p-4 bg-gray-50 rounded border border-gray-100")],
     [
-      html.p(
-        [attribute.class("text-gray-500 mb-2 text-sm font-light tracking-wide")],
-        [html.text("SAMPLE CONTAINER")],
-      ),
-      html.p([attribute.class("text-2xl font-light text-black")], [
-        html.text(string.concat([int.to_string(orbs_left), " specimens"])),
+      html.div([attribute.class("grid grid-cols-2 gap-4")], [
+        view_recent_orb_panel(model),
+        view_specimens_panel(orbs_left),
       ]),
     ],
+  )
+}
+
+fn view_recent_orb_panel(model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.p(
+      [attribute.class("text-gray-500 mb-2 text-xs font-light tracking-wide")],
+      [html.text("RECENT ORB")],
+    ),
+    view_orb_box(model.last_orb),
+  ])
+}
+
+fn view_specimens_panel(orbs_left: Int) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.p(
+      [attribute.class("text-gray-500 mb-2 text-xs font-light tracking-wide")],
+      [html.text("SAMPLE CONTAINER")],
+    ),
+    html.p([attribute.class("text-2xl font-light text-black")], [
+      html.text(string.concat([int.to_string(orbs_left)])),
+    ]),
+  ])
+}
+
+fn view_orb_box(last_orb: option.Option(types.Orb)) -> Element(Msg) {
+  case last_orb {
+    option.None ->
+      html.div(
+        [
+          attribute.class(
+            "w-full h-16 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center",
+          ),
+        ],
+        [
+          html.p([attribute.class("text-xs text-gray-400 font-light")], [
+            html.text("No orb yet"),
+          ]),
+        ],
+      )
+    option.Some(orb) -> {
+      let orb_style = get_orb_box_style(orb)
+      html.div(
+        [
+          attribute.class(
+            "w-full h-16 rounded flex flex-col items-center justify-center border-2 "
+            <> orb_style.background
+            <> " "
+            <> orb_style.border,
+          ),
+        ],
+        [
+          html.div([attribute.class("text-lg " <> orb_style.icon)], [
+            html.text(orb_style.symbol),
+          ]),
+          html.p([attribute.class("text-xs font-light " <> orb_style.text)], [
+            html.text(orb.get_orb_name(orb)),
+          ]),
+        ],
+      )
+    }
+  }
+}
+
+fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
+  case orb {
+    types.Point(_) ->
+      OrbBoxStyle(
+        background: "bg-blue-50",
+        border: "border-blue-200",
+        icon: "text-blue-600",
+        text: "text-blue-700",
+        symbol: "●",
+      )
+    types.Health(_) ->
+      OrbBoxStyle(
+        background: "bg-green-50",
+        border: "border-green-200",
+        icon: "text-green-600",
+        text: "text-green-700",
+        symbol: "♥",
+      )
+    types.Bomb(_) ->
+      OrbBoxStyle(
+        background: "bg-red-50",
+        border: "border-red-200",
+        icon: "text-red-600",
+        text: "text-red-700",
+        symbol: "⚠",
+      )
+    types.Collector ->
+      OrbBoxStyle(
+        background: "bg-purple-50",
+        border: "border-purple-200",
+        icon: "text-purple-600",
+        text: "text-purple-700",
+        symbol: "◎",
+      )
+    types.Survivor ->
+      OrbBoxStyle(
+        background: "bg-yellow-50",
+        border: "border-yellow-200",
+        icon: "text-yellow-600",
+        text: "text-yellow-700",
+        symbol: "◈",
+      )
+    types.Multiplier ->
+      OrbBoxStyle(
+        background: "bg-indigo-50",
+        border: "border-indigo-200",
+        icon: "text-indigo-600",
+        text: "text-indigo-700",
+        symbol: "✱",
+      )
+  }
+}
+
+type OrbBoxStyle {
+  OrbBoxStyle(
+    background: String,
+    border: String,
+    icon: String,
+    text: String,
+    symbol: String,
   )
 }
 
@@ -250,7 +379,7 @@ fn view_pull_orb_button(model: Model) -> Element(Msg) {
 
 fn view_main_menu(model: Model) -> Element(Msg) {
   let has_progress = model.level > 1 || model.credits > 0
-  
+
   html.div([attribute.class("text-center")], [
     // Game branding
     html.div([attribute.class("mb-8")], [
@@ -267,7 +396,6 @@ fn view_main_menu(model: Model) -> Element(Msg) {
         [html.text("Extract samples • Manage risk • Survive the unknown")],
       ),
     ]),
-    
     // Menu options
     html.div([attribute.class("space-y-4")], [
       html.button(
@@ -311,13 +439,17 @@ fn view_main_menu(model: Model) -> Element(Msg) {
         [html.text("HOW TO PLAY")],
       ),
     ]),
-    
     // Progress indicator
     case has_progress {
       True ->
         html.div([attribute.class("mt-6 p-3 bg-gray-50 rounded border")], [
           html.p([attribute.class("text-xs text-gray-600")], [
-            html.text("Progress: Sector " <> int.to_string(model.level) <> " • Credits: " <> int.to_string(model.credits)),
+            html.text(
+              "Progress: Sector "
+              <> int.to_string(model.level)
+              <> " • Credits: "
+              <> int.to_string(model.credits),
+            ),
           ]),
         ])
       False -> html.div([], [])
@@ -328,7 +460,11 @@ fn view_main_menu(model: Model) -> Element(Msg) {
 fn view_paused_state(_model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-yellow-50 border border-yellow-200 rounded")],
+      [
+        attribute.class(
+          "mb-6 p-6 bg-yellow-50 border border-yellow-200 rounded",
+        ),
+      ],
       [
         html.h2(
           [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
@@ -385,10 +521,16 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
             html.text("Mission successful!"),
           ]),
           html.p([attribute.class("text-gray-600 text-sm mb-1")], [
-            html.text("Target achieved: " <> int.to_string(model.milestone) <> " data units"),
+            html.text(
+              "Target achieved: "
+              <> int.to_string(model.milestone)
+              <> " data units",
+            ),
           ]),
           html.p([attribute.class("text-gray-600 text-sm")], [
-            html.text("Final score: " <> int.to_string(model.points) <> " points"),
+            html.text(
+              "Final score: " <> int.to_string(model.points) <> " points",
+            ),
           ]),
         ]),
         html.p([attribute.class("text-green-600 text-lg font-medium mb-2")], [
@@ -457,7 +599,12 @@ fn view_game_over_state(model: Model) -> Element(Msg) {
             html.text("Sector: " <> int.to_string(model.level)),
           ]),
           html.p([attribute.class("mb-1")], [
-            html.text("Final score: " <> int.to_string(model.points) <> " / " <> int.to_string(model.milestone)),
+            html.text(
+              "Final score: "
+              <> int.to_string(model.points)
+              <> " / "
+              <> int.to_string(model.milestone),
+            ),
           ]),
           html.p([], [
             html.text("Credits retained: " <> int.to_string(model.credits)),
@@ -631,37 +778,54 @@ fn view_test_results(model: Model) -> Element(Msg) {
 }
 
 fn view_comprehensive_stats(stats: types.TestingStats) -> Element(Msg) {
-  let win_rate_percent = 
+  let win_rate_percent =
     float.round(stats.win_rate *. 100.0) |> int.to_string() <> "%"
-  let avg_points = 
-    float.round(stats.average_points) |> int.to_string()
+  let avg_points = float.round(stats.average_points) |> int.to_string()
 
   html.div([], [
     // Primary stats grid
     html.div([attribute.class("grid grid-cols-2 gap-4 mb-6")], [
-      view_stat_card("✓", "WIN RATE", win_rate_percent, case stats.win_rate >=. 0.7 {
-        True -> "text-green-600"
-        False -> case stats.win_rate >=. 0.4 {
-          True -> "text-yellow-600"
-          False -> "text-red-600"
-        }
-      }),
+      view_stat_card(
+        "✓",
+        "WIN RATE",
+        win_rate_percent,
+        case stats.win_rate >=. 0.7 {
+          True -> "text-green-600"
+          False ->
+            case stats.win_rate >=. 0.4 {
+              True -> "text-yellow-600"
+              False -> "text-red-600"
+            }
+        },
+      ),
       view_stat_card("◎", "AVG SCORE", avg_points, "text-blue-600"),
     ]),
-    
     // Secondary stats grid
     html.div([attribute.class("grid grid-cols-3 gap-3 mb-6")], [
       view_stat_card("◈", "WINS", int.to_string(stats.wins), "text-green-600"),
       view_stat_card("◇", "LOSSES", int.to_string(stats.losses), "text-red-600"),
-      view_stat_card("⚬", "TOTAL", int.to_string(stats.total_runs), "text-gray-600"),
+      view_stat_card(
+        "⚬",
+        "TOTAL",
+        int.to_string(stats.total_runs),
+        "text-gray-600",
+      ),
     ]),
-    
     // Score range
     html.div([attribute.class("grid grid-cols-2 gap-4 mb-6")], [
-      view_stat_card("↑", "BEST", int.to_string(stats.best_score), "text-purple-600"),
-      view_stat_card("↓", "WORST", int.to_string(stats.worst_score), "text-gray-500"),
+      view_stat_card(
+        "↑",
+        "BEST",
+        int.to_string(stats.best_score),
+        "text-purple-600",
+      ),
+      view_stat_card(
+        "↓",
+        "WORST",
+        int.to_string(stats.worst_score),
+        "text-gray-500",
+      ),
     ]),
-    
     // Performance insights
     view_performance_insights(stats),
   ])
@@ -669,15 +833,16 @@ fn view_comprehensive_stats(stats: types.TestingStats) -> Element(Msg) {
 
 fn view_performance_insights(stats: types.TestingStats) -> Element(Msg) {
   let insights = generate_insights(stats)
-  
+
   html.div([attribute.class("bg-gray-50 rounded border p-4")], [
     html.h4([attribute.class("text-sm font-medium text-gray-700 mb-2")], [
       html.text("STRATEGY INSIGHTS"),
     ]),
-    html.div([attribute.class("space-y-2")], 
+    html.div(
+      [attribute.class("space-y-2")],
       list.map(insights, fn(insight) {
         html.p([attribute.class("text-xs text-gray-600")], [html.text(insight)])
-      })
+      }),
     ),
   ])
 }
@@ -689,18 +854,21 @@ fn generate_insights(stats: types.TestingStats) -> List(String) {
     rate if rate >=. 0.4 -> "Moderate success. Consider more health orbs."
     _ -> "Low win rate. Strategy needs significant improvement."
   }
-  
-  let score_insight = case stats.average_points >=. int.to_float(float.round(int.to_float(stats.best_score) *. 0.7)) {
+
+  let score_insight = case
+    stats.average_points
+    >=. int.to_float(float.round(int.to_float(stats.best_score) *. 0.7))
+  {
     True -> "Consistent scoring with good point generation."
     False -> "High variance in scores. Strategy may be risky."
   }
-  
+
   let sample_insight = case stats.total_runs {
     runs if runs >= 100 -> "Large sample size provides reliable results."
     runs if runs >= 50 -> "Good sample size for meaningful insights."
     _ -> "Small sample size. Consider running more simulations."
   }
-  
+
   [win_rate_insight, score_insight, sample_insight]
 }
 
@@ -711,7 +879,9 @@ fn view_test_bag_builder(config: types.TestingConfiguration) -> Element(Msg) {
     ]),
     html.div([attribute.class("mb-4 p-4 bg-gray-50 rounded border")], [
       html.p([attribute.class("text-sm text-gray-600 mb-2")], [
-        html.text("Orbs in bag: " <> int.to_string(list.length(config.test_bag))),
+        html.text(
+          "Orbs in bag: " <> int.to_string(list.length(config.test_bag)),
+        ),
       ]),
       view_test_bag_contents(config.test_bag),
     ]),
@@ -726,38 +896,53 @@ fn view_test_bag_contents(bag: List(types.Orb)) -> Element(Msg) {
         html.text("No orbs added yet"),
       ])
     False ->
-      html.div([attribute.class("flex flex-wrap gap-2")], 
+      html.div(
+        [attribute.class("flex flex-wrap gap-2")],
         list.index_map(bag, fn(orb, index) {
-          html.div([attribute.class("flex items-center bg-white rounded border px-2 py-1")], [
-            html.span([attribute.class("text-xs mr-2")], [
-              html.text(orb.get_orb_name(orb)),
-            ]),
-            html.button(
-              [
-                attribute.class("text-red-500 hover:text-red-700 text-xs"),
-                event.on_click(RemoveTestOrb(index)),
-              ],
-              [html.text("×")],
-            ),
-          ])
-        })
+          html.div(
+            [
+              attribute.class(
+                "flex items-center bg-white rounded border px-2 py-1",
+              ),
+            ],
+            [
+              html.span([attribute.class("text-xs mr-2")], [
+                html.text(orb.get_orb_name(orb)),
+              ]),
+              html.button(
+                [
+                  attribute.class("text-red-500 hover:text-red-700 text-xs"),
+                  event.on_click(RemoveTestOrb(index)),
+                ],
+                [html.text("×")],
+              ),
+            ],
+          )
+        }),
       )
   }
 }
 
 fn view_orb_selector() -> Element(Msg) {
   let available_orbs = [
-    types.Point(8), types.Point(12), types.Point(15),
-    types.Health(2), types.Health(4),
-    types.Bomb(2), types.Bomb(3),
-    types.Collector, types.Survivor, types.Multiplier,
+    types.Point(8),
+    types.Point(12),
+    types.Point(15),
+    types.Health(2),
+    types.Health(4),
+    types.Bomb(2),
+    types.Bomb(3),
+    types.Collector,
+    types.Survivor,
+    types.Multiplier,
   ]
 
   html.div([], [
     html.p([attribute.class("text-sm font-light mb-2")], [
       html.text("Add orbs to your test bag:"),
     ]),
-    html.div([attribute.class("grid grid-cols-2 gap-2")], 
+    html.div(
+      [attribute.class("grid grid-cols-2 gap-2")],
       list.map(available_orbs, fn(orb) {
         html.button(
           [
@@ -768,7 +953,7 @@ fn view_orb_selector() -> Element(Msg) {
           ],
           [html.text(orb.get_orb_name(orb))],
         )
-      })
+      }),
     ),
   ])
 }
@@ -825,10 +1010,12 @@ fn view_test_actions(config: types.TestingConfiguration) -> Element(Msg) {
         ),
         event.on_click(StartSimulations),
       ],
-      [html.text(case can_run {
-        True -> "RUN SIMULATIONS"
-        False -> "ADD ORBS TO BEGIN"
-      })],
+      [
+        html.text(case can_run {
+          True -> "RUN SIMULATIONS"
+          False -> "ADD ORBS TO BEGIN"
+        }),
+      ],
     ),
     html.button(
       [
@@ -843,27 +1030,30 @@ fn view_test_actions(config: types.TestingConfiguration) -> Element(Msg) {
 }
 
 fn view_dev_mode_panel(model: Model) -> Element(Msg) {
-  html.div([attribute.class("mb-4 p-3 bg-red-50 border border-red-300 rounded")], [
-    html.div([attribute.class("flex items-center justify-between mb-2")], [
-      html.h3([attribute.class("text-sm font-medium text-red-800")], [
-        html.text("🔧 DEV MODE ACTIVE"),
+  html.div(
+    [attribute.class("mb-4 p-3 bg-red-50 border border-red-300 rounded")],
+    [
+      html.div([attribute.class("flex items-center justify-between mb-2")], [
+        html.h3([attribute.class("text-sm font-medium text-red-800")], [
+          html.text("🔧 DEV MODE ACTIVE"),
+        ]),
+        html.button(
+          [
+            attribute.class("text-xs text-red-600 hover:text-red-800 underline"),
+            event.on_click(ToggleDevMode),
+          ],
+          [html.text("Turn Off")],
+        ),
       ]),
-      html.button(
-        [
-          attribute.class("text-xs text-red-600 hover:text-red-800 underline"),
-          event.on_click(ToggleDevMode),
-        ],
-        [html.text("Turn Off")],
-      ),
-    ]),
-    view_next_orb_preview(model),
-    view_bag_order_display(model),
-  ])
+      view_next_orb_preview(model),
+      view_bag_order_display(model),
+    ],
+  )
 }
 
 fn view_next_orb_preview(model: Model) -> Element(Msg) {
   case model.bag {
-    [] -> 
+    [] ->
       html.p([attribute.class("text-xs text-red-700 mb-1")], [
         html.text("Next: No orbs remaining"),
       ])
@@ -896,7 +1086,8 @@ fn view_bag_order_display(model: Model) -> Element(Msg) {
 
 fn view_dev_mode_toggle(model: Model) -> Element(Msg) {
   case model.dev_mode {
-    True -> html.div([], []) // Toggle is shown in dev panel when active
+    True -> html.div([], [])
+    // Toggle is shown in dev panel when active
     False ->
       html.div([attribute.class("mt-4")], [
         html.button(
@@ -911,4 +1102,3 @@ fn view_dev_mode_toggle(model: Model) -> Element(Msg) {
       ])
   }
 }
-

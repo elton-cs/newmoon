@@ -5145,69 +5145,6 @@ function on_click(msg) {
 }
 
 // build/dev/javascript/newmoon/orb.mjs
-function get_orb_result_message(orb, model) {
-  if (orb instanceof Bomb) {
-    let damage = orb[0];
-    return "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
-      damage
-    ) + " SYS";
-  } else if (orb instanceof Point) {
-    let value = orb[0];
-    let multiplied_value = value * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
-    if ($) {
-      return "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
-        model.current_multiplier
-      ) + "] +" + to_string(multiplied_value);
-    } else {
-      return "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
-    }
-  } else if (orb instanceof Health) {
-    let value = orb[0];
-    return "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
-      value
-    ) + " SYS";
-  } else if (orb instanceof Collector) {
-    let base_points = length2(model.bag);
-    let multiplied_points = base_points * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
-    if ($) {
-      return "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
-        model.current_multiplier
-      ) + "] +" + to_string(multiplied_points);
-    } else {
-      return "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
-    }
-  } else if (orb instanceof Survivor) {
-    let base_points = model.bombs_pulled_this_level;
-    let multiplied_points = base_points * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
-    if ($) {
-      return "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
-        model.current_multiplier
-      ) + "] +" + to_string(multiplied_points);
-    } else {
-      return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
-    }
-  } else {
-    return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
-  }
-}
-function get_orb_result_color(orb) {
-  if (orb instanceof Bomb) {
-    return "default";
-  } else if (orb instanceof Point) {
-    return "gray";
-  } else if (orb instanceof Health) {
-    return "green";
-  } else if (orb instanceof Collector) {
-    return "blue";
-  } else if (orb instanceof Survivor) {
-    return "purple";
-  } else {
-    return "yellow";
-  }
-}
 function apply_orb_effect(orb, model) {
   if (orb instanceof Bomb) {
     let damage = orb[0];
@@ -5723,6 +5660,16 @@ function run_simulations(config) {
 }
 
 // build/dev/javascript/newmoon/view.mjs
+var OrbBoxStyle = class extends CustomType {
+  constructor(background, border, icon, text4, symbol) {
+    super();
+    this.background = background;
+    this.border = border;
+    this.icon = icon;
+    this.text = text4;
+    this.symbol = symbol;
+  }
+};
 function view_header() {
   return div(
     toList([]),
@@ -5882,16 +5829,128 @@ function view_game_stats(model) {
     ])
   );
 }
-function view_last_orb_result(model) {
-  let $ = model.last_orb;
-  if ($ instanceof Some) {
-    let orb = $[0];
-    let message = get_orb_result_message(orb, model);
-    let color = get_orb_result_color(orb);
-    return view_result_card(message, color, false);
+function view_specimens_panel(orbs_left) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      p(
+        toList([
+          class$(
+            "text-gray-500 mb-2 text-xs font-light tracking-wide"
+          )
+        ]),
+        toList([text3("SAMPLE CONTAINER")])
+      ),
+      p(
+        toList([class$("text-2xl font-light text-black")]),
+        toList([text3(concat2(toList([to_string(orbs_left)])))])
+      )
+    ])
+  );
+}
+function get_orb_box_style(orb) {
+  if (orb instanceof Bomb) {
+    return new OrbBoxStyle(
+      "bg-red-50",
+      "border-red-200",
+      "text-red-600",
+      "text-red-700",
+      "\u26A0"
+    );
+  } else if (orb instanceof Point) {
+    return new OrbBoxStyle(
+      "bg-blue-50",
+      "border-blue-200",
+      "text-blue-600",
+      "text-blue-700",
+      "\u25CF"
+    );
+  } else if (orb instanceof Health) {
+    return new OrbBoxStyle(
+      "bg-green-50",
+      "border-green-200",
+      "text-green-600",
+      "text-green-700",
+      "\u2665"
+    );
+  } else if (orb instanceof Collector) {
+    return new OrbBoxStyle(
+      "bg-purple-50",
+      "border-purple-200",
+      "text-purple-600",
+      "text-purple-700",
+      "\u25CE"
+    );
+  } else if (orb instanceof Survivor) {
+    return new OrbBoxStyle(
+      "bg-yellow-50",
+      "border-yellow-200",
+      "text-yellow-600",
+      "text-yellow-700",
+      "\u25C8"
+    );
   } else {
-    return div(toList([class$("h-8 mb-4")]), toList([]));
+    return new OrbBoxStyle(
+      "bg-indigo-50",
+      "border-indigo-200",
+      "text-indigo-600",
+      "text-indigo-700",
+      "\u2731"
+    );
   }
+}
+function view_orb_box(last_orb) {
+  if (last_orb instanceof Some) {
+    let orb = last_orb[0];
+    let orb_style = get_orb_box_style(orb);
+    return div(
+      toList([
+        class$(
+          "w-full h-16 rounded flex flex-col items-center justify-center border-2 " + orb_style.background + " " + orb_style.border
+        )
+      ]),
+      toList([
+        div(
+          toList([class$("text-lg " + orb_style.icon)]),
+          toList([text3(orb_style.symbol)])
+        ),
+        p(
+          toList([class$("text-xs font-light " + orb_style.text)]),
+          toList([text3(get_orb_name(orb))])
+        )
+      ])
+    );
+  } else {
+    return div(
+      toList([
+        class$(
+          "w-full h-16 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center"
+        )
+      ]),
+      toList([
+        p(
+          toList([class$("text-xs text-gray-400 font-light")]),
+          toList([text3("No orb yet")])
+        )
+      ])
+    );
+  }
+}
+function view_recent_orb_panel(model) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      p(
+        toList([
+          class$(
+            "text-gray-500 mb-2 text-xs font-light tracking-wide"
+          )
+        ]),
+        toList([text3("RECENT ORB")])
+      ),
+      view_orb_box(model.last_orb)
+    ])
+  );
 }
 function view_bag_info(model) {
   let orbs_left = length2(model.bag);
@@ -5900,21 +5959,9 @@ function view_bag_info(model) {
       class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
     ]),
     toList([
-      p(
-        toList([
-          class$(
-            "text-gray-500 mb-2 text-sm font-light tracking-wide"
-          )
-        ]),
-        toList([text3("SAMPLE CONTAINER")])
-      ),
-      p(
-        toList([class$("text-2xl font-light text-black")]),
-        toList([
-          text3(
-            concat2(toList([to_string(orbs_left), " specimens"]))
-          )
-        ])
+      div(
+        toList([class$("grid grid-cols-2 gap-4")]),
+        toList([view_recent_orb_panel(model), view_specimens_panel(orbs_left)])
       )
     ])
   );
@@ -6980,7 +7027,6 @@ function view_playing_state(model) {
         }
       })(),
       view_pause_button(),
-      view_last_orb_result(model),
       view_bag_info(model),
       view_shuffle_toggle(model),
       view_pull_orb_button(model),
