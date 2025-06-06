@@ -603,6 +603,19 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       // Gamble within gamble - treat as no-op to avoid recursion
       model
     }
+    types.PointScanner -> {
+      // During gamble, count Point orbs in bag AFTER gamble orbs were removed
+      let point_orbs_count =
+        model.bag
+        |> list.count(fn(orb) {
+          case orb {
+            types.Point(_) -> True
+            _ -> False
+          }
+        })
+      let scanner_points = point_orbs_count * model.current_multiplier
+      types.Model(..model, points: model.points + scanner_points)
+    }
   }
 }
 

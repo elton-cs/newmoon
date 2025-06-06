@@ -861,5 +861,138 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       }
     }
     types.Gamble -> model
+    types.PointScanner -> {
+      let point_orbs_count =
+        model.bag
+        |> list.count(fn(orb) {
+          case orb {
+            types.Point(_) -> True
+            _ -> False
+          }
+        })
+      let scanner_points = point_orbs_count * model.current_multiplier
+      types.Model(..model, points: model.points + scanner_points)
+    }
   }
+}
+
+// ============================================================================
+// POINT SCANNER ORB TESTS
+// ============================================================================
+
+pub fn point_scanner_orb_empty_bag_test() {
+  let model = Model(..create_test_model(), bag: [])
+  let point_scanner_orb = types.PointScanner
+  let result = orb.apply_orb_effect(point_scanner_orb, model)
+
+  should.equal(result.points, 0)
+  // No point orbs in bag = 0 points
+  should.equal(result.health, 5)
+  // Health unchanged
+}
+
+pub fn point_scanner_orb_single_point_orb_test() {
+  let model = Model(..create_test_model(), bag: [Point(8)])
+  let point_scanner_orb = types.PointScanner
+  let result = orb.apply_orb_effect(point_scanner_orb, model)
+
+  should.equal(result.points, 1)
+  // 1 point orb in bag = 1 point awarded
+}
+
+pub fn point_scanner_orb_multiple_point_orbs_test() {
+  let model =
+    Model(..create_test_model(), bag: [Point(5), Point(12), Point(15)])
+  let point_scanner_orb = types.PointScanner
+  let result = orb.apply_orb_effect(point_scanner_orb, model)
+
+  should.equal(result.points, 3)
+  // 3 point orbs in bag = 3 points awarded (regardless of their values)
+}
+
+pub fn point_scanner_orb_mixed_bag_test() {
+  let model =
+    Model(..create_test_model(), bag: [
+      Point(8),
+      Bomb(2),
+      Point(12),
+      Health(3),
+      Point(5),
+    ])
+  let point_scanner_orb = types.PointScanner
+  let result = orb.apply_orb_effect(point_scanner_orb, model)
+
+  should.equal(result.points, 3)
+  // Only 3 point orbs counted, ignoring Bomb and Health
+}
+
+pub fn point_scanner_orb_no_point_orbs_test() {
+  let model =
+    Model(..create_test_model(), bag: [
+      Bomb(2),
+      Health(3),
+      Collector,
+      Multiplier,
+    ])
+  let point_scanner_orb = types.PointScanner
+  let result = orb.apply_orb_effect(point_scanner_orb, model)
+
+  should.equal(result.points, 0)
+  // No point orbs in bag = 0 points
+}
+
+pub fn point_scanner_orb_with_multiplier_test() {
+  let model =
+    Model(
+      ..create_test_model(),
+      bag: [Point(8), Point(12)],
+      current_multiplier: 3,
+    )
+  let point_scanner_orb = types.PointScanner
+  let result = orb.apply_orb_effect(point_scanner_orb, model)
+
+  should.equal(result.points, 6)
+  // 2 point orbs * 3 multiplier = 6 points
+  should.equal(result.current_multiplier, 3)
+  // Multiplier unchanged
+}
+
+pub fn point_scanner_orb_message_test() {
+  let model = Model(..create_test_model(), bag: [Point(5), Point(8)])
+  let point_scanner_orb = types.PointScanner
+  let message = orb.get_orb_result_message(point_scanner_orb, model)
+
+  should.equal(message, "◉ DATA SCANNER [2 SAMPLES] +2")
+}
+
+pub fn point_scanner_orb_message_with_multiplier_test() {
+  let model =
+    Model(..create_test_model(), bag: [Point(5)], current_multiplier: 4)
+  let point_scanner_orb = types.PointScanner
+  let message = orb.get_orb_result_message(point_scanner_orb, model)
+
+  should.equal(message, "◉ DATA SCANNER [1×4] +4")
+}
+
+pub fn point_scanner_orb_color_test() {
+  should.equal(orb.get_orb_result_color(types.PointScanner), "blue")
+}
+
+pub fn point_scanner_orb_name_test() {
+  should.equal(orb.get_orb_name(types.PointScanner), "Data Scanner Sample")
+}
+
+pub fn point_scanner_integration_test() {
+  // Real game scenario: PointScanner vs Collector comparison
+  let game_bag = [Point(8), Point(12), Bomb(2), Health(3), Point(5), Multiplier]
+  let model = Model(..create_test_model(), bag: game_bag, current_multiplier: 2)
+
+  // Test PointScanner - should count 3 Point orbs * 2 multiplier = 6 points
+  let scanner_result = orb.apply_orb_effect(types.PointScanner, model)
+  should.equal(scanner_result.points, 6)
+
+  // Test Collector for comparison - should count 5 remaining orbs (6-1) * 2 multiplier = 10 points  
+  let collector_result = orb.apply_orb_effect(types.Collector, model)
+  should.equal(collector_result.points, 10)
+  // PointScanner is more predictable but usually lower value than Collector
 }

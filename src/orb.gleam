@@ -3,7 +3,7 @@ import gleam/list
 import gleam/option
 import types.{
   type Model, type Orb, Bomb, Choice, ChoosingOrb, Collector, Gamble,
-  GamblingChoice, Health, Multiplier, Point, Survivor,
+  GamblingChoice, Health, Multiplier, Point, PointScanner, Survivor,
 }
 
 pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
@@ -67,6 +67,31 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
       <> "× AMPLIFICATION ACTIVE]"
     Choice -> "◆ CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]"
     Gamble -> "🎲 GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]"
+    PointScanner -> {
+      let point_orbs_count =
+        model.bag
+        |> list.count(fn(orb) {
+          case orb {
+            Point(_) -> True
+            _ -> False
+          }
+        })
+      let multiplied_points = point_orbs_count * model.current_multiplier
+      case model.current_multiplier > 1 {
+        True ->
+          "◉ DATA SCANNER ["
+          <> int.to_string(point_orbs_count)
+          <> "×"
+          <> int.to_string(model.current_multiplier)
+          <> "] +"
+          <> int.to_string(multiplied_points)
+        False ->
+          "◉ DATA SCANNER ["
+          <> int.to_string(point_orbs_count)
+          <> " SAMPLES] +"
+          <> int.to_string(point_orbs_count)
+      }
+    }
   }
 }
 
@@ -80,6 +105,7 @@ pub fn get_orb_result_color(orb: Orb) -> String {
     Multiplier -> "yellow"
     Choice -> "orange"
     Gamble -> "red"
+    PointScanner -> "blue"
   }
 }
 
@@ -115,6 +141,18 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
     }
     Choice -> handle_choice_orb(model)
     Gamble -> handle_gamble_orb(model)
+    PointScanner -> {
+      let point_orbs_count =
+        model.bag
+        |> list.count(fn(orb) {
+          case orb {
+            Point(_) -> True
+            _ -> False
+          }
+        })
+      let scanner_points = point_orbs_count * model.current_multiplier
+      types.Model(..model, points: model.points + scanner_points)
+    }
   }
 }
 
@@ -247,5 +285,6 @@ pub fn get_orb_name(orb: Orb) -> String {
     Multiplier -> "Amplifier Sample"
     Choice -> "Choice Sample"
     Gamble -> "Gamble Sample"
+    PointScanner -> "Data Scanner Sample"
   }
 }

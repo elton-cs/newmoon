@@ -9,6 +9,7 @@ pub type Orb {
   Multiplier
   Choice
   Gamble
+  PointScanner
 }
 
 pub type GameStatus {

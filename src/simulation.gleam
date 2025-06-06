@@ -134,6 +134,12 @@ fn apply_orb_simulation(
       // we can't make choices, so it's essentially a no-op
       #(health, points, multiplier, bombs_hit)
     }
+    types.PointScanner -> {
+      // For simulation purposes, estimate ~3 point orbs remaining in bag
+      // In real gameplay this would count actual Point orbs in the bag
+      let scanner_points = 3 * multiplier
+      #(health, points + scanner_points, multiplier, bombs_hit)
+    }
   }
 }
 
