@@ -49,6 +49,7 @@ fn init(_) -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
+    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -166,6 +167,7 @@ fn handle_next_level(model: Model) -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
+    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -299,6 +301,7 @@ fn start_new_game() -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
+    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -331,6 +334,7 @@ fn restart_current_level(model: Model) -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
+    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -616,6 +620,29 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       let scanner_points = point_orbs_count * model.current_multiplier
       types.Model(..model, points: model.points + scanner_points)
     }
+    types.PointRecovery -> {
+      // During gamble, PointRecovery functions normally
+      case model.point_orbs_pulled_this_level {
+        [] -> model  // No point orbs to recover
+        pulled_points -> {
+          let min_value = pulled_points |> list.sort(int.compare) |> list.first
+          case min_value {
+            Ok(value) -> {
+              // Add Point(value) back to bag
+              let updated_bag = model.bag |> list.append([types.Point(value)])
+              // Remove first occurrence of min_value from tracking list
+              let updated_tracking = remove_first_occurrence(pulled_points, value)
+              types.Model(
+                ..model, 
+                bag: updated_bag, 
+                point_orbs_pulled_this_level: updated_tracking
+              )
+            }
+            Error(_) -> model
+          }
+        }
+      }
+    }
   }
 }
 
@@ -629,5 +656,18 @@ fn check_game_status(model: Model) -> Model {
         credits: model.credits + model.points,
       )
     False, False -> model
+  }
+}
+
+// Helper function to remove first occurrence of a value from a list
+fn remove_first_occurrence(list: List(Int), target: Int) -> List(Int) {
+  case list {
+    [] -> []
+    [first, ..rest] -> {
+      case first == target {
+        True -> rest  // Found target, return rest without it
+        False -> [first, ..remove_first_occurrence(rest, target)]
+      }
+    }
   }
 }

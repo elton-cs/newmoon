@@ -345,6 +345,14 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
         text: "text-cyan-700",
         symbol: "◉",
       )
+    types.PointRecovery ->
+      OrbBoxStyle(
+        background: "bg-white",
+        border: "border-green-200",
+        icon: "text-green-600",
+        text: "text-green-700",
+        symbol: "↺",
+      )
   }
 }
 
@@ -729,6 +737,7 @@ fn get_short_orb_name(orb: types.Orb) -> String {
     types.Choice -> "Choice"
     types.Gamble -> "Gamble"
     types.PointScanner -> "Data\nScanner"
+    types.PointRecovery -> "Data\nRecovery"
   }
 }
 
@@ -1430,6 +1439,7 @@ fn view_orb_selector() -> Element(Msg) {
     types.Bomb(3),
     types.Collector,
     types.PointScanner,
+    types.PointRecovery,
     types.Survivor,
     types.Multiplier,
     types.Choice,

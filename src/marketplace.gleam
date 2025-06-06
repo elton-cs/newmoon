@@ -9,7 +9,7 @@ import orb
 import types.{
   type MarketItem, type Model, type Msg, type Orb, BuyOrb, Choice, Collector,
   Gamble, GoToMainMenu, Health, MarketItem, Multiplier, NextLevel, Point,
-  PointScanner, Survivor,
+  PointRecovery, PointScanner, Survivor,
 }
 
 pub fn get_market_items() -> List(MarketItem) {
@@ -25,6 +25,7 @@ pub fn get_market_items() -> List(MarketItem) {
     // Strategic orbs - high value, high cost
     MarketItem(Collector, 30, "Deep scanner - points for remaining samples"),
     MarketItem(PointScanner, 25, "Data scanner - points for each data sample"),
+    MarketItem(PointRecovery, 35, "Data recovery - restore lowest pulled data sample"),
     MarketItem(Survivor, 35, "Damage analyzer - points for bombs survived"),
     MarketItem(Multiplier, 45, "Signal amplifier - doubles point multiplier"),
     MarketItem(Choice, 50, "Choice protocol - select optimal sample from two"),

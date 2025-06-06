@@ -4867,6 +4867,8 @@ var Gamble = class extends CustomType {
 };
 var PointScanner = class extends CustomType {
 };
+var PointRecovery = class extends CustomType {
+};
 var MainMenu = class extends CustomType {
 };
 var Playing = class extends CustomType {
@@ -4890,7 +4892,7 @@ var ViewingGambleResults = class extends CustomType {
 var ApplyingGambleOrbs = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index, in_gamble_choice) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index, in_gamble_choice, point_orbs_pulled_this_level) {
     super();
     this.health = health;
     this.points = points;
@@ -4914,6 +4916,7 @@ var Model = class extends CustomType {
     this.gamble_orbs = gamble_orbs;
     this.gamble_current_index = gamble_current_index;
     this.in_gamble_choice = in_gamble_choice;
+    this.point_orbs_pulled_this_level = point_orbs_pulled_this_level;
   }
 };
 var StartNewGame = class extends CustomType {
@@ -5259,7 +5262,7 @@ function get_orb_result_message(orb, model) {
     return "\u25C6 CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]";
   } else if (orb instanceof Gamble) {
     return "\u{1F3B2} GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]";
-  } else {
+  } else if (orb instanceof PointScanner) {
     let _block;
     let _pipe = model.bag;
     _block = count(
@@ -5284,6 +5287,24 @@ function get_orb_result_message(orb, model) {
         point_orbs_count
       );
     }
+  } else {
+    let $ = model.point_orbs_pulled_this_level;
+    if ($ instanceof Empty) {
+      return "\u21BA DATA RECOVERY [NO DATA SAMPLES TO RECOVER]";
+    } else {
+      let pulled_points = $;
+      let _block;
+      let _pipe = pulled_points;
+      let _pipe$1 = sort(_pipe, compare2);
+      _block = first(_pipe$1);
+      let min_value = _block;
+      if (min_value instanceof Ok) {
+        let value = min_value[0];
+        return "\u21BA DATA RECOVERY [POINT(" + to_string(value) + ") RESTORED TO CONTAINER]";
+      } else {
+        return "\u21BA DATA RECOVERY [NO DATA SAMPLES TO RECOVER]";
+      }
+    }
   }
 }
 function get_orb_result_color(orb) {
@@ -5303,8 +5324,10 @@ function get_orb_result_color(orb) {
     return "orange";
   } else if (orb instanceof Gamble) {
     return "red";
-  } else {
+  } else if (orb instanceof PointScanner) {
     return "blue";
+  } else {
+    return "green";
   }
 }
 function handle_gamble_orb(model) {
@@ -5331,7 +5354,8 @@ function handle_gamble_orb(model) {
     new Some(true),
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice
+    _record.in_gamble_choice,
+    _record.point_orbs_pulled_this_level
   );
 }
 function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_choice_orbs, loop$first_orb, loop$original_choice_orbs) {
@@ -5368,7 +5392,8 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
     } else {
       let $ = remaining_bag.head;
@@ -5412,7 +5437,8 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
           _record.pending_gamble,
           _record.gamble_orbs,
           _record.gamble_current_index,
-          _record.in_gamble_choice
+          _record.in_gamble_choice,
+          _record.point_orbs_pulled_this_level
         );
       }
     }
@@ -5447,7 +5473,8 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
     } else {
       let $ = remaining_bag.head;
@@ -5486,7 +5513,8 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
             _record.pending_gamble,
             _record.gamble_orbs,
             _record.gamble_current_index,
-            _record.in_gamble_choice
+            _record.in_gamble_choice,
+            _record.point_orbs_pulled_this_level
           );
         } else {
           let $2 = $1.head;
@@ -5530,7 +5558,8 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
               _record.pending_gamble,
               _record.gamble_orbs,
               _record.gamble_current_index,
-              _record.in_gamble_choice
+              _record.in_gamble_choice,
+              _record.point_orbs_pulled_this_level
             );
           }
         }
@@ -5569,10 +5598,51 @@ function handle_choice_orb(model) {
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
     } else {
       return draw_two_non_choice_orbs(model, model.bag, toList([]));
+    }
+  }
+}
+function get_orb_name(orb) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    return "Hazard Sample (-" + to_string(damage) + " health)";
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    return "Data Sample (+" + to_string(value) + ")";
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    return "Medical Sample (+" + to_string(value) + " health)";
+  } else if (orb instanceof Collector) {
+    return "Scanner Sample";
+  } else if (orb instanceof Survivor) {
+    return "Analyzer Sample";
+  } else if (orb instanceof Multiplier) {
+    return "Amplifier Sample";
+  } else if (orb instanceof Choice) {
+    return "Choice Sample";
+  } else if (orb instanceof Gamble) {
+    return "Gamble Sample";
+  } else if (orb instanceof PointScanner) {
+    return "Data Scanner Sample";
+  } else {
+    return "Data Recovery Sample";
+  }
+}
+function remove_first_occurrence(list4, target) {
+  if (list4 instanceof Empty) {
+    return toList([]);
+  } else {
+    let first2 = list4.head;
+    let rest = list4.tail;
+    let $ = first2 === target;
+    if ($) {
+      return rest;
+    } else {
+      return prepend(first2, remove_first_occurrence(rest, target));
     }
   }
 }
@@ -5602,7 +5672,8 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
@@ -5630,7 +5701,8 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      prepend(value, model.point_orbs_pulled_this_level)
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
@@ -5658,7 +5730,8 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (orb instanceof Collector) {
     let remaining_orbs = (() => {
@@ -5689,7 +5762,8 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (orb instanceof Survivor) {
     let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
@@ -5716,7 +5790,8 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (orb instanceof Multiplier) {
     let new_multiplier = model.current_multiplier * 2;
@@ -5743,13 +5818,14 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (orb instanceof Choice) {
     return handle_choice_orb(model);
   } else if (orb instanceof Gamble) {
     return handle_gamble_orb(model);
-  } else {
+  } else if (orb instanceof PointScanner) {
     let _block;
     let _pipe = model.bag;
     _block = count(
@@ -5787,32 +5863,57 @@ function apply_orb_effect(orb, model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
-  }
-}
-function get_orb_name(orb) {
-  if (orb instanceof Bomb) {
-    let damage = orb[0];
-    return "Hazard Sample (-" + to_string(damage) + " health)";
-  } else if (orb instanceof Point) {
-    let value = orb[0];
-    return "Data Sample (+" + to_string(value) + ")";
-  } else if (orb instanceof Health) {
-    let value = orb[0];
-    return "Medical Sample (+" + to_string(value) + " health)";
-  } else if (orb instanceof Collector) {
-    return "Scanner Sample";
-  } else if (orb instanceof Survivor) {
-    return "Analyzer Sample";
-  } else if (orb instanceof Multiplier) {
-    return "Amplifier Sample";
-  } else if (orb instanceof Choice) {
-    return "Choice Sample";
-  } else if (orb instanceof Gamble) {
-    return "Gamble Sample";
   } else {
-    return "Data Scanner Sample";
+    let $ = model.point_orbs_pulled_this_level;
+    if ($ instanceof Empty) {
+      return model;
+    } else {
+      let pulled_points = $;
+      let _block;
+      let _pipe = pulled_points;
+      let _pipe$1 = sort(_pipe, compare2);
+      _block = first(_pipe$1);
+      let min_value = _block;
+      if (min_value instanceof Ok) {
+        let value = min_value[0];
+        let _block$1;
+        let _pipe$2 = model.bag;
+        _block$1 = append(_pipe$2, toList([new Point(value)]));
+        let updated_bag = _block$1;
+        let updated_tracking = remove_first_occurrence(pulled_points, value);
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          updated_bag,
+          _record.status,
+          _record.last_orb,
+          _record.bombs_pulled_this_level,
+          _record.current_multiplier,
+          _record.credits,
+          _record.shuffle_enabled,
+          _record.dev_mode,
+          _record.testing_config,
+          _record.testing_mode,
+          _record.testing_stats,
+          _record.log_entries,
+          _record.log_sequence,
+          _record.pending_choice,
+          _record.pending_gamble,
+          _record.gamble_orbs,
+          _record.gamble_current_index,
+          _record.in_gamble_choice,
+          updated_tracking
+        );
+      } else {
+        return model;
+      }
+    }
   }
 }
 
@@ -5834,6 +5935,11 @@ function get_market_items() {
       new PointScanner(),
       25,
       "Data scanner - points for each data sample"
+    ),
+    new MarketItem(
+      new PointRecovery(),
+      35,
+      "Data recovery - restore lowest pulled data sample"
     ),
     new MarketItem(
       new Survivor(),
@@ -5897,7 +6003,8 @@ function purchase_orb(model, orb) {
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
     } else {
       return model;
@@ -6072,9 +6179,11 @@ function apply_orb_simulation(orb, health, points, multiplier, bombs_hit) {
     return [health, points, multiplier, bombs_hit];
   } else if (orb instanceof Gamble) {
     return [health, points, multiplier, bombs_hit];
-  } else {
+  } else if (orb instanceof PointScanner) {
     let scanner_points = 3 * multiplier;
     return [health, points + scanner_points, multiplier, bombs_hit];
+  } else {
+    return [health, points, multiplier, bombs_hit];
   }
 }
 function simulate_game(loop$bag, loop$health, loop$points, loop$target, loop$orbs_pulled, loop$bombs_hit, loop$multiplier) {
@@ -6493,13 +6602,21 @@ function get_orb_box_style(orb) {
       "text-red-700",
       "\u{1F3B2}"
     );
-  } else {
+  } else if (orb instanceof PointScanner) {
     return new OrbBoxStyle(
       "bg-white",
       "border-cyan-200",
       "text-cyan-600",
       "text-cyan-700",
       "\u25C9"
+    );
+  } else {
+    return new OrbBoxStyle(
+      "bg-white",
+      "border-green-200",
+      "text-green-600",
+      "text-green-700",
+      "\u21BA"
     );
   }
 }
@@ -6720,8 +6837,10 @@ function get_short_orb_name(orb) {
     return "Choice";
   } else if (orb instanceof Gamble) {
     return "Gamble";
-  } else {
+  } else if (orb instanceof PointScanner) {
     return "Data\nScanner";
+  } else {
+    return "Data\nRecovery";
   }
 }
 function view_large_orb_box(orb_option) {
@@ -7940,6 +8059,7 @@ function view_orb_selector() {
     new Bomb(3),
     new Collector(),
     new PointScanner(),
+    new PointRecovery(),
     new Survivor(),
     new Multiplier(),
     new Choice(),
@@ -8323,7 +8443,8 @@ function init(_) {
     new None(),
     toList([]),
     0,
-    false
+    false,
+    toList([])
   );
 }
 function handle_next_level(model) {
@@ -8360,7 +8481,8 @@ function handle_next_level(model) {
     new None(),
     toList([]),
     0,
-    false
+    false,
+    toList([])
   );
 }
 function handle_enter_testing_grounds(model) {
@@ -8387,7 +8509,8 @@ function handle_enter_testing_grounds(model) {
     _record.pending_gamble,
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice
+    _record.in_gamble_choice,
+    _record.point_orbs_pulled_this_level
   );
 }
 function handle_add_test_orb(model, orb) {
@@ -8426,7 +8549,8 @@ function handle_add_test_orb(model, orb) {
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice
+      _record$1.in_gamble_choice,
+      _record$1.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -8480,7 +8604,8 @@ function handle_remove_test_orb(model, index3) {
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice
+      _record$1.in_gamble_choice,
+      _record$1.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -8522,7 +8647,8 @@ function handle_set_test_milestone(model, milestone) {
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice
+      _record$1.in_gamble_choice,
+      _record$1.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -8564,7 +8690,8 @@ function handle_set_test_health(model, health) {
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice
+      _record$1.in_gamble_choice,
+      _record$1.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -8606,7 +8733,8 @@ function handle_set_simulation_count(model, count2) {
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice
+      _record$1.in_gamble_choice,
+      _record$1.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -8640,7 +8768,8 @@ function handle_start_simulations(model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -8670,7 +8799,8 @@ function handle_view_test_results(model) {
     _record.pending_gamble,
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice
+    _record.in_gamble_choice,
+    _record.point_orbs_pulled_this_level
   );
 }
 function handle_reset_test_config(model) {
@@ -8697,7 +8827,8 @@ function handle_reset_test_config(model) {
     _record.pending_gamble,
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice
+    _record.in_gamble_choice,
+    _record.point_orbs_pulled_this_level
   );
 }
 function start_new_game() {
@@ -8724,7 +8855,8 @@ function start_new_game() {
     new None(),
     toList([]),
     0,
-    false
+    false,
+    toList([])
   );
 }
 function restart_current_level(model) {
@@ -8760,7 +8892,8 @@ function restart_current_level(model) {
     new None(),
     toList([]),
     0,
-    false
+    false,
+    toList([])
   );
 }
 function handle_toggle_shuffle(model) {
@@ -8794,7 +8927,8 @@ function handle_toggle_shuffle(model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else {
     let _record = model;
@@ -8820,7 +8954,8 @@ function handle_toggle_shuffle(model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   }
 }
@@ -8852,7 +8987,8 @@ function handle_accept_gamble(model) {
     new None(),
     gamble_orbs,
     0,
-    false
+    false,
+    _record.point_orbs_pulled_this_level
   );
 }
 function handle_decline_gamble(model) {
@@ -8879,312 +9015,9 @@ function handle_decline_gamble(model) {
     new None(),
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice
+    _record.in_gamble_choice,
+    _record.point_orbs_pulled_this_level
   );
-}
-function apply_gamble_orb_effect(orb, model) {
-  if (orb instanceof Bomb) {
-    let damage = orb[0];
-    let _record = model;
-    return new Model(
-      model.health - damage,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      model.bombs_pulled_this_level + 1,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  } else if (orb instanceof Point) {
-    let value = orb[0];
-    let gamble_points = value * 2 * model.current_multiplier;
-    let _record = model;
-    return new Model(
-      _record.health,
-      model.points + gamble_points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  } else if (orb instanceof Health) {
-    let value = orb[0];
-    let new_health = min(5, model.health + value);
-    let _record = model;
-    return new Model(
-      new_health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  } else if (orb instanceof Collector) {
-    let _block;
-    let _pipe = model.bag;
-    _block = length(_pipe);
-    let remaining_orbs = _block;
-    let collector_points = remaining_orbs * model.current_multiplier;
-    let _record = model;
-    return new Model(
-      _record.health,
-      model.points + collector_points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  } else if (orb instanceof Survivor) {
-    let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
-    let _record = model;
-    return new Model(
-      _record.health,
-      model.points + survivor_points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  } else if (orb instanceof Multiplier) {
-    let new_multiplier = model.current_multiplier * 2;
-    let _record = model;
-    return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      new_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  } else if (orb instanceof Choice) {
-    let _block;
-    let _pipe = model.bag;
-    _block = drop(_pipe, 5);
-    let orbs_after_gamble = _block;
-    if (orbs_after_gamble instanceof Empty) {
-      let gamble_points = 5 * 2 * model.current_multiplier;
-      let _record = model;
-      return new Model(
-        _record.health,
-        model.points + gamble_points,
-        _record.level,
-        _record.milestone,
-        _record.bag,
-        _record.status,
-        _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
-        _record.shuffle_enabled,
-        _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
-        _record.log_entries,
-        _record.log_sequence,
-        _record.pending_choice,
-        _record.pending_gamble,
-        _record.gamble_orbs,
-        _record.gamble_current_index,
-        _record.in_gamble_choice
-      );
-    } else {
-      let $ = orbs_after_gamble.tail;
-      if ($ instanceof Empty) {
-        let single_orb = orbs_after_gamble.head;
-        let _record = model;
-        return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
-          _record.milestone,
-          _record.bag,
-          new ChoosingOrb(),
-          _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
-          _record.shuffle_enabled,
-          _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
-          _record.log_entries,
-          _record.log_sequence,
-          new Some([single_orb, single_orb]),
-          _record.pending_gamble,
-          _record.gamble_orbs,
-          _record.gamble_current_index,
-          true
-        );
-      } else {
-        let first_orb = orbs_after_gamble.head;
-        let second_orb = $.head;
-        let _record = model;
-        return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
-          _record.milestone,
-          _record.bag,
-          new ChoosingOrb(),
-          _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
-          _record.shuffle_enabled,
-          _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
-          _record.log_entries,
-          _record.log_sequence,
-          new Some([first_orb, second_orb]),
-          _record.pending_gamble,
-          _record.gamble_orbs,
-          _record.gamble_current_index,
-          true
-        );
-      }
-    }
-  } else if (orb instanceof Gamble) {
-    return model;
-  } else {
-    let _block;
-    let _pipe = model.bag;
-    _block = count(
-      _pipe,
-      (orb2) => {
-        if (orb2 instanceof Point) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-    );
-    let point_orbs_count = _block;
-    let scanner_points = point_orbs_count * model.current_multiplier;
-    let _record = model;
-    return new Model(
-      _record.health,
-      model.points + scanner_points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice
-    );
-  }
 }
 function check_game_status(model) {
   let $ = model.health <= 0;
@@ -9213,7 +9046,8 @@ function check_game_status(model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if ($1) {
     let _record = model;
@@ -9239,7 +9073,8 @@ function check_game_status(model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else {
     return model;
@@ -9286,13 +9121,390 @@ function handle_pull_orb(model) {
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
       let updated_model = _block;
       return check_game_status(updated_model);
     }
   } else {
     return model;
+  }
+}
+function remove_first_occurrence2(list4, target) {
+  if (list4 instanceof Empty) {
+    return toList([]);
+  } else {
+    let first2 = list4.head;
+    let rest = list4.tail;
+    let $ = first2 === target;
+    if ($) {
+      return rest;
+    } else {
+      return prepend(first2, remove_first_occurrence2(rest, target));
+    }
+  }
+}
+function apply_gamble_orb_effect(orb, model) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    let _record = model;
+    return new Model(
+      model.health - damage,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      model.bombs_pulled_this_level + 1,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let gamble_points = value * 2 * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + gamble_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    let new_health = min(5, model.health + value);
+    let _record = model;
+    return new Model(
+      new_health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else if (orb instanceof Collector) {
+    let _block;
+    let _pipe = model.bag;
+    _block = length(_pipe);
+    let remaining_orbs = _block;
+    let collector_points = remaining_orbs * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + collector_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else if (orb instanceof Survivor) {
+    let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + survivor_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else if (orb instanceof Multiplier) {
+    let new_multiplier = model.current_multiplier * 2;
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      new_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else if (orb instanceof Choice) {
+    let _block;
+    let _pipe = model.bag;
+    _block = drop(_pipe, 5);
+    let orbs_after_gamble = _block;
+    if (orbs_after_gamble instanceof Empty) {
+      let gamble_points = 5 * 2 * model.current_multiplier;
+      let _record = model;
+      return new Model(
+        _record.health,
+        model.points + gamble_points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        _record.status,
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index,
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
+      );
+    } else {
+      let $ = orbs_after_gamble.tail;
+      if ($ instanceof Empty) {
+        let single_orb = orbs_after_gamble.head;
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          _record.bag,
+          new ChoosingOrb(),
+          _record.last_orb,
+          _record.bombs_pulled_this_level,
+          _record.current_multiplier,
+          _record.credits,
+          _record.shuffle_enabled,
+          _record.dev_mode,
+          _record.testing_config,
+          _record.testing_mode,
+          _record.testing_stats,
+          _record.log_entries,
+          _record.log_sequence,
+          new Some([single_orb, single_orb]),
+          _record.pending_gamble,
+          _record.gamble_orbs,
+          _record.gamble_current_index,
+          true,
+          _record.point_orbs_pulled_this_level
+        );
+      } else {
+        let first_orb = orbs_after_gamble.head;
+        let second_orb = $.head;
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          _record.bag,
+          new ChoosingOrb(),
+          _record.last_orb,
+          _record.bombs_pulled_this_level,
+          _record.current_multiplier,
+          _record.credits,
+          _record.shuffle_enabled,
+          _record.dev_mode,
+          _record.testing_config,
+          _record.testing_mode,
+          _record.testing_stats,
+          _record.log_entries,
+          _record.log_sequence,
+          new Some([first_orb, second_orb]),
+          _record.pending_gamble,
+          _record.gamble_orbs,
+          _record.gamble_current_index,
+          true,
+          _record.point_orbs_pulled_this_level
+        );
+      }
+    }
+  } else if (orb instanceof Gamble) {
+    return model;
+  } else if (orb instanceof PointScanner) {
+    let _block;
+    let _pipe = model.bag;
+    _block = count(
+      _pipe,
+      (orb2) => {
+        if (orb2 instanceof Point) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    );
+    let point_orbs_count = _block;
+    let scanner_points = point_orbs_count * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + scanner_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index,
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
+    );
+  } else {
+    let $ = model.point_orbs_pulled_this_level;
+    if ($ instanceof Empty) {
+      return model;
+    } else {
+      let pulled_points = $;
+      let _block;
+      let _pipe = pulled_points;
+      let _pipe$1 = sort(_pipe, compare2);
+      _block = first(_pipe$1);
+      let min_value = _block;
+      if (min_value instanceof Ok) {
+        let value = min_value[0];
+        let _block$1;
+        let _pipe$2 = model.bag;
+        _block$1 = append(_pipe$2, toList([new Point(value)]));
+        let updated_bag = _block$1;
+        let updated_tracking = remove_first_occurrence2(pulled_points, value);
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          updated_bag,
+          _record.status,
+          _record.last_orb,
+          _record.bombs_pulled_this_level,
+          _record.current_multiplier,
+          _record.credits,
+          _record.shuffle_enabled,
+          _record.dev_mode,
+          _record.testing_config,
+          _record.testing_mode,
+          _record.testing_stats,
+          _record.log_entries,
+          _record.log_sequence,
+          _record.pending_choice,
+          _record.pending_gamble,
+          _record.gamble_orbs,
+          _record.gamble_current_index,
+          _record.in_gamble_choice,
+          updated_tracking
+        );
+      } else {
+        return model;
+      }
+    }
   }
 }
 function handle_choice_selection(model, select_first) {
@@ -9363,7 +9575,8 @@ function handle_choice_selection(model, select_first) {
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        false
+        false,
+        _record.point_orbs_pulled_this_level
       );
       let updated_model = _block$4;
       return check_game_status(updated_model);
@@ -9409,7 +9622,8 @@ function handle_choice_selection(model, select_first) {
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
       let updated_model = _block$2;
       return check_game_status(updated_model);
@@ -9454,7 +9668,8 @@ function apply_current_gamble_orb(model) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
     let model_with_consumed_orb = _block$1;
     let modified_model = apply_gamble_orb_effect(orb, model_with_consumed_orb);
@@ -9485,7 +9700,8 @@ function apply_current_gamble_orb(model) {
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice
+      _record$1.in_gamble_choice,
+      _record$1.point_orbs_pulled_this_level
     );
     let updated_model = _block$2;
     return check_game_status(updated_model);
@@ -9521,7 +9737,8 @@ function handle_next_gamble_orb(model) {
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
     } else {
       let _block;
@@ -9548,7 +9765,8 @@ function handle_next_gamble_orb(model) {
         _record.pending_gamble,
         _record.gamble_orbs,
         0,
-        false
+        false,
+        _record.point_orbs_pulled_this_level
       );
       let updated_model = _block;
       return apply_current_gamble_orb(updated_model);
@@ -9583,7 +9801,8 @@ function handle_next_gamble_orb(model) {
         _record.pending_gamble,
         toList([]),
         0,
-        false
+        false,
+        _record.point_orbs_pulled_this_level
       );
     } else {
       let _block;
@@ -9610,7 +9829,8 @@ function handle_next_gamble_orb(model) {
         _record.pending_gamble,
         _record.gamble_orbs,
         next_index,
-        _record.in_gamble_choice
+        _record.in_gamble_choice,
+        _record.point_orbs_pulled_this_level
       );
       let updated_model = _block;
       return apply_current_gamble_orb(updated_model);
@@ -9646,7 +9866,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof ShowHowToPlay) {
     return model;
@@ -9676,7 +9897,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof ResumeGame) {
     let _record = model;
@@ -9702,7 +9924,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
@@ -9732,7 +9955,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof GoToMarketplace) {
     let _record = model;
@@ -9758,7 +9982,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof GoToTestingGrounds) {
     return handle_enter_testing_grounds(model);
@@ -9786,7 +10011,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
@@ -9817,7 +10043,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof SelectFirstChoice) {
     return handle_choice_selection(model, true);
@@ -9853,7 +10080,8 @@ function update2(model, msg) {
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice
+      _record.in_gamble_choice,
+      _record.point_orbs_pulled_this_level
     );
   } else if (msg instanceof AddTestOrb) {
     let orb = msg[0];

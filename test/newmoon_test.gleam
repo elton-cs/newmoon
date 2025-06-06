@@ -39,6 +39,7 @@ fn create_test_model() -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
+    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -873,6 +874,10 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       let scanner_points = point_orbs_count * model.current_multiplier
       types.Model(..model, points: model.points + scanner_points)
     }
+    types.PointRecovery -> {
+      // Placeholder for gamble test helper - not implemented yet
+      model
+    }
   }
 }
 
@@ -995,4 +1000,154 @@ pub fn point_scanner_integration_test() {
   let collector_result = orb.apply_orb_effect(types.Collector, model)
   should.equal(collector_result.points, 10)
   // PointScanner is more predictable but usually lower value than Collector
+}
+
+// ============================================================================
+// POINT RECOVERY ORB TESTS
+// ============================================================================
+
+pub fn point_recovery_orb_no_points_pulled_test() {
+  let model = Model(..create_test_model(), point_orbs_pulled_this_level: [])
+  let point_recovery_orb = types.PointRecovery
+  let result = orb.apply_orb_effect(point_recovery_orb, model)
+
+  should.equal(result.points, 0)
+  // No point orbs pulled = no effect
+  should.equal(result.bag |> list.length, 0)
+  // No orb added to bag
+  should.equal(result.point_orbs_pulled_this_level, [])
+  // Tracking unchanged
+}
+
+pub fn point_recovery_orb_single_point_orb_test() {
+  let model = Model(
+    ..create_test_model(), 
+    points: 8,  // Already earned from Point(8)
+    point_orbs_pulled_this_level: [8],
+    bag: [Bomb(2), Health(3)]
+  )
+  let point_recovery_orb = types.PointRecovery
+  let result = orb.apply_orb_effect(point_recovery_orb, model)
+
+  should.equal(result.points, 8)
+  // Points unchanged - keep the original 8 points earned
+  should.equal(result.bag |> list.length, 3)
+  // Point(8) added back to bag
+  should.equal(result.point_orbs_pulled_this_level, [])
+  // Tracking list cleared after recovery
+}
+
+pub fn point_recovery_orb_multiple_points_test() {
+  let model = Model(
+    ..create_test_model(), 
+    points: 25,  // Earned from Point(8) + Point(12) + Point(5)
+    point_orbs_pulled_this_level: [8, 12, 5],
+    bag: [Bomb(2)]
+  )
+  let point_recovery_orb = types.PointRecovery
+  let result = orb.apply_orb_effect(point_recovery_orb, model)
+
+  should.equal(result.points, 25)
+  // Points unchanged
+  should.equal(result.bag |> list.length, 2)
+  // Point(5) added back (lowest value)
+  should.equal(result.point_orbs_pulled_this_level, [8, 12])
+  // Only the recovered orb (5) removed from tracking
+}
+
+pub fn point_recovery_orb_duplicate_lowest_test() {
+  let model = Model(
+    ..create_test_model(), 
+    points: 18,  // Point(5) + Point(8) + Point(5)
+    point_orbs_pulled_this_level: [5, 8, 5],
+    bag: [Health(2)]
+  )
+  let point_recovery_orb = types.PointRecovery
+  let result = orb.apply_orb_effect(point_recovery_orb, model)
+
+  should.equal(result.points, 18)
+  // Points unchanged
+  should.equal(result.bag |> list.length, 2)
+  // One Point(5) added back
+  should.equal(result.point_orbs_pulled_this_level, [8, 5])
+  // First occurrence of 5 removed from tracking
+}
+
+pub fn point_recovery_orb_with_multiplier_test() {
+  let model = Model(
+    ..create_test_model(), 
+    points: 20,  // Point(8) with 2x multiplier = 16, + Point(4) = 20
+    point_orbs_pulled_this_level: [8, 4],
+    current_multiplier: 2,
+    bag: [Collector]
+  )
+  let point_recovery_orb = types.PointRecovery
+  let result = orb.apply_orb_effect(point_recovery_orb, model)
+
+  should.equal(result.points, 20)
+  // Points unchanged (no re-application of multiplier)
+  should.equal(result.bag |> list.length, 2)
+  // Point(4) added back to bag (lowest value)
+  should.equal(result.current_multiplier, 2)
+  // Multiplier unchanged
+  should.equal(result.point_orbs_pulled_this_level, [8])
+  // Only Point(4) removed from tracking
+}
+
+pub fn point_recovery_orb_message_test() {
+  let model = Model(
+    ..create_test_model(), 
+    point_orbs_pulled_this_level: [8, 5, 12]
+  )
+  let point_recovery_orb = types.PointRecovery
+  let message = orb.get_orb_result_message(point_recovery_orb, model)
+
+  should.equal(message, "↺ DATA RECOVERY [POINT(5) RESTORED TO CONTAINER]")
+}
+
+pub fn point_recovery_orb_message_no_points_test() {
+  let model = Model(..create_test_model(), point_orbs_pulled_this_level: [])
+  let point_recovery_orb = types.PointRecovery
+  let message = orb.get_orb_result_message(point_recovery_orb, model)
+
+  should.equal(message, "↺ DATA RECOVERY [NO DATA SAMPLES TO RECOVER]")
+}
+
+pub fn point_recovery_orb_color_test() {
+  should.equal(orb.get_orb_result_color(types.PointRecovery), "green")
+}
+
+pub fn point_recovery_orb_name_test() {
+  should.equal(orb.get_orb_name(types.PointRecovery), "Data Recovery Sample")
+}
+
+pub fn point_recovery_integration_test() {
+  // Realistic game scenario: Pull some Point orbs, then recover lowest
+  let model = create_test_model()
+  
+  // Simulate pulling Point(8)
+  let after_first = Model(
+    ..model, 
+    points: 8, 
+    point_orbs_pulled_this_level: [8],
+    bag: [Point(5), Point(12), Bomb(2)]
+  )
+  
+  // Simulate pulling Point(5) from bag
+  let after_second = Model(
+    ..after_first,
+    points: 13,  // 8 + 5
+    point_orbs_pulled_this_level: [8, 5],
+    bag: [Point(12), Bomb(2)]
+  )
+  
+  // Now use PointRecovery
+  let recovery_result = orb.apply_orb_effect(types.PointRecovery, after_second)
+  
+  should.equal(recovery_result.points, 13)
+  // Keep all earned points
+  should.equal(recovery_result.bag |> list.length, 3)
+  // Point(5) restored to bag
+  should.equal(recovery_result.point_orbs_pulled_this_level, [8])
+  // Only Point(5) removed from tracking
 }

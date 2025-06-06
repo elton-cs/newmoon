@@ -10,6 +10,7 @@ pub type Orb {
   Choice
   Gamble
   PointScanner
+  PointRecovery
 }
 
 pub type GameStatus {
@@ -50,6 +51,7 @@ pub type Model {
     gamble_orbs: List(Orb),
     gamble_current_index: Int,
     in_gamble_choice: Bool,
+    point_orbs_pulled_this_level: List(Int),
   )
 }
 

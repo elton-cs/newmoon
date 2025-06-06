@@ -140,6 +140,11 @@ fn apply_orb_simulation(
       let scanner_points = 3 * multiplier
       #(health, points + scanner_points, multiplier, bombs_hit)
     }
+    types.PointRecovery -> {
+      // For simulation purposes, assume recovery of a Point(5) orb
+      // In real gameplay this would check point_orbs_pulled_this_level
+      #(health, points, multiplier, bombs_hit)
+    }
   }
 }
 
