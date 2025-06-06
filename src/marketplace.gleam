@@ -6,7 +6,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import orb
-import types.{type MarketItem, type Model, type Msg, type Orb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor, Choice, GoToMainMenu}
+import types.{type MarketItem, type Model, type Msg, type Orb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor, Choice, Gamble, GoToMainMenu}
 
 pub fn get_market_items() -> List(MarketItem) {
   [
@@ -25,6 +25,7 @@ pub fn get_market_items() -> List(MarketItem) {
     MarketItem(Survivor, 35, "Damage analyzer - points for bombs survived"),
     MarketItem(Multiplier, 45, "Signal amplifier - doubles point multiplier"),
     MarketItem(Choice, 50, "Choice protocol - select optimal sample from two"),
+    MarketItem(Gamble, 75, "High risk gamble - draw 5 orbs with point boost"),
   ]
 }
 

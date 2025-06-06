@@ -1,7 +1,7 @@
 import gleam/int
 import gleam/list
 import gleam/option
-import types.{type Model, type Orb, Bomb, Collector, Health, Multiplier, Point, Survivor, Choice, ChoosingOrb}
+import types.{type Model, type Orb, Bomb, Collector, Health, Multiplier, Point, Survivor, Choice, Gamble, ChoosingOrb, GamblingChoice}
 
 pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
   case orb {
@@ -63,6 +63,7 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
       <> int.to_string(model.current_multiplier)
       <> "× AMPLIFICATION ACTIVE]"
     Choice -> "◆ CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]"
+    Gamble -> "🎲 GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]"
   }
 }
 
@@ -75,6 +76,7 @@ pub fn get_orb_result_color(orb: Orb) -> String {
     Survivor -> "purple"
     Multiplier -> "yellow"
     Choice -> "orange"
+    Gamble -> "red"
   }
 }
 
@@ -108,7 +110,17 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
       types.Model(..model, current_multiplier: new_multiplier)
     }
     Choice -> handle_choice_orb(model)
+    Gamble -> handle_gamble_orb(model)
   }
+}
+
+// Helper function to handle Gamble orb logic
+fn handle_gamble_orb(model: Model) -> Model {
+  types.Model(
+    ..model,
+    status: GamblingChoice,
+    pending_gamble: option.Some(True),
+  )
 }
 
 // Helper function to handle Choice orb logic
@@ -202,5 +214,6 @@ pub fn get_orb_name(orb: Orb) -> String {
     Survivor -> "Analyzer Sample"
     Multiplier -> "Amplifier Sample"
     Choice -> "Choice Sample"
+    Gamble -> "Gamble Sample"
   }
 }

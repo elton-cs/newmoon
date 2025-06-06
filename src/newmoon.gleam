@@ -1,11 +1,12 @@
 import gleam/list
+import gleam/int
 import gleam/option
 import lustre
 import level
 import marketplace
 import orb
 import simulation
-import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, SelectFirstChoice, SelectSecondChoice}
+import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, SelectFirstChoice, SelectSecondChoice, AcceptGamble, DeclineGamble, NextGambleOrb}
 import view
 
 pub fn main() -> Nil {
@@ -35,6 +36,9 @@ fn init(_) -> Model {
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
+    pending_gamble: option.None,
+    gamble_orbs: [],
+    gamble_current_index: 0,
   )
 }
 
@@ -71,6 +75,11 @@ fn update(model: Model, msg: Msg) -> Model {
     // Choice Orb Actions
     SelectFirstChoice -> handle_choice_selection(model, True)
     SelectSecondChoice -> handle_choice_selection(model, False)
+    
+    // Gamble Orb Actions
+    AcceptGamble -> handle_accept_gamble(model)
+    DeclineGamble -> handle_decline_gamble(model)
+    NextGambleOrb -> handle_next_gamble_orb(model)
     
     // Testing Grounds Actions
     ExitTestingGrounds -> types.Model(..model, status: MainMenu)
@@ -142,6 +151,9 @@ fn handle_next_level(model: Model) -> Model {
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
+    pending_gamble: option.None,
+    gamble_orbs: [],
+    gamble_current_index: 0,
   )
 }
 
@@ -277,6 +289,9 @@ fn start_new_game() -> Model {
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
+    pending_gamble: option.None,
+    gamble_orbs: [],
+    gamble_current_index: 0,
   )
 }
 
@@ -305,6 +320,9 @@ fn restart_current_level(model: Model) -> Model {
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
+    pending_gamble: option.None,
+    gamble_orbs: [],
+    gamble_current_index: 0,
   )
 }
 
@@ -362,6 +380,138 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
       check_game_status(updated_model)
     }
     option.None -> model  // No pending choice, do nothing
+  }
+}
+
+fn handle_accept_gamble(model: Model) -> Model {
+  // Pull 5 orbs from bag
+  let gamble_orbs = list.take(model.bag, 5)
+  let remaining_bag = list.drop(model.bag, 5)
+  
+  types.Model(
+    ..model,
+    status: types.ViewingGambleResults,
+    pending_gamble: option.None,
+    gamble_orbs: gamble_orbs,
+    gamble_current_index: 0,
+    bag: remaining_bag,
+  )
+}
+
+fn handle_decline_gamble(model: Model) -> Model {
+  types.Model(
+    ..model,
+    status: Playing,
+    pending_gamble: option.None,
+  )
+}
+
+fn handle_next_gamble_orb(model: Model) -> Model {
+  case model.status {
+    types.ViewingGambleResults -> {
+      // Start applying orbs
+      case model.gamble_orbs {
+        [] -> types.Model(..model, status: Playing) // No orbs to apply
+        _ -> {
+          let updated_model = types.Model(
+            ..model,
+            status: types.ApplyingGambleOrbs,
+            gamble_current_index: 0,
+          )
+          apply_current_gamble_orb(updated_model)
+        }
+      }
+    }
+    types.ApplyingGambleOrbs -> {
+      // Apply next orb
+      let next_index = model.gamble_current_index + 1
+      case next_index >= list.length(model.gamble_orbs) {
+        True -> {
+          // Done with all orbs, return to playing
+          types.Model(
+            ..model,
+            status: Playing,
+            gamble_orbs: [],
+            gamble_current_index: 0,
+          )
+        }
+        False -> {
+          let updated_model = types.Model(
+            ..model,
+            gamble_current_index: next_index,
+          )
+          apply_current_gamble_orb(updated_model)
+        }
+      }
+    }
+    _ -> model
+  }
+}
+
+fn apply_current_gamble_orb(model: Model) -> Model {
+  case list.first(list.drop(model.gamble_orbs, model.gamble_current_index)) {
+    Ok(orb) -> {
+      let modified_model = apply_gamble_orb_effect(orb, model)
+      let new_sequence = model.log_sequence + 1
+      let log_message = orb.get_orb_result_message(orb, modified_model)
+      let new_log_entry = types.LogEntry(
+        sequence: new_sequence,
+        orb: orb,
+        message: log_message,
+      )
+      
+      let updated_model = types.Model(
+        ..modified_model,
+        log_entries: [new_log_entry, ..model.log_entries],
+        log_sequence: new_sequence,
+      )
+      
+      check_game_status(updated_model)
+    }
+    Error(_) -> model
+  }
+}
+
+fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
+  case orb {
+    types.Point(value) -> {
+      // Special gamble rule: Point orbs get 2X multiplier
+      let gamble_points = value * 2 * model.current_multiplier
+      types.Model(..model, points: model.points + gamble_points)
+    }
+    types.Bomb(damage) ->
+      types.Model(
+        ..model,
+        health: model.health - damage,
+        bombs_pulled_this_level: model.bombs_pulled_this_level + 1,
+      )
+    types.Health(value) -> {
+      let new_health = int.min(5, model.health + value)
+      types.Model(..model, health: new_health)
+    }
+    types.Collector -> {
+      // Count remaining orbs in bag AFTER gamble orbs were removed
+      let remaining_orbs = list.length(model.bag)
+      let collector_points = remaining_orbs * model.current_multiplier
+      types.Model(..model, points: model.points + collector_points)
+    }
+    types.Survivor -> {
+      let survivor_points = model.bombs_pulled_this_level * model.current_multiplier
+      types.Model(..model, points: model.points + survivor_points)
+    }
+    types.Multiplier -> {
+      let new_multiplier = model.current_multiplier * 2
+      types.Model(..model, current_multiplier: new_multiplier)
+    }
+    types.Choice -> {
+      // During gamble, Choice orb becomes a basic Point(5) orb to avoid complexity
+      let gamble_points = 5 * 2 * model.current_multiplier
+      types.Model(..model, points: model.points + gamble_points)
+    }
+    types.Gamble -> {
+      // Gamble within gamble - treat as no-op to avoid recursion
+      model
+    }
   }
 }
 

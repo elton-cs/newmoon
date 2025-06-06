@@ -5,7 +5,7 @@ import gleeunit/should
 import orb
 import types.{
   type Model, Bomb, Collector, Health, Model, Multiplier, Playing, Point,
-  Survivor, Choice, ChoosingOrb, SelectFirstChoice, SelectSecondChoice,
+  Survivor, Choice, Gamble, ChoosingOrb, GamblingChoice, SelectFirstChoice, SelectSecondChoice,
 }
 
 pub fn main() -> Nil {
@@ -33,6 +33,9 @@ fn create_test_model() -> Model {
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
+    pending_gamble: option.None,
+    gamble_orbs: [],
+    gamble_current_index: 0,
   )
 }
 
@@ -403,6 +406,7 @@ pub fn orb_names_test() {
   should.equal(orb.get_orb_name(Survivor), "Analyzer Sample")
   should.equal(orb.get_orb_name(Multiplier), "Amplifier Sample")
   should.equal(orb.get_orb_name(Choice), "Choice Sample")
+  should.equal(orb.get_orb_name(Gamble), "Gamble Sample")
 }
 
 // ============================================================================
@@ -699,4 +703,31 @@ fn handle_choice_selection(model: Model, msg: types.Msg) -> Model {
     }
     _, _ -> model
   }
+}
+
+// ============================================================================
+// GAMBLE ORB TESTS
+// ============================================================================
+
+pub fn gamble_orb_basic_test() {
+  let model = create_test_model()
+  let gamble_orb = Gamble
+  let result = orb.apply_orb_effect(gamble_orb, model)
+  
+  // Should transition to GamblingChoice state
+  should.equal(result.status, GamblingChoice)
+  // Should have pending gamble set
+  should.equal(result.pending_gamble, option.Some(True))
+}
+
+pub fn gamble_orb_color_test() {
+  should.equal(orb.get_orb_result_color(Gamble), "red")
+}
+
+pub fn gamble_orb_message_test() {
+  let model = create_test_model()
+  let gamble_orb = Gamble
+  let message = orb.get_orb_result_message(gamble_orb, model)
+  
+  should.equal(message, "🎲 GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]")
 }

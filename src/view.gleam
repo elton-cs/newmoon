@@ -17,6 +17,7 @@ import types.{
   RestartLevel, ResumeGame, RunningSimulations, ShowHowToPlay, StartNewGame,
   StartSimulations, ToggleDevMode, ToggleShuffle, ViewTestResults,
   ViewingResults, ChoosingOrb, SelectFirstChoice, SelectSecondChoice,
+  GamblingChoice, ViewingGambleResults, ApplyingGambleOrbs, AcceptGamble, DeclineGamble, NextGambleOrb,
 }
 
 pub fn view(model: Model) -> Element(Msg) {
@@ -175,6 +176,9 @@ fn view_game_content(model: Model) -> Element(Msg) {
     InMarketplace -> marketplace.view_marketplace(model)
     InTestingGrounds -> view_testing_grounds(model)
     ChoosingOrb -> view_choosing_orb_state(model)
+    GamblingChoice -> view_gambling_choice_state(model)
+    ViewingGambleResults -> view_gamble_results_state(model)
+    ApplyingGambleOrbs -> view_applying_gamble_orbs_state(model)
   }
 }
 
@@ -324,6 +328,14 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
         text: "text-orange-700",
         symbol: "◆",
       )
+    types.Gamble ->
+      OrbBoxStyle(
+        background: "bg-white",
+        border: "border-red-200",
+        icon: "text-red-600",
+        text: "text-red-700",
+        symbol: "🎲",
+      )
   }
 }
 
@@ -440,6 +452,107 @@ fn view_choice_selection(first_orb: types.Orb, second_orb: types.Orb) -> Element
         ]),
       ])
   }
+}
+
+fn view_gambling_choice_state(_model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.div(
+      [attribute.class("mb-6 p-6 bg-red-50 border border-red-200 rounded")],
+      [
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("GAMBLE PROTOCOL ACTIVATED")],
+        ),
+        html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
+          html.text("Draw 5 orbs simultaneously. Point orbs get 2X multiplier. High risk, high reward."),
+        ]),
+      ],
+    ),
+    html.div([attribute.class("space-y-3")], [
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          ),
+          event.on_click(AcceptGamble),
+        ],
+        [html.text("ACCEPT GAMBLE")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(DeclineGamble),
+        ],
+        [html.text("DECLINE GAMBLE")],
+      ),
+    ]),
+  ])
+}
+
+fn view_gamble_results_state(model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.div(
+      [attribute.class("mb-6 p-6 bg-red-50 border border-red-200 rounded")],
+      [
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("GAMBLE RESULTS")],
+        ),
+        html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
+          html.text("5 orbs drawn. Click 'Start Applying' to apply effects one by one."),
+        ]),
+      ],
+    ),
+    html.div([attribute.class("grid grid-cols-5 gap-2 mb-6")], 
+      list.map(model.gamble_orbs, fn(orb) { view_orb_box(option.Some(orb)) })
+    ),
+    html.button(
+      [
+        attribute.class(
+          "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+        ),
+        event.on_click(NextGambleOrb),
+      ],
+      [html.text("START APPLYING EFFECTS")],
+    ),
+  ])
+}
+
+fn view_applying_gamble_orbs_state(model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.div(
+      [attribute.class("mb-6 p-6 bg-red-50 border border-red-200 rounded")],
+      [
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("APPLYING GAMBLE EFFECTS")],
+        ),
+        html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
+          html.text("Orb " <> int.to_string(model.gamble_current_index + 1) <> " of " <> int.to_string(list.length(model.gamble_orbs))),
+        ]),
+      ],
+    ),
+    html.div([attribute.class("grid grid-cols-5 gap-2 mb-6")], 
+      list.index_map(model.gamble_orbs, fn(orb, index) {
+        let style = case index <= model.gamble_current_index {
+          True -> [attribute.class("opacity-50")]
+          False -> []
+        }
+        html.div(style, [view_orb_box(option.Some(orb))])
+      })
+    ),
+    html.button(
+      [
+        attribute.class(
+          "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+        ),
+        event.on_click(NextGambleOrb),
+      ],
+      [html.text("NEXT ORB")],
+    ),
+  ])
 }
 
 fn view_choice_option(orb: types.Orb, select_msg: types.Msg, is_single: Bool) -> Element(Msg) {
@@ -1111,6 +1224,7 @@ fn view_orb_selector() -> Element(Msg) {
     types.Survivor,
     types.Multiplier,
     types.Choice,
+    types.Gamble,
   ]
 
   html.div([], [

@@ -372,6 +372,14 @@ function makeError(variant, file, module, line, fn, message, extra) {
   return error;
 }
 
+// build/dev/javascript/gleam_stdlib/gleam/order.mjs
+var Lt = class extends CustomType {
+};
+var Eq = class extends CustomType {
+};
+var Gt = class extends CustomType {
+};
+
 // build/dev/javascript/gleam_stdlib/gleam/option.mjs
 var Some = class extends CustomType {
   constructor($0) {
@@ -1086,266 +1094,6 @@ var Dict = class _Dict {
 };
 var unequalDictSymbol = /* @__PURE__ */ Symbol();
 
-// build/dev/javascript/gleam_stdlib/gleam/order.mjs
-var Lt = class extends CustomType {
-};
-var Eq = class extends CustomType {
-};
-var Gt = class extends CustomType {
-};
-
-// build/dev/javascript/gleam_stdlib/gleam/float.mjs
-function compare(a, b) {
-  let $ = a === b;
-  if ($) {
-    return new Eq();
-  } else {
-    let $1 = a < b;
-    if ($1) {
-      return new Lt();
-    } else {
-      return new Gt();
-    }
-  }
-}
-function negate(x) {
-  return -1 * x;
-}
-function round2(x) {
-  let $ = x >= 0;
-  if ($) {
-    return round(x);
-  } else {
-    return 0 - round(negate(x));
-  }
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/int.mjs
-function compare2(a, b) {
-  let $ = a === b;
-  if ($) {
-    return new Eq();
-  } else {
-    let $1 = a < b;
-    if ($1) {
-      return new Lt();
-    } else {
-      return new Gt();
-    }
-  }
-}
-function min(a, b) {
-  let $ = a < b;
-  if ($) {
-    return a;
-  } else {
-    return b;
-  }
-}
-function add(a, b) {
-  return a + b;
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function slice(string5, idx, len) {
-  let $ = len < 0;
-  if ($) {
-    return "";
-  } else {
-    let $1 = idx < 0;
-    if ($1) {
-      let translated_idx = string_length(string5) + idx;
-      let $2 = translated_idx < 0;
-      if ($2) {
-        return "";
-      } else {
-        return string_slice(string5, translated_idx, len);
-      }
-    } else {
-      return string_slice(string5, idx, len);
-    }
-  }
-}
-function concat_loop(loop$strings, loop$accumulator) {
-  while (true) {
-    let strings = loop$strings;
-    let accumulator = loop$accumulator;
-    if (strings instanceof Empty) {
-      return accumulator;
-    } else {
-      let string5 = strings.head;
-      let strings$1 = strings.tail;
-      loop$strings = strings$1;
-      loop$accumulator = accumulator + string5;
-    }
-  }
-}
-function concat2(strings) {
-  return concat_loop(strings, "");
-}
-function join_loop(loop$strings, loop$separator, loop$accumulator) {
-  while (true) {
-    let strings = loop$strings;
-    let separator = loop$separator;
-    let accumulator = loop$accumulator;
-    if (strings instanceof Empty) {
-      return accumulator;
-    } else {
-      let string5 = strings.head;
-      let strings$1 = strings.tail;
-      loop$strings = strings$1;
-      loop$separator = separator;
-      loop$accumulator = accumulator + separator + string5;
-    }
-  }
-}
-function join(strings, separator) {
-  if (strings instanceof Empty) {
-    return "";
-  } else {
-    let first$1 = strings.head;
-    let rest = strings.tail;
-    return join_loop(rest, separator, first$1);
-  }
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
-var Decoder = class extends CustomType {
-  constructor(function$) {
-    super();
-    this.function = function$;
-  }
-};
-function run(data, decoder) {
-  let $ = decoder.function(data);
-  let maybe_invalid_data = $[0];
-  let errors = $[1];
-  if (errors instanceof Empty) {
-    return new Ok(maybe_invalid_data);
-  } else {
-    return new Error(errors);
-  }
-}
-function success(data) {
-  return new Decoder((_) => {
-    return [data, toList([])];
-  });
-}
-function map2(decoder, transformer) {
-  return new Decoder(
-    (d) => {
-      let $ = decoder.function(d);
-      let data = $[0];
-      let errors = $[1];
-      return [transformer(data), errors];
-    }
-  );
-}
-
-// build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
-var Nil = void 0;
-var NOT_FOUND = {};
-function identity(x) {
-  return x;
-}
-function to_string(term) {
-  return term.toString();
-}
-function string_length(string5) {
-  if (string5 === "") {
-    return 0;
-  }
-  const iterator = graphemes_iterator(string5);
-  if (iterator) {
-    let i = 0;
-    for (const _ of iterator) {
-      i++;
-    }
-    return i;
-  } else {
-    return string5.match(/./gsu).length;
-  }
-}
-var segmenter = void 0;
-function graphemes_iterator(string5) {
-  if (globalThis.Intl && Intl.Segmenter) {
-    segmenter ||= new Intl.Segmenter();
-    return segmenter.segment(string5)[Symbol.iterator]();
-  }
-}
-function string_slice(string5, idx, len) {
-  if (len <= 0 || idx >= string5.length) {
-    return "";
-  }
-  const iterator = graphemes_iterator(string5);
-  if (iterator) {
-    while (idx-- > 0) {
-      iterator.next();
-    }
-    let result = "";
-    while (len-- > 0) {
-      const v = iterator.next().value;
-      if (v === void 0) {
-        break;
-      }
-      result += v.segment;
-    }
-    return result;
-  } else {
-    return string5.match(/./gsu).slice(idx, idx + len).join("");
-  }
-}
-function starts_with(haystack, needle) {
-  return haystack.startsWith(needle);
-}
-var unicode_whitespaces = [
-  " ",
-  // Space
-  "	",
-  // Horizontal tab
-  "\n",
-  // Line feed
-  "\v",
-  // Vertical tab
-  "\f",
-  // Form feed
-  "\r",
-  // Carriage return
-  "\x85",
-  // Next line
-  "\u2028",
-  // Line separator
-  "\u2029"
-  // Paragraph separator
-].join("");
-var trim_start_regex = /* @__PURE__ */ new RegExp(
-  `^[${unicode_whitespaces}]*`
-);
-var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
-function round(float2) {
-  return Math.round(float2);
-}
-function random_uniform() {
-  const random_uniform_result = Math.random();
-  if (random_uniform_result === 1) {
-    return random_uniform();
-  }
-  return random_uniform_result;
-}
-function new_map() {
-  return Dict.new();
-}
-function map_get(map4, key) {
-  const value = map4.get(key, NOT_FOUND);
-  if (value === NOT_FOUND) {
-    return new Error(Nil);
-  }
-  return new Ok(value);
-}
-function map_insert(key, value, map4) {
-  return map4.set(key, value);
-}
-
 // build/dev/javascript/gleam_stdlib/gleam/dict.mjs
 function insert(dict2, key, value) {
   return map_insert(key, value, dict2);
@@ -1369,7 +1117,7 @@ function length_loop(loop$list, loop$count) {
     }
   }
 }
-function length2(list4) {
+function length(list4) {
   return length_loop(list4, 0);
 }
 function count_loop(loop$list, loop$predicate, loop$acc) {
@@ -1417,6 +1165,14 @@ function reverse(list4) {
 }
 function is_empty(list4) {
   return isEqual(list4, toList([]));
+}
+function first(list4) {
+  if (list4 instanceof Empty) {
+    return new Error(void 0);
+  } else {
+    let first$1 = list4.head;
+    return new Ok(first$1);
+  }
 }
 function map_loop(loop$list, loop$fun, loop$acc) {
   while (true) {
@@ -1503,22 +1259,22 @@ function take(list4, n) {
 }
 function append_loop(loop$first, loop$second) {
   while (true) {
-    let first = loop$first;
+    let first2 = loop$first;
     let second = loop$second;
-    if (first instanceof Empty) {
+    if (first2 instanceof Empty) {
       return second;
     } else {
-      let first$1 = first.head;
-      let rest$1 = first.tail;
+      let first$1 = first2.head;
+      let rest$1 = first2.tail;
       loop$first = rest$1;
       loop$second = prepend(first$1, second);
     }
   }
 }
-function append2(first, second) {
-  return append_loop(reverse(first), second);
+function append(first2, second) {
+  return append_loop(reverse(first2), second);
 }
-function fold2(loop$list, loop$initial, loop$fun) {
+function fold(loop$list, loop$initial, loop$fun) {
   while (true) {
     let list4 = loop$list;
     let initial = loop$initial;
@@ -1933,7 +1689,7 @@ function do_shuffle_by_pair_indexes(list_of_pairs) {
 }
 function shuffle(list4) {
   let _pipe = list4;
-  let _pipe$1 = fold2(
+  let _pipe$1 = fold(
     _pipe,
     toList([]),
     (acc, a) => {
@@ -1942,6 +1698,258 @@ function shuffle(list4) {
   );
   let _pipe$2 = do_shuffle_by_pair_indexes(_pipe$1);
   return shuffle_pair_unwrap_loop(_pipe$2, toList([]));
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function slice(string5, idx, len) {
+  let $ = len < 0;
+  if ($) {
+    return "";
+  } else {
+    let $1 = idx < 0;
+    if ($1) {
+      let translated_idx = string_length(string5) + idx;
+      let $2 = translated_idx < 0;
+      if ($2) {
+        return "";
+      } else {
+        return string_slice(string5, translated_idx, len);
+      }
+    } else {
+      return string_slice(string5, idx, len);
+    }
+  }
+}
+function concat_loop(loop$strings, loop$accumulator) {
+  while (true) {
+    let strings = loop$strings;
+    let accumulator = loop$accumulator;
+    if (strings instanceof Empty) {
+      return accumulator;
+    } else {
+      let string5 = strings.head;
+      let strings$1 = strings.tail;
+      loop$strings = strings$1;
+      loop$accumulator = accumulator + string5;
+    }
+  }
+}
+function concat2(strings) {
+  return concat_loop(strings, "");
+}
+function join_loop(loop$strings, loop$separator, loop$accumulator) {
+  while (true) {
+    let strings = loop$strings;
+    let separator = loop$separator;
+    let accumulator = loop$accumulator;
+    if (strings instanceof Empty) {
+      return accumulator;
+    } else {
+      let string5 = strings.head;
+      let strings$1 = strings.tail;
+      loop$strings = strings$1;
+      loop$separator = separator;
+      loop$accumulator = accumulator + separator + string5;
+    }
+  }
+}
+function join(strings, separator) {
+  if (strings instanceof Empty) {
+    return "";
+  } else {
+    let first$1 = strings.head;
+    let rest = strings.tail;
+    return join_loop(rest, separator, first$1);
+  }
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
+var Decoder = class extends CustomType {
+  constructor(function$) {
+    super();
+    this.function = function$;
+  }
+};
+function run(data, decoder) {
+  let $ = decoder.function(data);
+  let maybe_invalid_data = $[0];
+  let errors = $[1];
+  if (errors instanceof Empty) {
+    return new Ok(maybe_invalid_data);
+  } else {
+    return new Error(errors);
+  }
+}
+function success(data) {
+  return new Decoder((_) => {
+    return [data, toList([])];
+  });
+}
+function map2(decoder, transformer) {
+  return new Decoder(
+    (d) => {
+      let $ = decoder.function(d);
+      let data = $[0];
+      let errors = $[1];
+      return [transformer(data), errors];
+    }
+  );
+}
+
+// build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
+var Nil = void 0;
+var NOT_FOUND = {};
+function identity(x) {
+  return x;
+}
+function to_string(term) {
+  return term.toString();
+}
+function string_length(string5) {
+  if (string5 === "") {
+    return 0;
+  }
+  const iterator = graphemes_iterator(string5);
+  if (iterator) {
+    let i = 0;
+    for (const _ of iterator) {
+      i++;
+    }
+    return i;
+  } else {
+    return string5.match(/./gsu).length;
+  }
+}
+var segmenter = void 0;
+function graphemes_iterator(string5) {
+  if (globalThis.Intl && Intl.Segmenter) {
+    segmenter ||= new Intl.Segmenter();
+    return segmenter.segment(string5)[Symbol.iterator]();
+  }
+}
+function string_slice(string5, idx, len) {
+  if (len <= 0 || idx >= string5.length) {
+    return "";
+  }
+  const iterator = graphemes_iterator(string5);
+  if (iterator) {
+    while (idx-- > 0) {
+      iterator.next();
+    }
+    let result = "";
+    while (len-- > 0) {
+      const v = iterator.next().value;
+      if (v === void 0) {
+        break;
+      }
+      result += v.segment;
+    }
+    return result;
+  } else {
+    return string5.match(/./gsu).slice(idx, idx + len).join("");
+  }
+}
+function starts_with(haystack, needle) {
+  return haystack.startsWith(needle);
+}
+var unicode_whitespaces = [
+  " ",
+  // Space
+  "	",
+  // Horizontal tab
+  "\n",
+  // Line feed
+  "\v",
+  // Vertical tab
+  "\f",
+  // Form feed
+  "\r",
+  // Carriage return
+  "\x85",
+  // Next line
+  "\u2028",
+  // Line separator
+  "\u2029"
+  // Paragraph separator
+].join("");
+var trim_start_regex = /* @__PURE__ */ new RegExp(
+  `^[${unicode_whitespaces}]*`
+);
+var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
+function round2(float2) {
+  return Math.round(float2);
+}
+function random_uniform() {
+  const random_uniform_result = Math.random();
+  if (random_uniform_result === 1) {
+    return random_uniform();
+  }
+  return random_uniform_result;
+}
+function new_map() {
+  return Dict.new();
+}
+function map_get(map4, key) {
+  const value = map4.get(key, NOT_FOUND);
+  if (value === NOT_FOUND) {
+    return new Error(Nil);
+  }
+  return new Ok(value);
+}
+function map_insert(key, value, map4) {
+  return map4.set(key, value);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/float.mjs
+function compare(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
+}
+function negate(x) {
+  return -1 * x;
+}
+function round(x) {
+  let $ = x >= 0;
+  if ($) {
+    return round2(x);
+  } else {
+    return 0 - round2(negate(x));
+  }
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function compare2(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
+}
+function min(a, b) {
+  let $ = a < b;
+  if ($) {
+    return a;
+  } else {
+    return b;
+  }
+}
+function add2(a, b) {
+  return a + b;
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -3272,12 +3280,12 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             if ($2) {
               let remove_from = node_index$1 + next_count - moved_offset;
               let patch = remove2(remove_from, child.patch.removed);
-              _block = append2(
+              _block = append(
                 child.patch.changes,
                 prepend(patch, changes)
               );
             } else {
-              _block = append2(child.patch.changes, changes);
+              _block = append(child.patch.changes, changes);
             }
             let changes$1 = _block;
             loop$old = old$1;
@@ -4358,7 +4366,7 @@ function listAppend(a, b) {
   } else if (b instanceof Empty) {
     return a;
   } else {
-    return append2(a, b);
+    return append(a, b);
   }
 }
 
@@ -4398,7 +4406,7 @@ function remove_event(events, path, name) {
   );
 }
 function remove_attributes(handlers, path, attributes) {
-  return fold2(
+  return fold(
     attributes,
     handlers,
     (events, attribute3) => {
@@ -4452,7 +4460,7 @@ function add_event(events, mapper, path, name, handler) {
   );
 }
 function add_attributes(handlers, mapper, path, attributes) {
-  return fold2(
+  return fold(
     attributes,
     handlers,
     (events, attribute3) => {
@@ -4741,7 +4749,7 @@ function new$6(options) {
     option_none,
     option_none
   );
-  return fold2(
+  return fold(
     options,
     init2,
     (config, option) => {
@@ -4852,6 +4860,8 @@ var Multiplier = class extends CustomType {
 };
 var Choice = class extends CustomType {
 };
+var Gamble = class extends CustomType {
+};
 var MainMenu = class extends CustomType {
 };
 var Playing = class extends CustomType {
@@ -4868,8 +4878,14 @@ var InTestingGrounds = class extends CustomType {
 };
 var ChoosingOrb = class extends CustomType {
 };
+var GamblingChoice = class extends CustomType {
+};
+var ViewingGambleResults = class extends CustomType {
+};
+var ApplyingGambleOrbs = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence, pending_choice) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index) {
     super();
     this.health = health;
     this.points = points;
@@ -4889,6 +4905,9 @@ var Model = class extends CustomType {
     this.log_entries = log_entries;
     this.log_sequence = log_sequence;
     this.pending_choice = pending_choice;
+    this.pending_gamble = pending_gamble;
+    this.gamble_orbs = gamble_orbs;
+    this.gamble_current_index = gamble_current_index;
   }
 };
 var StartNewGame = class extends CustomType {
@@ -4928,6 +4947,12 @@ var ToggleDevMode = class extends CustomType {
 var SelectFirstChoice = class extends CustomType {
 };
 var SelectSecondChoice = class extends CustomType {
+};
+var AcceptGamble = class extends CustomType {
+};
+var DeclineGamble = class extends CustomType {
+};
+var NextGambleOrb = class extends CustomType {
 };
 var ExitTestingGrounds = class extends CustomType {
 };
@@ -5028,6 +5053,7 @@ function create_level_bag(loop$level) {
     let level = loop$level;
     if (level === 1) {
       return toList([
+        new Gamble(),
         new Choice(),
         new Point(8),
         new Point(10),
@@ -5114,7 +5140,7 @@ function create_level_bag(loop$level) {
         new Health(3),
         new Collector(),
         new Survivor(),
-        new Choice()
+        new Gamble()
       ]);
     } else {
       loop$level = 5;
@@ -5197,7 +5223,7 @@ function get_orb_result_message(orb, model) {
       value
     ) + " SYS";
   } else if (orb instanceof Collector) {
-    let base_points = length2(model.bag);
+    let base_points = length(model.bag);
     let multiplied_points = base_points * model.current_multiplier;
     let $ = model.current_multiplier > 1;
     if ($) {
@@ -5220,8 +5246,10 @@ function get_orb_result_message(orb, model) {
     }
   } else if (orb instanceof Multiplier) {
     return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
-  } else {
+  } else if (orb instanceof Choice) {
     return "\u25C6 CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]";
+  } else {
+    return "\u{1F3B2} GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]";
   }
 }
 function get_orb_result_color(orb) {
@@ -5237,9 +5265,37 @@ function get_orb_result_color(orb) {
     return "purple";
   } else if (orb instanceof Multiplier) {
     return "yellow";
-  } else {
+  } else if (orb instanceof Choice) {
     return "orange";
+  } else {
+    return "red";
   }
+}
+function handle_gamble_orb(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new GamblingChoice(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    _record.dev_mode,
+    _record.testing_config,
+    _record.testing_mode,
+    _record.testing_stats,
+    _record.log_entries,
+    _record.log_sequence,
+    _record.pending_choice,
+    new Some(true),
+    _record.gamble_orbs,
+    _record.gamble_current_index
+  );
 }
 function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_choice_orbs, loop$first_orb, loop$original_choice_orbs) {
   while (true) {
@@ -5255,7 +5311,7 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         _record.points,
         _record.level,
         _record.milestone,
-        append2(original_choice_orbs, more_choice_orbs),
+        append(original_choice_orbs, more_choice_orbs),
         new ChoosingOrb(),
         _record.last_orb,
         _record.bombs_pulled_this_level,
@@ -5268,7 +5324,10 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
-        new Some([first_orb, first_orb])
+        new Some([first_orb, first_orb]),
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index
       );
     } else {
       let $ = remaining_bag.head;
@@ -5276,7 +5335,7 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         let rest = remaining_bag.tail;
         loop$model = model;
         loop$remaining_bag = rest;
-        loop$more_choice_orbs = append2(
+        loop$more_choice_orbs = append(
           more_choice_orbs,
           toList([new Choice()])
         );
@@ -5291,8 +5350,8 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
           _record.points,
           _record.level,
           _record.milestone,
-          append2(
-            append2(rest, original_choice_orbs),
+          append(
+            append(rest, original_choice_orbs),
             more_choice_orbs
           ),
           new ChoosingOrb(),
@@ -5307,7 +5366,10 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
           _record.testing_stats,
           _record.log_entries,
           _record.log_sequence,
-          new Some([first_orb, second_orb])
+          new Some([first_orb, second_orb]),
+          _record.pending_gamble,
+          _record.gamble_orbs,
+          _record.gamble_current_index
         );
       }
     }
@@ -5338,7 +5400,10 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
         _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
-        _record.pending_choice
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index
       );
     } else {
       let $ = remaining_bag.head;
@@ -5346,7 +5411,7 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
         let rest = remaining_bag.tail;
         loop$model = model;
         loop$remaining_bag = rest;
-        loop$choice_orbs_found = append2(
+        loop$choice_orbs_found = append(
           choice_orbs_found,
           toList([new Choice()])
         );
@@ -5373,7 +5438,10 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
             _record.testing_stats,
             _record.log_entries,
             _record.log_sequence,
-            new Some([single_orb, single_orb])
+            new Some([single_orb, single_orb]),
+            _record.pending_gamble,
+            _record.gamble_orbs,
+            _record.gamble_current_index
           );
         } else {
           let $2 = $1.head;
@@ -5397,7 +5465,7 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
               _record.points,
               _record.level,
               _record.milestone,
-              append2(rest, choice_orbs_found),
+              append(rest, choice_orbs_found),
               new ChoosingOrb(),
               _record.last_orb,
               _record.bombs_pulled_this_level,
@@ -5410,7 +5478,10 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
               _record.testing_stats,
               _record.log_entries,
               _record.log_sequence,
-              new Some([first_orb, second_orb])
+              new Some([first_orb, second_orb]),
+              _record.pending_gamble,
+              _record.gamble_orbs,
+              _record.gamble_current_index
             );
           }
         }
@@ -5445,7 +5516,10 @@ function handle_choice_orb(model) {
         _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
-        new Some([single_orb, single_orb])
+        new Some([single_orb, single_orb]),
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index
       );
     } else {
       return draw_two_non_choice_orbs(model, model.bag, toList([]));
@@ -5474,7 +5548,10 @@ function apply_orb_effect(orb, model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
@@ -5498,7 +5575,10 @@ function apply_orb_effect(orb, model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
@@ -5522,10 +5602,13 @@ function apply_orb_effect(orb, model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (orb instanceof Collector) {
-    let remaining_orbs = length2(model.bag) - 1;
+    let remaining_orbs = length(model.bag) - 1;
     let collector_points = remaining_orbs * model.current_multiplier;
     let _record = model;
     return new Model(
@@ -5546,7 +5629,10 @@ function apply_orb_effect(orb, model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (orb instanceof Survivor) {
     let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
@@ -5569,7 +5655,10 @@ function apply_orb_effect(orb, model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (orb instanceof Multiplier) {
     let new_multiplier = model.current_multiplier * 2;
@@ -5592,10 +5681,15 @@ function apply_orb_effect(orb, model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
-  } else {
+  } else if (orb instanceof Choice) {
     return handle_choice_orb(model);
+  } else {
+    return handle_gamble_orb(model);
   }
 }
 function get_orb_name(orb) {
@@ -5614,8 +5708,10 @@ function get_orb_name(orb) {
     return "Analyzer Sample";
   } else if (orb instanceof Multiplier) {
     return "Amplifier Sample";
-  } else {
+  } else if (orb instanceof Choice) {
     return "Choice Sample";
+  } else {
+    return "Gamble Sample";
   }
 }
 
@@ -5647,6 +5743,11 @@ function get_market_items() {
       new Choice(),
       50,
       "Choice protocol - select optimal sample from two"
+    ),
+    new MarketItem(
+      new Gamble(),
+      75,
+      "High risk gamble - draw 5 orbs with point boost"
     )
   ]);
 }
@@ -5683,7 +5784,10 @@ function purchase_orb(model, orb) {
         _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
-        _record.pending_choice
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index
       );
     } else {
       return model;
@@ -5851,6 +5955,8 @@ function apply_orb_simulation(orb, health, points, multiplier, bombs_hit) {
   } else if (orb instanceof Multiplier) {
     let new_multiplier = multiplier * 2;
     return [health, points, new_multiplier, bombs_hit];
+  } else if (orb instanceof Choice) {
+    return [health, points, multiplier, bombs_hit];
   } else {
     return [health, points, multiplier, bombs_hit];
   }
@@ -5925,7 +6031,7 @@ function run_single_simulation(config) {
   );
 }
 function calculate_stats(results) {
-  let total_runs = length2(results);
+  let total_runs = length(results);
   let wins = count(results, (result) => {
     return result.won;
   });
@@ -5947,7 +6053,7 @@ function calculate_stats(results) {
   let _block$1;
   let $1 = total_runs > 0;
   if ($1) {
-    let total_points = fold2(point_values, 0, add);
+    let total_points = fold(point_values, 0, add2);
     _block$1 = divideFloat(
       identity(total_points),
       identity(total_runs)
@@ -6236,13 +6342,21 @@ function get_orb_box_style(orb) {
       "text-indigo-700",
       "\u2731"
     );
-  } else {
+  } else if (orb instanceof Choice) {
     return new OrbBoxStyle(
       "bg-white",
       "border-orange-200",
       "text-orange-600",
       "text-orange-700",
       "\u25C6"
+    );
+  } else {
+    return new OrbBoxStyle(
+      "bg-white",
+      "border-red-200",
+      "text-red-600",
+      "text-red-700",
+      "\u{1F3B2}"
     );
   }
 }
@@ -6301,7 +6415,7 @@ function view_recent_orb_panel(model) {
   );
 }
 function view_bag_info(model) {
-  let orbs_left = length2(model.bag);
+  let orbs_left = length(model.bag);
   return div(
     toList([
       class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
@@ -6384,6 +6498,168 @@ function view_game_toggles(model) {
     toList([
       view_shuffle_toggle_button(model),
       view_dev_mode_toggle_button(model)
+    ])
+  );
+}
+function view_gambling_choice_state(_) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$("mb-6 p-6 bg-red-50 border border-red-200 rounded")
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("GAMBLE PROTOCOL ACTIVATED")])
+          ),
+          p(
+            toList([class$("text-red-700 text-sm font-light mb-4")]),
+            toList([
+              text3(
+                "Draw 5 orbs simultaneously. Point orbs get 2X multiplier. High risk, high reward."
+              )
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("space-y-3")]),
+        toList([
+          button(
+            toList([
+              class$(
+                "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new AcceptGamble())
+            ]),
+            toList([text3("ACCEPT GAMBLE")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new DeclineGamble())
+            ]),
+            toList([text3("DECLINE GAMBLE")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view_gamble_results_state(model) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$("mb-6 p-6 bg-red-50 border border-red-200 rounded")
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("GAMBLE RESULTS")])
+          ),
+          p(
+            toList([class$("text-red-700 text-sm font-light mb-4")]),
+            toList([
+              text3(
+                "5 orbs drawn. Click 'Start Applying' to apply effects one by one."
+              )
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("grid grid-cols-5 gap-2 mb-6")]),
+        map(
+          model.gamble_orbs,
+          (orb) => {
+            return view_orb_box(new Some(orb));
+          }
+        )
+      ),
+      button(
+        toList([
+          class$(
+            "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          ),
+          on_click(new NextGambleOrb())
+        ]),
+        toList([text3("START APPLYING EFFECTS")])
+      )
+    ])
+  );
+}
+function view_applying_gamble_orbs_state(model) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$("mb-6 p-6 bg-red-50 border border-red-200 rounded")
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("APPLYING GAMBLE EFFECTS")])
+          ),
+          p(
+            toList([class$("text-red-700 text-sm font-light mb-4")]),
+            toList([
+              text3(
+                "Orb " + to_string(model.gamble_current_index + 1) + " of " + to_string(
+                  length(model.gamble_orbs)
+                )
+              )
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("grid grid-cols-5 gap-2 mb-6")]),
+        index_map(
+          model.gamble_orbs,
+          (orb, index3) => {
+            let _block;
+            let $ = index3 <= model.gamble_current_index;
+            if ($) {
+              _block = toList([class$("opacity-50")]);
+            } else {
+              _block = toList([]);
+            }
+            let style2 = _block;
+            return div(
+              style2,
+              toList([view_orb_box(new Some(orb))])
+            );
+          }
+        )
+      ),
+      button(
+        toList([
+          class$(
+            "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          ),
+          on_click(new NextGambleOrb())
+        ]),
+        toList([text3("NEXT ORB")])
+      )
     ])
   );
 }
@@ -7089,7 +7365,7 @@ function generate_insights(stats) {
   let win_rate_insight = _block;
   let _block$1;
   let $1 = stats.average_points >= identity(
-    round2(identity(stats.best_score) * 0.7)
+    round(identity(stats.best_score) * 0.7)
   );
   if ($1) {
     _block$1 = "Consistent scoring with good point generation.";
@@ -7139,11 +7415,11 @@ function view_performance_insights(stats) {
 }
 function view_comprehensive_stats(stats) {
   let win_rate_percent = (() => {
-    let _pipe2 = round2(stats.win_rate * 100);
+    let _pipe2 = round(stats.win_rate * 100);
     return to_string(_pipe2);
   })() + "%";
   let _block;
-  let _pipe = round2(stats.average_points);
+  let _pipe = round(stats.average_points);
   _block = to_string(_pipe);
   let avg_points = _block;
   return div(
@@ -7316,7 +7592,8 @@ function view_orb_selector() {
     new Collector(),
     new Survivor(),
     new Multiplier(),
-    new Choice()
+    new Choice(),
+    new Gamble()
   ]);
   return div(
     toList([]),
@@ -7361,7 +7638,7 @@ function view_test_bag_builder(config) {
             toList([
               text3(
                 "Samples in container: " + to_string(
-                  length2(config.test_bag)
+                  length(config.test_bag)
                 )
               )
             ])
@@ -7601,8 +7878,14 @@ function view_game_content(model) {
     return view_marketplace(model);
   } else if ($ instanceof InTestingGrounds) {
     return view_testing_grounds(model);
-  } else {
+  } else if ($ instanceof ChoosingOrb) {
     return view_choosing_orb_state(model);
+  } else if ($ instanceof GamblingChoice) {
+    return view_gambling_choice_state(model);
+  } else if ($ instanceof ViewingGambleResults) {
+    return view_gamble_results_state(model);
+  } else {
+    return view_applying_gamble_orbs_state(model);
   }
 }
 function view_game_card(model) {
@@ -7664,7 +7947,10 @@ function init(_) {
     new None(),
     toList([]),
     0,
-    new None()
+    new None(),
+    new None(),
+    toList([]),
+    0
   );
 }
 function handle_next_level(model) {
@@ -7696,7 +7982,10 @@ function handle_next_level(model) {
     model.testing_stats,
     toList([]),
     0,
-    new None()
+    new None(),
+    new None(),
+    toList([]),
+    0
   );
 }
 function handle_enter_testing_grounds(model) {
@@ -7719,7 +8008,10 @@ function handle_enter_testing_grounds(model) {
     new None(),
     _record.log_entries,
     _record.log_sequence,
-    _record.pending_choice
+    _record.pending_choice,
+    _record.pending_gamble,
+    _record.gamble_orbs,
+    _record.gamble_current_index
   );
 }
 function handle_add_test_orb(model, orb) {
@@ -7754,7 +8046,10 @@ function handle_add_test_orb(model, orb) {
       _record$1.testing_stats,
       _record$1.log_entries,
       _record$1.log_sequence,
-      _record$1.pending_choice
+      _record$1.pending_choice,
+      _record$1.pending_gamble,
+      _record$1.gamble_orbs,
+      _record$1.gamble_current_index
     );
   } else {
     return model;
@@ -7766,7 +8061,7 @@ function handle_remove_test_orb(model, index3) {
     let config = $[0];
     let before = take(config.test_bag, index3);
     let after = drop(config.test_bag, index3 + 1);
-    let new_bag = append2(before, after);
+    let new_bag = append(before, after);
     let _block;
     let _record = config;
     _block = new TestingConfiguration(
@@ -7795,7 +8090,10 @@ function handle_remove_test_orb(model, index3) {
       _record$1.testing_stats,
       _record$1.log_entries,
       _record$1.log_sequence,
-      _record$1.pending_choice
+      _record$1.pending_choice,
+      _record$1.pending_gamble,
+      _record$1.gamble_orbs,
+      _record$1.gamble_current_index
     );
   } else {
     return model;
@@ -7833,7 +8131,10 @@ function handle_set_test_milestone(model, milestone) {
       _record$1.testing_stats,
       _record$1.log_entries,
       _record$1.log_sequence,
-      _record$1.pending_choice
+      _record$1.pending_choice,
+      _record$1.pending_gamble,
+      _record$1.gamble_orbs,
+      _record$1.gamble_current_index
     );
   } else {
     return model;
@@ -7871,7 +8172,10 @@ function handle_set_test_health(model, health) {
       _record$1.testing_stats,
       _record$1.log_entries,
       _record$1.log_sequence,
-      _record$1.pending_choice
+      _record$1.pending_choice,
+      _record$1.pending_gamble,
+      _record$1.gamble_orbs,
+      _record$1.gamble_current_index
     );
   } else {
     return model;
@@ -7909,7 +8213,10 @@ function handle_set_simulation_count(model, count2) {
       _record$1.testing_stats,
       _record$1.log_entries,
       _record$1.log_sequence,
-      _record$1.pending_choice
+      _record$1.pending_choice,
+      _record$1.pending_gamble,
+      _record$1.gamble_orbs,
+      _record$1.gamble_current_index
     );
   } else {
     return model;
@@ -7939,7 +8246,10 @@ function handle_start_simulations(model) {
       new Some(stats),
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else {
     return model;
@@ -7965,7 +8275,10 @@ function handle_view_test_results(model) {
     _record.testing_stats,
     _record.log_entries,
     _record.log_sequence,
-    _record.pending_choice
+    _record.pending_choice,
+    _record.pending_gamble,
+    _record.gamble_orbs,
+    _record.gamble_current_index
   );
 }
 function handle_reset_test_config(model) {
@@ -7988,7 +8301,10 @@ function handle_reset_test_config(model) {
     new None(),
     _record.log_entries,
     _record.log_sequence,
-    _record.pending_choice
+    _record.pending_choice,
+    _record.pending_gamble,
+    _record.gamble_orbs,
+    _record.gamble_current_index
   );
 }
 function start_new_game() {
@@ -8011,7 +8327,10 @@ function start_new_game() {
     new None(),
     toList([]),
     0,
-    new None()
+    new None(),
+    new None(),
+    toList([]),
+    0
   );
 }
 function restart_current_level(model) {
@@ -8042,7 +8361,10 @@ function restart_current_level(model) {
     model.testing_stats,
     toList([]),
     0,
-    new None()
+    new None(),
+    new None(),
+    toList([]),
+    0
   );
 }
 function handle_toggle_shuffle(model) {
@@ -8069,7 +8391,10 @@ function handle_toggle_shuffle(model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else {
     let _record = model;
@@ -8091,8 +8416,255 @@ function handle_toggle_shuffle(model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
+  }
+}
+function handle_accept_gamble(model) {
+  let gamble_orbs = take(model.bag, 5);
+  let remaining_bag = drop(model.bag, 5);
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    remaining_bag,
+    new ViewingGambleResults(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    _record.dev_mode,
+    _record.testing_config,
+    _record.testing_mode,
+    _record.testing_stats,
+    _record.log_entries,
+    _record.log_sequence,
+    _record.pending_choice,
+    new None(),
+    gamble_orbs,
+    0
+  );
+}
+function handle_decline_gamble(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new Playing(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    _record.dev_mode,
+    _record.testing_config,
+    _record.testing_mode,
+    _record.testing_stats,
+    _record.log_entries,
+    _record.log_sequence,
+    _record.pending_choice,
+    new None(),
+    _record.gamble_orbs,
+    _record.gamble_current_index
+  );
+}
+function apply_gamble_orb_effect(orb, model) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    let _record = model;
+    return new Model(
+      model.health - damage,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      model.bombs_pulled_this_level + 1,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let gamble_points = value * 2 * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + gamble_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    let new_health = min(5, model.health + value);
+    let _record = model;
+    return new Model(
+      new_health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else if (orb instanceof Collector) {
+    let remaining_orbs = length(model.bag);
+    let collector_points = remaining_orbs * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + collector_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else if (orb instanceof Survivor) {
+    let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + survivor_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else if (orb instanceof Multiplier) {
+    let new_multiplier = model.current_multiplier * 2;
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      new_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else if (orb instanceof Choice) {
+    let gamble_points = 5 * 2 * model.current_multiplier;
+    let _record = model;
+    return new Model(
+      _record.health,
+      model.points + gamble_points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+  } else {
+    return model;
   }
 }
 function check_game_status(model) {
@@ -8118,7 +8690,10 @@ function check_game_status(model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if ($1) {
     let _record = model;
@@ -8140,7 +8715,10 @@ function check_game_status(model) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else {
     return model;
@@ -8183,7 +8761,10 @@ function handle_pull_orb(model) {
         _record.testing_stats,
         prepend(new_log_entry, model.log_entries),
         new_sequence,
-        _record.pending_choice
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index
       );
       let updated_model = _block;
       return check_game_status(updated_model);
@@ -8219,7 +8800,7 @@ function handle_choice_selection(model, select_first) {
     if ($2) {
       _block$1 = after_effect.bag;
     } else {
-      _block$1 = append2(after_effect.bag, toList([unchosen_orb]));
+      _block$1 = append(after_effect.bag, toList([unchosen_orb]));
     }
     let new_bag = _block$1;
     let _block$2;
@@ -8242,10 +8823,171 @@ function handle_choice_selection(model, select_first) {
       _record.testing_stats,
       prepend(new_log_entry, model.log_entries),
       new_sequence,
-      new None()
+      new None(),
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
     let updated_model = _block$2;
     return check_game_status(updated_model);
+  } else {
+    return model;
+  }
+}
+function apply_current_gamble_orb(model) {
+  let $ = first(drop(model.gamble_orbs, model.gamble_current_index));
+  if ($ instanceof Ok) {
+    let orb = $[0];
+    let modified_model = apply_gamble_orb_effect(orb, model);
+    let new_sequence = model.log_sequence + 1;
+    let log_message = get_orb_result_message(orb, modified_model);
+    let new_log_entry = new LogEntry(new_sequence, orb, log_message);
+    let _block;
+    let _record = modified_model;
+    _block = new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      prepend(new_log_entry, model.log_entries),
+      new_sequence,
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
+    );
+    let updated_model = _block;
+    return check_game_status(updated_model);
+  } else {
+    return model;
+  }
+}
+function handle_next_gamble_orb(model) {
+  let $ = model.status;
+  if ($ instanceof ViewingGambleResults) {
+    let $1 = model.gamble_orbs;
+    if ($1 instanceof Empty) {
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        new Playing(),
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        _record.gamble_current_index
+      );
+    } else {
+      let _block;
+      let _record = model;
+      _block = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        new ApplyingGambleOrbs(),
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        0
+      );
+      let updated_model = _block;
+      return apply_current_gamble_orb(updated_model);
+    }
+  } else if ($ instanceof ApplyingGambleOrbs) {
+    let next_index = model.gamble_current_index + 1;
+    let $1 = next_index >= length(model.gamble_orbs);
+    if ($1) {
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        new Playing(),
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        _record.pending_choice,
+        _record.pending_gamble,
+        toList([]),
+        0
+      );
+    } else {
+      let _block;
+      let _record = model;
+      _block = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        _record.status,
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        _record.pending_choice,
+        _record.pending_gamble,
+        _record.gamble_orbs,
+        next_index
+      );
+      let updated_model = _block;
+      return apply_current_gamble_orb(updated_model);
+    }
   } else {
     return model;
   }
@@ -8273,7 +9015,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof ShowHowToPlay) {
     return model;
@@ -8299,7 +9044,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof ResumeGame) {
     let _record = model;
@@ -8321,7 +9069,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
@@ -8347,7 +9098,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof GoToMarketplace) {
     let _record = model;
@@ -8369,7 +9123,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof GoToTestingGrounds) {
     return handle_enter_testing_grounds(model);
@@ -8393,7 +9150,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
@@ -8420,12 +9180,21 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof SelectFirstChoice) {
     return handle_choice_selection(model, true);
   } else if (msg instanceof SelectSecondChoice) {
     return handle_choice_selection(model, false);
+  } else if (msg instanceof AcceptGamble) {
+    return handle_accept_gamble(model);
+  } else if (msg instanceof DeclineGamble) {
+    return handle_decline_gamble(model);
+  } else if (msg instanceof NextGambleOrb) {
+    return handle_next_gamble_orb(model);
   } else if (msg instanceof ExitTestingGrounds) {
     let _record = model;
     return new Model(
@@ -8446,7 +9215,10 @@ function update2(model, msg) {
       _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
-      _record.pending_choice
+      _record.pending_choice,
+      _record.pending_gamble,
+      _record.gamble_orbs,
+      _record.gamble_current_index
     );
   } else if (msg instanceof AddTestOrb) {
     let orb = msg[0];
@@ -8481,10 +9253,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      12,
+      13,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 688, end: 778, pattern_start: 699, pattern_end: 704 }
+      { value: $, start: 749, end: 839, pattern_start: 760, pattern_end: 765 }
     );
   }
   return void 0;

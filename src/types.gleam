@@ -8,6 +8,7 @@ pub type Orb {
   Survivor
   Multiplier
   Choice
+  Gamble
 }
 
 pub type GameStatus {
@@ -19,6 +20,9 @@ pub type GameStatus {
   InMarketplace
   InTestingGrounds
   ChoosingOrb
+  GamblingChoice
+  ViewingGambleResults
+  ApplyingGambleOrbs
 }
 
 pub type Model {
@@ -41,6 +45,9 @@ pub type Model {
     log_entries: List(LogEntry),
     log_sequence: Int,
     pending_choice: Option(#(Orb, Orb)),
+    pending_gamble: Option(Bool),
+    gamble_orbs: List(Orb),
+    gamble_current_index: Int,
   )
 }
 
@@ -75,6 +82,11 @@ pub type Msg {
   // Choice Orb Actions
   SelectFirstChoice
   SelectSecondChoice
+  
+  // Gamble Orb Actions
+  AcceptGamble
+  DeclineGamble
+  NextGambleOrb
   
   // Testing Grounds Actions
   ExitTestingGrounds

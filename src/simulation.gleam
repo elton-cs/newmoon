@@ -118,6 +118,12 @@ fn apply_orb_simulation(
       // we can't make choices, so it's essentially a no-op
       #(health, points, multiplier, bombs_hit)
     }
+    types.Gamble -> {
+      // For simulation purposes, Gamble orb has no direct effect
+      // In real gameplay it would trigger gamble choice, but in simulation
+      // we can't make choices, so it's essentially a no-op
+      #(health, points, multiplier, bombs_hit)
+    }
   }
 }
 
