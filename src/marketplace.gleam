@@ -6,18 +6,24 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import orb
-import types.{type MarketItem, type Model, type Msg, type Orb, Bomb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor}
+import types.{type MarketItem, type Model, type Msg, type Orb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor}
 
 pub fn get_market_items() -> List(MarketItem) {
   [
-    MarketItem(Point(5), 10, "Basic data packet - reliable points"),
-    MarketItem(Point(8), 15, "Advanced data packet - higher value"),
-    MarketItem(Health(2), 12, "Standard repair kit - moderate healing"),
-    MarketItem(Health(4), 20, "Enhanced repair kit - superior healing"),
-    MarketItem(Collector, 25, "Deep scanner - points for remaining orbs"),
-    MarketItem(Survivor, 30, "Damage analyzer - points for bombs survived"),
-    MarketItem(Multiplier, 35, "Signal amplifier - doubles point multiplier"),
-    MarketItem(Bomb(1), 5, "Minor explosive - low risk training"),
+    // Point orbs - direct scoring benefit
+    MarketItem(Point(8), 12, "Basic data packet - reliable points"),
+    MarketItem(Point(12), 18, "Advanced data packet - higher value"),
+    MarketItem(Point(15), 25, "Premium data packet - maximum value"),
+    
+    // Health orbs - safety and survival
+    MarketItem(Health(2), 15, "Standard repair kit - moderate healing"),
+    MarketItem(Health(4), 28, "Enhanced repair kit - superior healing"),
+    MarketItem(Health(5), 40, "Emergency repair kit - full restoration"),
+    
+    // Strategic orbs - high value, high cost
+    MarketItem(Collector, 30, "Deep scanner - points for remaining orbs"),
+    MarketItem(Survivor, 35, "Damage analyzer - points for bombs survived"),
+    MarketItem(Multiplier, 45, "Signal amplifier - doubles point multiplier"),
   ]
 }
 
@@ -103,7 +109,7 @@ fn view_market_item(model: Model, item: MarketItem) -> Element(Msg) {
       [
         attribute.class(
           string.concat([
-            "w-full py-2 px-4 rounded text-sm font-light transition transform hover:scale-[1.02] ",
+            "w-full py-4 px-6 rounded text-sm font-light transition transform hover:scale-[1.02] tracking-wider ",
             button_classes,
           ]),
         ),
