@@ -10,7 +10,7 @@ import lustre/event
 import marketplace
 import orb
 import types.{
-  type Model, type Msg, AddTestOrb, ConfiguringTest, ContinueGame,
+  type LogEntry, type Model, type Msg, AddTestOrb, ConfiguringTest, ContinueGame,
   ExitTestingGrounds, GameOver, GoToMainMenu, GoToMarketplace,
   GoToTestingGrounds, InMarketplace, InTestingGrounds, LevelComplete, MainMenu,
   NextLevel, PauseGame, Paused, Playing, PullOrb, RemoveTestOrb, ResetTestConfig,
@@ -186,6 +186,7 @@ fn view_playing_state(model: Model) -> Element(Msg) {
     view_pause_button(),
     view_bag_info(model),
     view_game_toggles(model),
+    view_extraction_log(model),
     view_pull_orb_button(model),
   ])
 }
@@ -380,6 +381,61 @@ fn view_dev_mode_toggle_button(model: Model) -> Element(Msg) {
     ],
     [html.text(toggle_text)],
   )
+}
+
+fn view_extraction_log(model: Model) -> Element(Msg) {
+  case list.is_empty(model.log_entries) {
+    True -> html.div([], [])
+    False ->
+      html.div([attribute.class("mb-4")], [
+        view_log_header(),
+        view_log_entries(model.log_entries),
+      ])
+  }
+}
+
+fn view_log_header() -> Element(Msg) {
+  html.div([attribute.class("mb-2")], [
+    html.h3([attribute.class("text-xs font-medium text-gray-600 uppercase tracking-wider")], [
+      html.text("EXTRACTION LOG"),
+    ]),
+  ])
+}
+
+fn view_log_entries(entries: List(LogEntry)) -> Element(Msg) {
+  let visible_entries = list.take(entries, 4) // Show last 4 entries
+  
+  html.div(
+    [attribute.class("bg-gray-50 border border-gray-200 rounded p-3 max-h-20 overflow-y-auto")],
+    [
+      html.div(
+        [attribute.class("space-y-1")],
+        list.map(visible_entries, view_log_entry),
+      ),
+    ],
+  )
+}
+
+fn view_log_entry(entry: LogEntry) -> Element(Msg) {
+  let orb_color = orb.get_orb_result_color(entry.orb)
+  let text_color_class = case orb_color {
+    "gray" -> "text-gray-700"
+    "green" -> "text-green-700"
+    "blue" -> "text-blue-700"
+    "purple" -> "text-purple-700"
+    "yellow" -> "text-yellow-700"
+    _ -> "text-red-700"
+  }
+
+  html.div([attribute.class("text-xs")], [
+    html.span([attribute.class("text-gray-500 mr-2")], [
+      html.text("#" <> int.to_string(entry.sequence)),
+    ]),
+    html.span([attribute.class("mr-2")], [html.text("→")]),
+    html.span([attribute.class(text_color_class <> " font-medium")], [
+      html.text(entry.message),
+    ]),
+  ])
 }
 
 fn view_pull_orb_button(model: Model) -> Element(Msg) {

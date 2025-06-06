@@ -32,6 +32,8 @@ fn init(_) -> Model {
     testing_config: option.None,
     testing_mode: ConfiguringTest,
     testing_stats: option.None,
+    log_entries: [],
+    log_sequence: 0,
   )
 }
 
@@ -85,8 +87,21 @@ fn handle_pull_orb(model: Model) -> Model {
         [] -> model
         [first_orb, ..rest] -> {
           let new_model = orb.apply_orb_effect(first_orb, model)
+          let new_sequence = model.log_sequence + 1
+          let log_message = orb.get_orb_result_message(first_orb, new_model)
+          let new_log_entry = types.LogEntry(
+            sequence: new_sequence,
+            orb: first_orb,
+            message: log_message,
+          )
           let updated_model =
-            types.Model(..new_model, bag: rest, last_orb: option.Some(first_orb))
+            types.Model(
+              ..new_model,
+              bag: rest,
+              last_orb: option.Some(first_orb),
+              log_entries: [new_log_entry, ..model.log_entries],
+              log_sequence: new_sequence,
+            )
           check_game_status(updated_model)
         }
       }
@@ -119,6 +134,8 @@ fn handle_next_level(model: Model) -> Model {
     testing_config: model.testing_config,
     testing_mode: model.testing_mode,
     testing_stats: model.testing_stats,
+    log_entries: [],
+    log_sequence: 0,
   )
 }
 
@@ -251,6 +268,8 @@ fn start_new_game() -> Model {
     testing_config: option.None,
     testing_mode: ConfiguringTest,
     testing_stats: option.None,
+    log_entries: [],
+    log_sequence: 0,
   )
 }
 
@@ -276,6 +295,8 @@ fn restart_current_level(model: Model) -> Model {
     testing_config: model.testing_config,
     testing_mode: model.testing_mode,
     testing_stats: model.testing_stats,
+    log_entries: [],
+    log_sequence: 0,
   )
 }
 

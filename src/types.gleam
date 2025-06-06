@@ -36,6 +36,8 @@ pub type Model {
     testing_config: Option(TestingConfiguration),
     testing_mode: TestingMode,
     testing_stats: Option(TestingStats),
+    log_entries: List(LogEntry),
+    log_sequence: Int,
   )
 }
 
@@ -119,4 +121,12 @@ pub type TestingMode {
   ConfiguringTest
   RunningSimulations
   ViewingResults
+}
+
+pub type LogEntry {
+  LogEntry(
+    sequence: Int,
+    orb: Orb,
+    message: String,
+  )
 }

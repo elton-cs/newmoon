@@ -4865,7 +4865,7 @@ var InMarketplace = class extends CustomType {
 var InTestingGrounds = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence) {
     super();
     this.health = health;
     this.points = points;
@@ -4882,6 +4882,8 @@ var Model = class extends CustomType {
     this.testing_config = testing_config;
     this.testing_mode = testing_mode;
     this.testing_stats = testing_stats;
+    this.log_entries = log_entries;
+    this.log_sequence = log_sequence;
   }
 };
 var StartNewGame = class extends CustomType {
@@ -5001,6 +5003,14 @@ var ConfiguringTest = class extends CustomType {
 var RunningSimulations = class extends CustomType {
 };
 var ViewingResults = class extends CustomType {
+};
+var LogEntry = class extends CustomType {
+  constructor(sequence, orb, message) {
+    super();
+    this.sequence = sequence;
+    this.orb = orb;
+    this.message = message;
+  }
 };
 
 // build/dev/javascript/newmoon/level.mjs
@@ -5154,6 +5164,69 @@ function on_click(msg) {
 }
 
 // build/dev/javascript/newmoon/orb.mjs
+function get_orb_result_message(orb, model) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    return "\u25CB HULL BREACH [SEVERITY-" + to_string(damage) + "] -" + to_string(
+      damage
+    ) + " SYS";
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let multiplied_value = value * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_value);
+    } else {
+      return "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
+    }
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    return "+ NANO-REPAIR DEPLOYED [EFFICIENCY-" + to_string(value) + "] +" + to_string(
+      value
+    ) + " SYS";
+  } else if (orb instanceof Collector) {
+    let base_points = length2(model.bag);
+    let multiplied_points = base_points * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_points);
+    } else {
+      return "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
+    }
+  } else if (orb instanceof Survivor) {
+    let base_points = model.bombs_pulled_this_level;
+    let multiplied_points = base_points * model.current_multiplier;
+    let $ = model.current_multiplier > 1;
+    if ($) {
+      return "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
+        model.current_multiplier
+      ) + "] +" + to_string(multiplied_points);
+    } else {
+      return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
+    }
+  } else {
+    return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
+  }
+}
+function get_orb_result_color(orb) {
+  if (orb instanceof Bomb) {
+    return "default";
+  } else if (orb instanceof Point) {
+    return "gray";
+  } else if (orb instanceof Health) {
+    return "green";
+  } else if (orb instanceof Collector) {
+    return "blue";
+  } else if (orb instanceof Survivor) {
+    return "purple";
+  } else {
+    return "yellow";
+  }
+}
 function apply_orb_effect(orb, model) {
   if (orb instanceof Bomb) {
     let damage = orb[0];
@@ -5173,7 +5246,9 @@ function apply_orb_effect(orb, model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
@@ -5194,7 +5269,9 @@ function apply_orb_effect(orb, model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
@@ -5215,7 +5292,9 @@ function apply_orb_effect(orb, model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (orb instanceof Collector) {
     let remaining_orbs = length2(model.bag) - 1;
@@ -5236,7 +5315,9 @@ function apply_orb_effect(orb, model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (orb instanceof Survivor) {
     let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
@@ -5256,7 +5337,9 @@ function apply_orb_effect(orb, model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else {
     let new_multiplier = model.current_multiplier * 2;
@@ -5276,7 +5359,9 @@ function apply_orb_effect(orb, model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   }
 }
@@ -5355,7 +5440,9 @@ function purchase_orb(model, orb) {
         _record.dev_mode,
         _record.testing_config,
         _record.testing_mode,
-        _record.testing_stats
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence
       );
     } else {
       return model;
@@ -6048,6 +6135,80 @@ function view_game_toggles(model) {
       view_dev_mode_toggle_button(model)
     ])
   );
+}
+function view_log_header() {
+  return div(
+    toList([class$("mb-2")]),
+    toList([
+      h3(
+        toList([
+          class$(
+            "text-xs font-medium text-gray-600 uppercase tracking-wider"
+          )
+        ]),
+        toList([text3("EXTRACTION LOG")])
+      )
+    ])
+  );
+}
+function view_log_entry(entry) {
+  let orb_color = get_orb_result_color(entry.orb);
+  let _block;
+  if (orb_color === "gray") {
+    _block = "text-gray-700";
+  } else if (orb_color === "green") {
+    _block = "text-green-700";
+  } else if (orb_color === "blue") {
+    _block = "text-blue-700";
+  } else if (orb_color === "purple") {
+    _block = "text-purple-700";
+  } else if (orb_color === "yellow") {
+    _block = "text-yellow-700";
+  } else {
+    _block = "text-red-700";
+  }
+  let text_color_class = _block;
+  return div(
+    toList([class$("text-xs")]),
+    toList([
+      span(
+        toList([class$("text-gray-500 mr-2")]),
+        toList([text3("#" + to_string(entry.sequence))])
+      ),
+      span(toList([class$("mr-2")]), toList([text3("\u2192")])),
+      span(
+        toList([class$(text_color_class + " font-medium")]),
+        toList([text3(entry.message)])
+      )
+    ])
+  );
+}
+function view_log_entries(entries) {
+  let visible_entries = take(entries, 4);
+  return div(
+    toList([
+      class$(
+        "bg-gray-50 border border-gray-200 rounded p-3 max-h-20 overflow-y-auto"
+      )
+    ]),
+    toList([
+      div(
+        toList([class$("space-y-1")]),
+        map(visible_entries, view_log_entry)
+      )
+    ])
+  );
+}
+function view_extraction_log(model) {
+  let $ = is_empty(model.log_entries);
+  if ($) {
+    return div(toList([]), toList([]));
+  } else {
+    return div(
+      toList([class$("mb-4")]),
+      toList([view_log_header(), view_log_entries(model.log_entries)])
+    );
+  }
 }
 function view_pull_orb_button(model) {
   let is_disabled = is_empty(model.bag);
@@ -7042,6 +7203,7 @@ function view_playing_state(model) {
       view_pause_button(),
       view_bag_info(model),
       view_game_toggles(model),
+      view_extraction_log(model),
       view_pull_orb_button(model)
     ])
   );
@@ -7120,7 +7282,9 @@ function init(_) {
     false,
     new None(),
     new ConfiguringTest(),
-    new None()
+    new None(),
+    toList([]),
+    0
   );
 }
 function handle_next_level(model) {
@@ -7149,7 +7313,9 @@ function handle_next_level(model) {
     model.dev_mode,
     model.testing_config,
     model.testing_mode,
-    model.testing_stats
+    model.testing_stats,
+    toList([]),
+    0
   );
 }
 function handle_enter_testing_grounds(model) {
@@ -7169,7 +7335,9 @@ function handle_enter_testing_grounds(model) {
     _record.dev_mode,
     new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
     new ConfiguringTest(),
-    new None()
+    new None(),
+    _record.log_entries,
+    _record.log_sequence
   );
 }
 function handle_add_test_orb(model, orb) {
@@ -7201,7 +7369,9 @@ function handle_add_test_orb(model, orb) {
       _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
-      _record$1.testing_stats
+      _record$1.testing_stats,
+      _record$1.log_entries,
+      _record$1.log_sequence
     );
   } else {
     return model;
@@ -7239,7 +7409,9 @@ function handle_remove_test_orb(model, index3) {
       _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
-      _record$1.testing_stats
+      _record$1.testing_stats,
+      _record$1.log_entries,
+      _record$1.log_sequence
     );
   } else {
     return model;
@@ -7274,7 +7446,9 @@ function handle_set_test_milestone(model, milestone) {
       _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
-      _record$1.testing_stats
+      _record$1.testing_stats,
+      _record$1.log_entries,
+      _record$1.log_sequence
     );
   } else {
     return model;
@@ -7309,7 +7483,9 @@ function handle_set_test_health(model, health) {
       _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
-      _record$1.testing_stats
+      _record$1.testing_stats,
+      _record$1.log_entries,
+      _record$1.log_sequence
     );
   } else {
     return model;
@@ -7344,7 +7520,9 @@ function handle_set_simulation_count(model, count2) {
       _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
-      _record$1.testing_stats
+      _record$1.testing_stats,
+      _record$1.log_entries,
+      _record$1.log_sequence
     );
   } else {
     return model;
@@ -7371,7 +7549,9 @@ function handle_start_simulations(model) {
       _record.dev_mode,
       _record.testing_config,
       new ViewingResults(),
-      new Some(stats)
+      new Some(stats),
+      _record.log_entries,
+      _record.log_sequence
     );
   } else {
     return model;
@@ -7394,7 +7574,9 @@ function handle_view_test_results(model) {
     _record.dev_mode,
     _record.testing_config,
     new ViewingResults(),
-    _record.testing_stats
+    _record.testing_stats,
+    _record.log_entries,
+    _record.log_sequence
   );
 }
 function handle_reset_test_config(model) {
@@ -7414,7 +7596,9 @@ function handle_reset_test_config(model) {
     _record.dev_mode,
     new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
     new ConfiguringTest(),
-    new None()
+    new None(),
+    _record.log_entries,
+    _record.log_sequence
   );
 }
 function start_new_game() {
@@ -7434,7 +7618,9 @@ function start_new_game() {
     false,
     new None(),
     new ConfiguringTest(),
-    new None()
+    new None(),
+    toList([]),
+    0
   );
 }
 function restart_current_level(model) {
@@ -7462,7 +7648,9 @@ function restart_current_level(model) {
     model.dev_mode,
     model.testing_config,
     model.testing_mode,
-    model.testing_stats
+    model.testing_stats,
+    toList([]),
+    0
   );
 }
 function handle_toggle_shuffle(model) {
@@ -7486,7 +7674,9 @@ function handle_toggle_shuffle(model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else {
     let _record = model;
@@ -7505,7 +7695,9 @@ function handle_toggle_shuffle(model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   }
 }
@@ -7529,7 +7721,9 @@ function check_game_status(model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if ($1) {
     let _record = model;
@@ -7548,7 +7742,9 @@ function check_game_status(model) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else {
     return model;
@@ -7564,6 +7760,13 @@ function handle_pull_orb(model) {
       let first_orb = $1.head;
       let rest = $1.tail;
       let new_model = apply_orb_effect(first_orb, model);
+      let new_sequence = model.log_sequence + 1;
+      let log_message = get_orb_result_message(first_orb, new_model);
+      let new_log_entry = new LogEntry(
+        new_sequence,
+        first_orb,
+        log_message
+      );
       let _block;
       let _record = new_model;
       _block = new Model(
@@ -7581,7 +7784,9 @@ function handle_pull_orb(model) {
         _record.dev_mode,
         _record.testing_config,
         _record.testing_mode,
-        _record.testing_stats
+        _record.testing_stats,
+        prepend(new_log_entry, model.log_entries),
+        new_sequence
       );
       let updated_model = _block;
       return check_game_status(updated_model);
@@ -7610,7 +7815,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof ShowHowToPlay) {
     return model;
@@ -7633,7 +7840,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof ResumeGame) {
     let _record = model;
@@ -7652,7 +7861,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
@@ -7675,7 +7886,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof GoToMarketplace) {
     let _record = model;
@@ -7694,7 +7907,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof GoToTestingGrounds) {
     return handle_enter_testing_grounds(model);
@@ -7715,7 +7930,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
@@ -7739,7 +7956,9 @@ function update2(model, msg) {
       !model.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof ExitTestingGrounds) {
     let _record = model;
@@ -7758,7 +7977,9 @@ function update2(model, msg) {
       _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
-      _record.testing_stats
+      _record.testing_stats,
+      _record.log_entries,
+      _record.log_sequence
     );
   } else if (msg instanceof AddTestOrb) {
     let orb = msg[0];

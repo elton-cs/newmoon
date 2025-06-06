@@ -638,6 +638,10 @@ video {
   height: 0.5rem;
 }
 
+.max-h-20 {
+  max-height: 5rem;
+}
+
 .max-h-64 {
   max-height: 16rem;
 }
@@ -704,6 +708,12 @@ video {
 
 .gap-4 {
   gap: 1rem;
+}
+
+.space-y-1 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
 }
 
 .space-y-2 > :not([hidden]) ~ :not([hidden]) {
