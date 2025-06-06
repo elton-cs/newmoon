@@ -1,3 +1,4 @@
+import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
@@ -8,7 +9,7 @@ import lustre/element/html
 import lustre/event
 import marketplace
 import orb
-import types.{type Model, type Msg, AcceptReward, EnterMarketplace, InMarketplace, Lost, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle, Won}
+import types.{type Model, type Msg, AcceptReward, EnterMarketplace, EnterTestingGrounds, ExitTestingGrounds, InMarketplace, InTestingGrounds, Lost, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle, Won, AddTestOrb, RemoveTestOrb, StartSimulations, ViewTestResults, ResetTestConfig, ConfiguringTest, RunningSimulations, ViewingResults}
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div(
@@ -147,6 +148,7 @@ fn view_game_content(model: Model) -> Element(Msg) {
     Won -> view_won_state(model)
     Lost -> view_lost_state()
     InMarketplace -> marketplace.view_marketplace(model)
+    InTestingGrounds -> view_testing_grounds(model)
   }
 }
 
@@ -300,6 +302,15 @@ fn view_won_state(_model: Model) -> Element(Msg) {
       html.button(
         [
           attribute.class(
+            "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          ),
+          event.on_click(EnterTestingGrounds),
+        ],
+        [html.text("TESTING GROUNDS")],
+      ),
+      html.button(
+        [
+          attribute.class(
             "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
           ),
           event.on_click(NextLevel),
@@ -332,6 +343,328 @@ fn view_lost_state() -> Element(Msg) {
         event.on_click(RestartGame),
       ],
       [html.text("RESTART MISSION")],
+    ),
+  ])
+}
+
+fn view_testing_grounds(model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    view_testing_header(),
+    case model.testing_mode {
+      ConfiguringTest -> view_test_configuration(model)
+      RunningSimulations -> view_simulation_progress(model)
+      ViewingResults -> view_test_results(model)
+    },
+  ])
+}
+
+fn view_testing_header() -> Element(Msg) {
+  html.div(
+    [attribute.class("mb-6 p-4 bg-blue-50 border border-blue-200 rounded")],
+    [
+      html.h2(
+        [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+        [html.text("ORB TESTING GROUNDS")],
+      ),
+      html.p([attribute.class("text-blue-700 text-sm font-light")], [
+        html.text("Simulate strategies and optimize your approach"),
+      ]),
+      html.button(
+        [
+          attribute.class(
+            "mt-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-light tracking-wider transition",
+          ),
+          event.on_click(ExitTestingGrounds),
+        ],
+        [html.text("← BACK TO GAME")],
+      ),
+    ],
+  )
+}
+
+fn view_test_configuration(model: Model) -> Element(Msg) {
+  case model.testing_config {
+    option.Some(config) ->
+      html.div([], [
+        view_test_bag_builder(config),
+        view_test_settings(config),
+        view_test_actions(config),
+      ])
+    option.None -> html.div([], [html.text("Configuration error")])
+  }
+}
+
+fn view_simulation_progress(_model: Model) -> Element(Msg) {
+  html.div([attribute.class("p-6")], [
+    html.div([attribute.class("mb-4")], [
+      html.h3([attribute.class("text-lg font-light mb-2")], [
+        html.text("Running Simulations..."),
+      ]),
+      html.p([attribute.class("text-gray-600 text-sm")], [
+        html.text("Please wait while we test your strategy"),
+      ]),
+    ]),
+    html.div([attribute.class("bg-gray-200 rounded-full h-2 mb-4")], [
+      html.div([attribute.class("bg-blue-600 h-2 rounded-full w-1/2")], []),
+    ]),
+    html.button(
+      [
+        attribute.class(
+          "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-light tracking-wider transition",
+        ),
+        event.on_click(ViewTestResults),
+      ],
+      [html.text("VIEW RESULTS (DEMO)")],
+    ),
+  ])
+}
+
+fn view_test_results(model: Model) -> Element(Msg) {
+  case model.testing_stats {
+    option.Some(stats) ->
+      html.div([attribute.class("p-6")], [
+        html.h3([attribute.class("text-lg font-light mb-4")], [
+          html.text("Simulation Results"),
+        ]),
+        view_comprehensive_stats(stats),
+        html.div([attribute.class("space-y-3 mt-6")], [
+          html.button(
+            [
+              attribute.class(
+                "w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-light tracking-wider transition",
+              ),
+              event.on_click(ResetTestConfig),
+            ],
+            [html.text("NEW TEST")],
+          ),
+          html.button(
+            [
+              attribute.class(
+                "w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-sm font-light tracking-wider transition",
+              ),
+              event.on_click(ExitTestingGrounds),
+            ],
+            [html.text("BACK TO GAME")],
+          ),
+        ]),
+      ])
+    option.None ->
+      html.div([attribute.class("p-6")], [
+        html.p([attribute.class("text-gray-600")], [
+          html.text("No simulation results available"),
+        ]),
+      ])
+  }
+}
+
+fn view_comprehensive_stats(stats: types.TestingStats) -> Element(Msg) {
+  let win_rate_percent = 
+    float.round(stats.win_rate *. 100.0) |> int.to_string() <> "%"
+  let avg_points = 
+    float.round(stats.average_points) |> int.to_string()
+
+  html.div([], [
+    // Primary stats grid
+    html.div([attribute.class("grid grid-cols-2 gap-4 mb-6")], [
+      view_stat_card("✓", "WIN RATE", win_rate_percent, case stats.win_rate >=. 0.7 {
+        True -> "text-green-600"
+        False -> case stats.win_rate >=. 0.4 {
+          True -> "text-yellow-600"
+          False -> "text-red-600"
+        }
+      }),
+      view_stat_card("◎", "AVG SCORE", avg_points, "text-blue-600"),
+    ]),
+    
+    // Secondary stats grid
+    html.div([attribute.class("grid grid-cols-3 gap-3 mb-6")], [
+      view_stat_card("◈", "WINS", int.to_string(stats.wins), "text-green-600"),
+      view_stat_card("◇", "LOSSES", int.to_string(stats.losses), "text-red-600"),
+      view_stat_card("⚬", "TOTAL", int.to_string(stats.total_runs), "text-gray-600"),
+    ]),
+    
+    // Score range
+    html.div([attribute.class("grid grid-cols-2 gap-4 mb-6")], [
+      view_stat_card("↑", "BEST", int.to_string(stats.best_score), "text-purple-600"),
+      view_stat_card("↓", "WORST", int.to_string(stats.worst_score), "text-gray-500"),
+    ]),
+    
+    // Performance insights
+    view_performance_insights(stats),
+  ])
+}
+
+fn view_performance_insights(stats: types.TestingStats) -> Element(Msg) {
+  let insights = generate_insights(stats)
+  
+  html.div([attribute.class("bg-gray-50 rounded border p-4")], [
+    html.h4([attribute.class("text-sm font-medium text-gray-700 mb-2")], [
+      html.text("STRATEGY INSIGHTS"),
+    ]),
+    html.div([attribute.class("space-y-2")], 
+      list.map(insights, fn(insight) {
+        html.p([attribute.class("text-xs text-gray-600")], [html.text(insight)])
+      })
+    ),
+  ])
+}
+
+fn generate_insights(stats: types.TestingStats) -> List(String) {
+  let win_rate_insight = case stats.win_rate {
+    rate if rate >=. 0.8 -> "Excellent strategy! Very high success rate."
+    rate if rate >=. 0.6 -> "Good strategy with solid win rate."
+    rate if rate >=. 0.4 -> "Moderate success. Consider more health orbs."
+    _ -> "Low win rate. Strategy needs significant improvement."
+  }
+  
+  let score_insight = case stats.average_points >=. int.to_float(float.round(int.to_float(stats.best_score) *. 0.7)) {
+    True -> "Consistent scoring with good point generation."
+    False -> "High variance in scores. Strategy may be risky."
+  }
+  
+  let sample_insight = case stats.total_runs {
+    runs if runs >= 100 -> "Large sample size provides reliable results."
+    runs if runs >= 50 -> "Good sample size for meaningful insights."
+    _ -> "Small sample size. Consider running more simulations."
+  }
+  
+  [win_rate_insight, score_insight, sample_insight]
+}
+
+fn view_test_bag_builder(config: types.TestingConfiguration) -> Element(Msg) {
+  html.div([attribute.class("mb-6")], [
+    html.h3([attribute.class("text-lg font-light mb-3")], [
+      html.text("Test Bag Configuration"),
+    ]),
+    html.div([attribute.class("mb-4 p-4 bg-gray-50 rounded border")], [
+      html.p([attribute.class("text-sm text-gray-600 mb-2")], [
+        html.text("Orbs in bag: " <> int.to_string(list.length(config.test_bag))),
+      ]),
+      view_test_bag_contents(config.test_bag),
+    ]),
+    view_orb_selector(),
+  ])
+}
+
+fn view_test_bag_contents(bag: List(types.Orb)) -> Element(Msg) {
+  case list.is_empty(bag) {
+    True ->
+      html.p([attribute.class("text-gray-400 text-sm italic")], [
+        html.text("No orbs added yet"),
+      ])
+    False ->
+      html.div([attribute.class("flex flex-wrap gap-2")], 
+        list.index_map(bag, fn(orb, index) {
+          html.div([attribute.class("flex items-center bg-white rounded border px-2 py-1")], [
+            html.span([attribute.class("text-xs mr-2")], [
+              html.text(orb.get_orb_name(orb)),
+            ]),
+            html.button(
+              [
+                attribute.class("text-red-500 hover:text-red-700 text-xs"),
+                event.on_click(RemoveTestOrb(index)),
+              ],
+              [html.text("×")],
+            ),
+          ])
+        })
+      )
+  }
+}
+
+fn view_orb_selector() -> Element(Msg) {
+  let available_orbs = [
+    types.Point(8), types.Point(12), types.Point(15),
+    types.Health(2), types.Health(4),
+    types.Bomb(2), types.Bomb(3),
+    types.Collector, types.Survivor, types.Multiplier,
+  ]
+
+  html.div([], [
+    html.p([attribute.class("text-sm font-light mb-2")], [
+      html.text("Add orbs to your test bag:"),
+    ]),
+    html.div([attribute.class("grid grid-cols-2 gap-2")], 
+      list.map(available_orbs, fn(orb) {
+        html.button(
+          [
+            attribute.class(
+              "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition",
+            ),
+            event.on_click(AddTestOrb(orb)),
+          ],
+          [html.text(orb.get_orb_name(orb))],
+        )
+      })
+    ),
+  ])
+}
+
+fn view_test_settings(config: types.TestingConfiguration) -> Element(Msg) {
+  html.div([attribute.class("mb-6 p-4 bg-gray-50 rounded border")], [
+    html.h3([attribute.class("text-lg font-light mb-3")], [
+      html.text("Test Settings"),
+    ]),
+    html.div([attribute.class("grid grid-cols-2 gap-4")], [
+      html.div([], [
+        html.label([attribute.class("block text-sm font-light mb-1")], [
+          html.text("Target Score:"),
+        ]),
+        html.p([attribute.class("text-lg")], [
+          html.text(int.to_string(config.target_milestone)),
+        ]),
+      ]),
+      html.div([], [
+        html.label([attribute.class("block text-sm font-light mb-1")], [
+          html.text("Starting Health:"),
+        ]),
+        html.p([attribute.class("text-lg")], [
+          html.text(int.to_string(config.starting_health)),
+        ]),
+      ]),
+    ]),
+    html.div([attribute.class("mt-4")], [
+      html.label([attribute.class("block text-sm font-light mb-1")], [
+        html.text("Simulation Count:"),
+      ]),
+      html.p([attribute.class("text-lg")], [
+        html.text(int.to_string(config.simulation_count)),
+      ]),
+    ]),
+  ])
+}
+
+fn view_test_actions(config: types.TestingConfiguration) -> Element(Msg) {
+  let can_run = !list.is_empty(config.test_bag)
+  let button_classes = case can_run {
+    True -> "bg-green-600 hover:bg-green-700 text-white"
+    False -> "bg-gray-300 cursor-not-allowed text-gray-500"
+  }
+
+  html.div([attribute.class("space-y-3")], [
+    html.button(
+      [
+        attribute.class(
+          string.concat([
+            "w-full py-4 px-6 rounded font-light text-sm tracking-wider transition transform hover:scale-[1.02] ",
+            button_classes,
+          ]),
+        ),
+        event.on_click(StartSimulations),
+      ],
+      [html.text(case can_run {
+        True -> "RUN SIMULATIONS"
+        False -> "ADD ORBS TO BEGIN"
+      })],
+    ),
+    html.button(
+      [
+        attribute.class(
+          "w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-light text-sm tracking-wider transition",
+        ),
+        event.on_click(ResetTestConfig),
+      ],
+      [html.text("RESET CONFIGURATION")],
     ),
   ])
 }

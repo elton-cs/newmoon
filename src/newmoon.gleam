@@ -4,7 +4,8 @@ import lustre
 import level
 import marketplace
 import orb
-import types.{type Model, type Msg, AcceptReward, BuyOrb, EnterMarketplace, InMarketplace, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle}
+import simulation
+import types.{type Model, type Msg, AcceptReward, BuyOrb, ConfiguringTest, EnterMarketplace, EnterTestingGrounds, ExitTestingGrounds, InMarketplace, InTestingGrounds, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig}
 import view
 
 pub fn main() -> Nil {
@@ -27,6 +28,9 @@ fn init(_) -> Model {
     current_multiplier: 1,
     credits: 0,
     shuffle_enabled: False,
+    testing_config: option.None,
+    testing_mode: ConfiguringTest,
+    testing_stats: option.None,
   )
 }
 
@@ -40,6 +44,16 @@ fn update(model: Model, msg: Msg) -> Model {
     EnterMarketplace -> handle_enter_marketplace(model)
     BuyOrb(orb) -> marketplace.purchase_orb(model, orb)
     ToggleShuffle -> types.Model(..model, shuffle_enabled: !model.shuffle_enabled)
+    EnterTestingGrounds -> handle_enter_testing_grounds(model)
+    ExitTestingGrounds -> handle_exit_testing_grounds(model)
+    AddTestOrb(orb) -> handle_add_test_orb(model, orb)
+    RemoveTestOrb(index) -> handle_remove_test_orb(model, index)
+    SetTestMilestone(milestone) -> handle_set_test_milestone(model, milestone)
+    SetTestHealth(health) -> handle_set_test_health(model, health)
+    SetSimulationCount(count) -> handle_set_simulation_count(model, count)
+    StartSimulations -> handle_start_simulations(model)
+    ViewTestResults -> handle_view_test_results(model)
+    ResetTestConfig -> handle_reset_test_config(model)
   }
 }
 
@@ -84,6 +98,9 @@ fn handle_next_level(model: Model) -> Model {
     current_multiplier: 1,
     credits: model.credits,
     shuffle_enabled: model.shuffle_enabled,
+    testing_config: model.testing_config,
+    testing_mode: model.testing_mode,
+    testing_stats: model.testing_stats,
   )
 }
 
@@ -97,6 +114,122 @@ fn handle_enter_marketplace(model: Model) -> Model {
   types.Model(..model, status: InMarketplace)
 }
 
+
+fn handle_enter_testing_grounds(model: Model) -> Model {
+  types.Model(
+    ..model,
+    status: InTestingGrounds,
+    testing_mode: ConfiguringTest,
+    testing_config: option.Some(types.TestingConfiguration(
+      test_bag: [],
+      target_milestone: 50,
+      starting_health: 5,
+      simulation_count: 100,
+    )),
+    testing_stats: option.None,
+  )
+}
+
+fn handle_exit_testing_grounds(model: Model) -> Model {
+  types.Model(
+    ..model,
+    status: Playing,
+    testing_config: option.None,
+    testing_stats: option.None,
+  )
+}
+
+fn handle_add_test_orb(model: Model, orb: types.Orb) -> Model {
+  case model.testing_config {
+    option.Some(config) -> {
+      let new_config =
+        types.TestingConfiguration(
+          ..config,
+          test_bag: [orb, ..config.test_bag],
+        )
+      types.Model(..model, testing_config: option.Some(new_config))
+    }
+    option.None -> model
+  }
+}
+
+fn handle_remove_test_orb(model: Model, index: Int) -> Model {
+  case model.testing_config {
+    option.Some(config) -> {
+      let before = list.take(config.test_bag, index)
+      let after = list.drop(config.test_bag, index + 1)
+      let new_bag = list.append(before, after)
+      let new_config = types.TestingConfiguration(..config, test_bag: new_bag)
+      types.Model(..model, testing_config: option.Some(new_config))
+    }
+    option.None -> model
+  }
+}
+
+fn handle_set_test_milestone(model: Model, milestone: Int) -> Model {
+  case model.testing_config {
+    option.Some(config) -> {
+      let new_config =
+        types.TestingConfiguration(..config, target_milestone: milestone)
+      types.Model(..model, testing_config: option.Some(new_config))
+    }
+    option.None -> model
+  }
+}
+
+fn handle_set_test_health(model: Model, health: Int) -> Model {
+  case model.testing_config {
+    option.Some(config) -> {
+      let new_config =
+        types.TestingConfiguration(..config, starting_health: health)
+      types.Model(..model, testing_config: option.Some(new_config))
+    }
+    option.None -> model
+  }
+}
+
+fn handle_set_simulation_count(model: Model, count: Int) -> Model {
+  case model.testing_config {
+    option.Some(config) -> {
+      let new_config =
+        types.TestingConfiguration(..config, simulation_count: count)
+      types.Model(..model, testing_config: option.Some(new_config))
+    }
+    option.None -> model
+  }
+}
+
+fn handle_start_simulations(model: Model) -> Model {
+  case model.testing_config {
+    option.Some(config) -> {
+      let stats = simulation.run_simulations(config)
+      types.Model(
+        ..model,
+        testing_mode: types.ViewingResults,
+        testing_stats: option.Some(stats),
+      )
+    }
+    option.None -> model
+  }
+}
+
+fn handle_view_test_results(model: Model) -> Model {
+  types.Model(..model, testing_mode: types.ViewingResults)
+}
+
+fn handle_reset_test_config(model: Model) -> Model {
+  types.Model(
+    ..model,
+    testing_config: option.Some(types.TestingConfiguration(
+      test_bag: [],
+      target_milestone: 50,
+      starting_health: 5,
+      simulation_count: 100,
+    )),
+    testing_stats: option.None,
+    testing_mode: ConfiguringTest,
+  )
+}
 
 fn check_game_status(model: Model) -> Model {
   case model.health <= 0, model.points >= model.milestone {

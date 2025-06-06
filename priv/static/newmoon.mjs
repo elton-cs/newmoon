@@ -2,7 +2,7 @@
 var CustomType = class {
   withFields(fields) {
     let properties = Object.keys(this).map(
-      (label) => label in fields ? fields[label] : this[label]
+      (label2) => label2 in fields ? fields[label2] : this[label2]
     );
     return new this.constructor(...properties);
   }
@@ -352,6 +352,13 @@ function structurallyCompatibleObjects(a, b) {
   let nonstructural = [Promise, WeakSet, WeakMap, Function];
   if (nonstructural.some((c) => a instanceof c)) return false;
   return a.constructor === b.constructor;
+}
+function divideFloat(a, b) {
+  if (b === 0) {
+    return 0;
+  } else {
+    return a / b;
+  }
 }
 function makeError(variant, file, module, line, fn, message, extra) {
   let error = new globalThis.Error(message);
@@ -1101,8 +1108,32 @@ function compare(a, b) {
     }
   }
 }
+function negate(x) {
+  return -1 * x;
+}
+function round2(x) {
+  let $ = x >= 0;
+  if ($) {
+    return round(x);
+  } else {
+    return 0 - round(negate(x));
+  }
+}
 
 // build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function compare2(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
+}
 function min(a, b) {
   let $ = a < b;
   if ($) {
@@ -1110,6 +1141,9 @@ function min(a, b) {
   } else {
     return b;
   }
+}
+function add(a, b) {
+  return a + b;
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
@@ -1167,6 +1201,9 @@ function map2(decoder, transformer) {
 // build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
 var Nil = void 0;
 var NOT_FOUND = {};
+function identity(x) {
+  return x;
+}
 function to_string(term) {
   return term.toString();
 }
@@ -1197,6 +1234,9 @@ var trim_start_regex = /* @__PURE__ */ new RegExp(
   `^[${unicode_whitespaces}]*`
 );
 var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
+function round(float2) {
+  return Math.round(float2);
+}
 function random_uniform() {
   const random_uniform_result = Math.random();
   if (random_uniform_result === 1) {
@@ -1231,18 +1271,44 @@ var Descending = class extends CustomType {
 function length_loop(loop$list, loop$count) {
   while (true) {
     let list4 = loop$list;
-    let count = loop$count;
+    let count2 = loop$count;
     if (list4 instanceof Empty) {
-      return count;
+      return count2;
     } else {
       let list$1 = list4.tail;
       loop$list = list$1;
-      loop$count = count + 1;
+      loop$count = count2 + 1;
     }
   }
 }
 function length2(list4) {
   return length_loop(list4, 0);
+}
+function count_loop(loop$list, loop$predicate, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let predicate = loop$predicate;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return acc;
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let $ = predicate(first$1);
+      if ($) {
+        loop$list = rest$1;
+        loop$predicate = predicate;
+        loop$acc = acc + 1;
+      } else {
+        loop$list = rest$1;
+        loop$predicate = predicate;
+        loop$acc = acc;
+      }
+    }
+  }
+}
+function count(list4, predicate) {
+  return count_loop(list4, predicate, 0);
 }
 function reverse_and_prepend(loop$prefix, loop$suffix) {
   while (true) {
@@ -1282,6 +1348,70 @@ function map_loop(loop$list, loop$fun, loop$acc) {
 }
 function map(list4, fun) {
   return map_loop(list4, fun, toList([]));
+}
+function index_map_loop(loop$list, loop$fun, loop$index, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let fun = loop$fun;
+    let index3 = loop$index;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return reverse(acc);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let acc$1 = prepend(fun(first$1, index3), acc);
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$index = index3 + 1;
+      loop$acc = acc$1;
+    }
+  }
+}
+function index_map(list4, fun) {
+  return index_map_loop(list4, fun, 0, toList([]));
+}
+function drop(loop$list, loop$n) {
+  while (true) {
+    let list4 = loop$list;
+    let n = loop$n;
+    let $ = n <= 0;
+    if ($) {
+      return list4;
+    } else {
+      if (list4 instanceof Empty) {
+        return toList([]);
+      } else {
+        let rest$1 = list4.tail;
+        loop$list = rest$1;
+        loop$n = n - 1;
+      }
+    }
+  }
+}
+function take_loop(loop$list, loop$n, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let n = loop$n;
+    let acc = loop$acc;
+    let $ = n <= 0;
+    if ($) {
+      return reverse(acc);
+    } else {
+      if (list4 instanceof Empty) {
+        return reverse(acc);
+      } else {
+        let first$1 = list4.head;
+        let rest$1 = list4.tail;
+        loop$list = rest$1;
+        loop$n = n - 1;
+        loop$acc = prepend(first$1, acc);
+      }
+    }
+  }
+}
+function take(list4, n) {
+  return take_loop(list4, n, toList([]));
 }
 function append_loop(loop$first, loop$second) {
   while (true) {
@@ -1669,6 +1799,28 @@ function sort(list4, compare4) {
     }
   }
 }
+function range_loop(loop$start, loop$stop, loop$acc) {
+  while (true) {
+    let start4 = loop$start;
+    let stop = loop$stop;
+    let acc = loop$acc;
+    let $ = compare2(start4, stop);
+    if ($ instanceof Lt) {
+      loop$start = start4;
+      loop$stop = stop - 1;
+      loop$acc = prepend(stop, acc);
+    } else if ($ instanceof Eq) {
+      return prepend(stop, acc);
+    } else {
+      loop$start = start4;
+      loop$stop = stop + 1;
+      loop$acc = prepend(stop, acc);
+    }
+  }
+}
+function range(start4, stop) {
+  return range_loop(start4, stop, toList([]));
+}
 function shuffle_pair_unwrap_loop(loop$list, loop$acc) {
   while (true) {
     let list4 = loop$list;
@@ -2041,7 +2193,7 @@ function do_matches(loop$path, loop$candidates) {
     }
   }
 }
-function add2(parent, index3, key) {
+function add3(parent, index3, key) {
   if (key === "") {
     return new Index(index3, parent);
   } else {
@@ -2408,28 +2560,28 @@ var Update = class extends CustomType {
   }
 };
 var Move = class extends CustomType {
-  constructor(kind, key, before, count) {
+  constructor(kind, key, before, count2) {
     super();
     this.kind = kind;
     this.key = key;
     this.before = before;
-    this.count = count;
+    this.count = count2;
   }
 };
 var RemoveKey = class extends CustomType {
-  constructor(kind, key, count) {
+  constructor(kind, key, count2) {
     super();
     this.kind = kind;
     this.key = key;
-    this.count = count;
+    this.count = count2;
   }
 };
 var Replace = class extends CustomType {
-  constructor(kind, from, count, with$) {
+  constructor(kind, from, count2, with$) {
     super();
     this.kind = kind;
     this.from = from;
-    this.count = count;
+    this.count = count2;
     this.with = with$;
   }
 };
@@ -2442,11 +2594,11 @@ var Insert = class extends CustomType {
   }
 };
 var Remove = class extends CustomType {
-  constructor(kind, from, count) {
+  constructor(kind, from, count2) {
     super();
     this.kind = kind;
     this.from = from;
-    this.count = count;
+    this.count = count2;
   }
 };
 function new$4(index3, removed, changes, children) {
@@ -2465,24 +2617,24 @@ function update(added, removed) {
   return new Update(update_kind, added, removed);
 }
 var move_kind = 3;
-function move(key, before, count) {
-  return new Move(move_kind, key, before, count);
+function move(key, before, count2) {
+  return new Move(move_kind, key, before, count2);
 }
 var remove_key_kind = 4;
-function remove_key(key, count) {
-  return new RemoveKey(remove_key_kind, key, count);
+function remove_key(key, count2) {
+  return new RemoveKey(remove_key_kind, key, count2);
 }
 var replace_kind = 5;
-function replace2(from, count, with$) {
-  return new Replace(replace_kind, from, count, with$);
+function replace2(from, count2, with$) {
+  return new Replace(replace_kind, from, count2, with$);
 }
 var insert_kind = 6;
 function insert4(children, before) {
   return new Insert(insert_kind, children, before);
 }
 var remove_kind = 7;
-function remove2(from, count) {
-  return new Remove(remove_kind, from, count);
+function remove2(from, count2) {
+  return new Remove(remove_kind, from, count2);
 }
 
 // build/dev/javascript/lustre/lustre/vdom/diff.mjs
@@ -2893,12 +3045,12 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$events = events;
             } else {
               let match = next_did_exist[0];
-              let count = advance(next);
+              let count2 = advance(next);
               let before = node_index - moved_offset;
-              let move2 = move(next.key, before, count);
+              let move2 = move(next.key, before, count2);
               let changes$1 = prepend(move2, changes);
               let moved$1 = insert2(moved, next.key);
-              let moved_offset$1 = moved_offset + count;
+              let moved_offset$1 = moved_offset + count2;
               loop$old = prepend(match, old);
               loop$old_keyed = old_keyed;
               loop$new = new$8;
@@ -2915,10 +3067,10 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
               loop$events = events;
             }
           } else {
-            let count = advance(prev);
-            let moved_offset$1 = moved_offset - count;
+            let count2 = advance(prev);
+            let moved_offset$1 = moved_offset - count2;
             let events$1 = remove_child(events, path, node_index, prev);
-            let remove3 = remove_key(prev.key, count);
+            let remove3 = remove_key(prev.key, count2);
             let changes$1 = prepend(remove3, changes);
             loop$old = old_remaining;
             loop$old_keyed = old_keyed;
@@ -2937,7 +3089,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
           }
         } else if (prev_does_exist instanceof Ok) {
           let before = node_index - moved_offset;
-          let count = advance(next);
+          let count2 = advance(next);
           let events$1 = add_child(
             events,
             mapper,
@@ -2952,9 +3104,9 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
           loop$new = new_remaining;
           loop$new_keyed = new_keyed;
           loop$moved = moved;
-          loop$moved_offset = moved_offset + count;
+          loop$moved_offset = moved_offset + count2;
           loop$removed = removed;
-          loop$node_index = node_index + count;
+          loop$node_index = node_index + count2;
           loop$patch_index = patch_index;
           loop$path = path;
           loop$changes = changes$1;
@@ -3095,7 +3247,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
                 mapper,
                 next$1.mapper
               );
-              let child_path = add2(path, node_index, next$1.key);
+              let child_path = add3(path, node_index, next$1.key);
               let controlled = is_controlled(
                 events,
                 next$1.namespace,
@@ -3349,7 +3501,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             let prev$1 = $;
             let old$1 = old.tail;
             let composed_mapper = compose_mapper(mapper, next$1.mapper);
-            let child_path = add2(path, node_index, next$1.key);
+            let child_path = add3(path, node_index, next$1.key);
             let $2 = diff_attributes(
               false,
               child_path,
@@ -3569,10 +3721,10 @@ var Reconciler = class {
     });
     insertBefore(node, fragment3, childAt(node, before));
   }
-  #move(node, key, before, count) {
+  #move(node, key, before, count2) {
     let el = getKeyedChild(node, key);
     const beforeEl = childAt(node, before);
-    for (let i = 0; i < count && el !== null; ++i) {
+    for (let i = 0; i < count2 && el !== null; ++i) {
       const next = el.nextSibling;
       if (SUPPORTS_MOVE_BEFORE) {
         node.moveBefore(el, beforeEl);
@@ -3582,14 +3734,14 @@ var Reconciler = class {
       el = next;
     }
   }
-  #removeKey(node, key, count) {
-    this.#removeFromChild(node, getKeyedChild(node, key), count);
+  #removeKey(node, key, count2) {
+    this.#removeFromChild(node, getKeyedChild(node, key), count2);
   }
-  #remove(node, from, count) {
-    this.#removeFromChild(node, childAt(node, from), count);
+  #remove(node, from, count2) {
+    this.#removeFromChild(node, childAt(node, from), count2);
   }
-  #removeFromChild(parent, child, count) {
-    while (count-- > 0 && child !== null) {
+  #removeFromChild(parent, child, count2) {
+    while (count2-- > 0 && child !== null) {
       const next = child.nextSibling;
       const key = child[meta].key;
       if (key) {
@@ -3602,8 +3754,8 @@ var Reconciler = class {
       child = next;
     }
   }
-  #replace(parent, from, count, child) {
-    this.#remove(parent, from, count);
+  #replace(parent, from, count2, child) {
+    this.#remove(parent, from, count2);
     const el = this.#createChild(parent, child);
     insertBefore(parent, el, childAt(parent, from));
   }
@@ -4257,7 +4409,7 @@ function do_remove_child(handlers, parent, child_index, child) {
   } else if (child instanceof Element) {
     let attributes = child.attributes;
     let children = child.children;
-    let path = add2(parent, child_index, child.key);
+    let path = add3(parent, child_index, child.key);
     let _pipe = handlers;
     let _pipe$1 = remove_attributes(_pipe, path, attributes);
     return do_remove_children(_pipe$1, path, 0, children);
@@ -4265,7 +4417,7 @@ function do_remove_child(handlers, parent, child_index, child) {
     return handlers;
   } else {
     let attributes = child.attributes;
-    let path = add2(parent, child_index, child.key);
+    let path = add3(parent, child_index, child.key);
     return remove_attributes(handlers, path, attributes);
   }
 }
@@ -4315,7 +4467,7 @@ function do_add_child(handlers, mapper, parent, child_index, child) {
   } else if (child instanceof Element) {
     let attributes = child.attributes;
     let children = child.children;
-    let path = add2(parent, child_index, child.key);
+    let path = add3(parent, child_index, child.key);
     let composed_mapper = compose_mapper(mapper, child.mapper);
     let _pipe = handlers;
     let _pipe$1 = add_attributes(_pipe, composed_mapper, path, attributes);
@@ -4324,7 +4476,7 @@ function do_add_child(handlers, mapper, parent, child_index, child) {
     return handlers;
   } else {
     let attributes = child.attributes;
-    let path = add2(parent, child_index, child.key);
+    let path = add3(parent, child_index, child.key);
     let composed_mapper = compose_mapper(mapper, child.mapper);
     return add_attributes(handlers, composed_mapper, path, attributes);
   }
@@ -4390,20 +4542,20 @@ function none2() {
 function count_fragment_children(loop$children, loop$count) {
   while (true) {
     let children = loop$children;
-    let count = loop$count;
+    let count2 = loop$count;
     if (children instanceof Empty) {
-      return count;
+      return count2;
     } else {
       let $ = children.head;
       if ($ instanceof Fragment) {
         let rest = children.tail;
         let children_count = $.children_count;
         loop$children = rest;
-        loop$count = count + children_count;
+        loop$count = count2 + children_count;
       } else {
         let rest = children.tail;
         loop$children = rest;
-        loop$count = count + 1;
+        loop$count = count2 + 1;
       }
     }
   }
@@ -4431,14 +4583,23 @@ function h2(attrs, children) {
 function h3(attrs, children) {
   return element2("h3", attrs, children);
 }
+function h4(attrs, children) {
+  return element2("h4", attrs, children);
+}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
 function p(attrs, children) {
   return element2("p", attrs, children);
 }
+function span(attrs, children) {
+  return element2("span", attrs, children);
+}
 function button(attrs, children) {
   return element2("button", attrs, children);
+}
+function label(attrs, children) {
+  return element2("label", attrs, children);
 }
 
 // build/dev/javascript/lustre/lustre/runtime/server/runtime.mjs
@@ -4602,8 +4763,10 @@ var ShowingReward = class extends CustomType {
 };
 var InMarketplace = class extends CustomType {
 };
+var InTestingGrounds = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, testing_config, testing_mode, testing_stats) {
     super();
     this.health = health;
     this.points = points;
@@ -4616,6 +4779,9 @@ var Model = class extends CustomType {
     this.current_multiplier = current_multiplier;
     this.credits = credits;
     this.shuffle_enabled = shuffle_enabled;
+    this.testing_config = testing_config;
+    this.testing_mode = testing_mode;
+    this.testing_stats = testing_stats;
   }
 };
 var PullOrb = class extends CustomType {
@@ -4636,6 +4802,46 @@ var BuyOrb = class extends CustomType {
 };
 var ToggleShuffle = class extends CustomType {
 };
+var EnterTestingGrounds = class extends CustomType {
+};
+var ExitTestingGrounds = class extends CustomType {
+};
+var AddTestOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var RemoveTestOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var SetTestMilestone = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var SetTestHealth = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var SetSimulationCount = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var StartSimulations = class extends CustomType {
+};
+var ViewTestResults = class extends CustomType {
+};
+var ResetTestConfig = class extends CustomType {
+};
 var MarketItem = class extends CustomType {
   constructor(orb, price, description) {
     super();
@@ -4643,6 +4849,44 @@ var MarketItem = class extends CustomType {
     this.price = price;
     this.description = description;
   }
+};
+var TestingConfiguration = class extends CustomType {
+  constructor(test_bag, target_milestone, starting_health, simulation_count) {
+    super();
+    this.test_bag = test_bag;
+    this.target_milestone = target_milestone;
+    this.starting_health = starting_health;
+    this.simulation_count = simulation_count;
+  }
+};
+var SimulationResult = class extends CustomType {
+  constructor(won, final_points, final_health, orbs_pulled, bombs_hit) {
+    super();
+    this.won = won;
+    this.final_points = final_points;
+    this.final_health = final_health;
+    this.orbs_pulled = orbs_pulled;
+    this.bombs_hit = bombs_hit;
+  }
+};
+var TestingStats = class extends CustomType {
+  constructor(total_runs, wins, losses, win_rate, average_points, best_score, worst_score, results) {
+    super();
+    this.total_runs = total_runs;
+    this.wins = wins;
+    this.losses = losses;
+    this.win_rate = win_rate;
+    this.average_points = average_points;
+    this.best_score = best_score;
+    this.worst_score = worst_score;
+    this.results = results;
+  }
+};
+var ConfiguringTest = class extends CustomType {
+};
+var RunningSimulations = class extends CustomType {
+};
+var ViewingResults = class extends CustomType {
 };
 
 // build/dev/javascript/newmoon/level.mjs
@@ -4874,7 +5118,10 @@ function apply_orb_effect(orb, model) {
       model.bombs_pulled_this_level + 1,
       _record.current_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
@@ -4891,7 +5138,10 @@ function apply_orb_effect(orb, model) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
@@ -4908,7 +5158,10 @@ function apply_orb_effect(orb, model) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else if (orb instanceof Collector) {
     let remaining_orbs = length2(model.bag) - 1;
@@ -4925,7 +5178,10 @@ function apply_orb_effect(orb, model) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else if (orb instanceof Survivor) {
     let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
@@ -4941,7 +5197,10 @@ function apply_orb_effect(orb, model) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else {
     let new_multiplier = model.current_multiplier * 2;
@@ -4957,7 +5216,10 @@ function apply_orb_effect(orb, model) {
       _record.bombs_pulled_this_level,
       new_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   }
 }
@@ -5032,7 +5294,10 @@ function purchase_orb(model, orb) {
         _record.bombs_pulled_this_level,
         _record.current_multiplier,
         new_credits,
-        _record.shuffle_enabled
+        _record.shuffle_enabled,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats
       );
     } else {
       return model;
@@ -5162,6 +5427,175 @@ function view_marketplace(model) {
   );
 }
 
+// build/dev/javascript/newmoon/simulation.mjs
+function apply_orb_simulation(orb, health, points, multiplier, bombs_hit) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    let new_health = health - damage;
+    let new_bombs = bombs_hit + 1;
+    return [new_health, points, multiplier, new_bombs];
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    let modified_points = points + value * multiplier;
+    return [health, modified_points, multiplier, bombs_hit];
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    let new_health = health + value;
+    return [new_health, points, multiplier, bombs_hit];
+  } else if (orb instanceof Collector) {
+    let collector_points = 5 * multiplier;
+    return [health, points + collector_points, multiplier, bombs_hit];
+  } else if (orb instanceof Survivor) {
+    let survivor_points = bombs_hit * 2 * multiplier;
+    return [health, points + survivor_points, multiplier, bombs_hit];
+  } else {
+    let new_multiplier = multiplier * 2;
+    return [health, points, new_multiplier, bombs_hit];
+  }
+}
+function simulate_game(loop$bag, loop$health, loop$points, loop$target, loop$orbs_pulled, loop$bombs_hit, loop$multiplier) {
+  while (true) {
+    let bag = loop$bag;
+    let health = loop$health;
+    let points = loop$points;
+    let target = loop$target;
+    let orbs_pulled = loop$orbs_pulled;
+    let bombs_hit = loop$bombs_hit;
+    let multiplier = loop$multiplier;
+    let $ = health <= 0;
+    if ($) {
+      return new SimulationResult(false, points, health, orbs_pulled, bombs_hit);
+    } else {
+      let $1 = points >= target;
+      if ($1) {
+        return new SimulationResult(
+          true,
+          points,
+          health,
+          orbs_pulled,
+          bombs_hit
+        );
+      } else {
+        if (bag instanceof Empty) {
+          return new SimulationResult(
+            false,
+            points,
+            health,
+            orbs_pulled,
+            bombs_hit
+          );
+        } else {
+          let orb = bag.head;
+          let rest = bag.tail;
+          let $2 = apply_orb_simulation(
+            orb,
+            health,
+            points,
+            multiplier,
+            bombs_hit
+          );
+          let new_health = $2[0];
+          let new_points = $2[1];
+          let new_multiplier = $2[2];
+          let new_bombs = $2[3];
+          loop$bag = rest;
+          loop$health = new_health;
+          loop$points = new_points;
+          loop$target = target;
+          loop$orbs_pulled = orbs_pulled + 1;
+          loop$bombs_hit = new_bombs;
+          loop$multiplier = new_multiplier;
+        }
+      }
+    }
+  }
+}
+function run_single_simulation(config) {
+  let shuffled_bag = shuffle(config.test_bag);
+  return simulate_game(
+    shuffled_bag,
+    config.starting_health,
+    0,
+    config.target_milestone,
+    0,
+    0,
+    1
+  );
+}
+function calculate_stats(results) {
+  let total_runs = length2(results);
+  let wins = count(results, (result) => {
+    return result.won;
+  });
+  let losses = total_runs - wins;
+  let _block;
+  let $ = total_runs > 0;
+  if ($) {
+    _block = divideFloat(identity(wins), identity(total_runs));
+  } else {
+    _block = 0;
+  }
+  let win_rate = _block;
+  let point_values = map(
+    results,
+    (result) => {
+      return result.final_points;
+    }
+  );
+  let _block$1;
+  let $1 = total_runs > 0;
+  if ($1) {
+    let total_points = fold2(point_values, 0, add);
+    _block$1 = divideFloat(
+      identity(total_points),
+      identity(total_runs)
+    );
+  } else {
+    _block$1 = 0;
+  }
+  let average_points = _block$1;
+  let _block$2;
+  let $2 = (() => {
+    let _pipe = sort(point_values, compare2);
+    return reverse(_pipe);
+  })();
+  if ($2 instanceof Empty) {
+    _block$2 = 0;
+  } else {
+    let best = $2.head;
+    _block$2 = best;
+  }
+  let best_score = _block$2;
+  let _block$3;
+  let $3 = sort(point_values, compare2);
+  if ($3 instanceof Empty) {
+    _block$3 = 0;
+  } else {
+    let worst = $3.head;
+    _block$3 = worst;
+  }
+  let worst_score = _block$3;
+  return new TestingStats(
+    total_runs,
+    wins,
+    losses,
+    win_rate,
+    average_points,
+    best_score,
+    worst_score,
+    results
+  );
+}
+function run_simulations(config) {
+  let _block;
+  let _pipe = range(1, config.simulation_count);
+  _block = map(_pipe, (_) => {
+    return run_single_simulation(config);
+  });
+  let results = _block;
+  return calculate_stats(results);
+}
+
 // build/dev/javascript/newmoon/view.mjs
 function view_header() {
   return div(
@@ -5184,7 +5618,7 @@ function view_header() {
     ])
   );
 }
-function view_stat_card(symbol, label, value, color_class) {
+function view_stat_card(symbol, label2, value, color_class) {
   return div(
     toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
     toList([
@@ -5198,7 +5632,7 @@ function view_stat_card(symbol, label, value, color_class) {
             "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light"
           )
         ]),
-        toList([text3(label)])
+        toList([text3(label2)])
       ),
       div(
         toList([
@@ -5532,6 +5966,15 @@ function view_won_state(_) {
           button(
             toList([
               class$(
+                "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new EnterTestingGrounds())
+            ]),
+            toList([text3("TESTING GROUNDS")])
+          ),
+          button(
+            toList([
+              class$(
                 "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
               ),
               on_click(new NextLevel())
@@ -5582,6 +6025,512 @@ function view_lost_state() {
     ])
   );
 }
+function view_testing_header() {
+  return div(
+    toList([
+      class$("mb-6 p-4 bg-blue-50 border border-blue-200 rounded")
+    ]),
+    toList([
+      h2(
+        toList([
+          class$("text-xl font-light text-black mb-2 tracking-wide")
+        ]),
+        toList([text3("ORB TESTING GROUNDS")])
+      ),
+      p(
+        toList([class$("text-blue-700 text-sm font-light")]),
+        toList([text3("Simulate strategies and optimize your approach")])
+      ),
+      button(
+        toList([
+          class$(
+            "mt-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-light tracking-wider transition"
+          ),
+          on_click(new ExitTestingGrounds())
+        ]),
+        toList([text3("\u2190 BACK TO GAME")])
+      )
+    ])
+  );
+}
+function view_simulation_progress(_) {
+  return div(
+    toList([class$("p-6")]),
+    toList([
+      div(
+        toList([class$("mb-4")]),
+        toList([
+          h3(
+            toList([class$("text-lg font-light mb-2")]),
+            toList([text3("Running Simulations...")])
+          ),
+          p(
+            toList([class$("text-gray-600 text-sm")]),
+            toList([text3("Please wait while we test your strategy")])
+          )
+        ])
+      ),
+      div(
+        toList([class$("bg-gray-200 rounded-full h-2 mb-4")]),
+        toList([
+          div(
+            toList([class$("bg-blue-600 h-2 rounded-full w-1/2")]),
+            toList([])
+          )
+        ])
+      ),
+      button(
+        toList([
+          class$(
+            "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-light tracking-wider transition"
+          ),
+          on_click(new ViewTestResults())
+        ]),
+        toList([text3("VIEW RESULTS (DEMO)")])
+      )
+    ])
+  );
+}
+function generate_insights(stats) {
+  let _block;
+  let $ = stats.win_rate;
+  let rate = $;
+  if (rate >= 0.8) {
+    _block = "Excellent strategy! Very high success rate.";
+  } else {
+    let rate$1 = $;
+    if (rate$1 >= 0.6) {
+      _block = "Good strategy with solid win rate.";
+    } else {
+      let rate$2 = $;
+      if (rate$2 >= 0.4) {
+        _block = "Moderate success. Consider more health orbs.";
+      } else {
+        _block = "Low win rate. Strategy needs significant improvement.";
+      }
+    }
+  }
+  let win_rate_insight = _block;
+  let _block$1;
+  let $1 = stats.average_points >= identity(
+    round2(identity(stats.best_score) * 0.7)
+  );
+  if ($1) {
+    _block$1 = "Consistent scoring with good point generation.";
+  } else {
+    _block$1 = "High variance in scores. Strategy may be risky.";
+  }
+  let score_insight = _block$1;
+  let _block$2;
+  let $2 = stats.total_runs;
+  let runs = $2;
+  if (runs >= 100) {
+    _block$2 = "Large sample size provides reliable results.";
+  } else {
+    let runs$1 = $2;
+    if (runs$1 >= 50) {
+      _block$2 = "Good sample size for meaningful insights.";
+    } else {
+      _block$2 = "Small sample size. Consider running more simulations.";
+    }
+  }
+  let sample_insight = _block$2;
+  return toList([win_rate_insight, score_insight, sample_insight]);
+}
+function view_performance_insights(stats) {
+  let insights = generate_insights(stats);
+  return div(
+    toList([class$("bg-gray-50 rounded border p-4")]),
+    toList([
+      h4(
+        toList([class$("text-sm font-medium text-gray-700 mb-2")]),
+        toList([text3("STRATEGY INSIGHTS")])
+      ),
+      div(
+        toList([class$("space-y-2")]),
+        map(
+          insights,
+          (insight) => {
+            return p(
+              toList([class$("text-xs text-gray-600")]),
+              toList([text3(insight)])
+            );
+          }
+        )
+      )
+    ])
+  );
+}
+function view_comprehensive_stats(stats) {
+  let win_rate_percent = (() => {
+    let _pipe2 = round2(stats.win_rate * 100);
+    return to_string(_pipe2);
+  })() + "%";
+  let _block;
+  let _pipe = round2(stats.average_points);
+  _block = to_string(_pipe);
+  let avg_points = _block;
+  return div(
+    toList([]),
+    toList([
+      div(
+        toList([class$("grid grid-cols-2 gap-4 mb-6")]),
+        toList([
+          view_stat_card(
+            "\u2713",
+            "WIN RATE",
+            win_rate_percent,
+            (() => {
+              let $ = stats.win_rate >= 0.7;
+              if ($) {
+                return "text-green-600";
+              } else {
+                let $1 = stats.win_rate >= 0.4;
+                if ($1) {
+                  return "text-yellow-600";
+                } else {
+                  return "text-red-600";
+                }
+              }
+            })()
+          ),
+          view_stat_card("\u25CE", "AVG SCORE", avg_points, "text-blue-600")
+        ])
+      ),
+      div(
+        toList([class$("grid grid-cols-3 gap-3 mb-6")]),
+        toList([
+          view_stat_card(
+            "\u25C8",
+            "WINS",
+            to_string(stats.wins),
+            "text-green-600"
+          ),
+          view_stat_card(
+            "\u25C7",
+            "LOSSES",
+            to_string(stats.losses),
+            "text-red-600"
+          ),
+          view_stat_card(
+            "\u26AC",
+            "TOTAL",
+            to_string(stats.total_runs),
+            "text-gray-600"
+          )
+        ])
+      ),
+      div(
+        toList([class$("grid grid-cols-2 gap-4 mb-6")]),
+        toList([
+          view_stat_card(
+            "\u2191",
+            "BEST",
+            to_string(stats.best_score),
+            "text-purple-600"
+          ),
+          view_stat_card(
+            "\u2193",
+            "WORST",
+            to_string(stats.worst_score),
+            "text-gray-500"
+          )
+        ])
+      ),
+      view_performance_insights(stats)
+    ])
+  );
+}
+function view_test_results(model) {
+  let $ = model.testing_stats;
+  if ($ instanceof Some) {
+    let stats = $[0];
+    return div(
+      toList([class$("p-6")]),
+      toList([
+        h3(
+          toList([class$("text-lg font-light mb-4")]),
+          toList([text3("Simulation Results")])
+        ),
+        view_comprehensive_stats(stats),
+        div(
+          toList([class$("space-y-3 mt-6")]),
+          toList([
+            button(
+              toList([
+                class$(
+                  "w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-light tracking-wider transition"
+                ),
+                on_click(new ResetTestConfig())
+              ]),
+              toList([text3("NEW TEST")])
+            ),
+            button(
+              toList([
+                class$(
+                  "w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-sm font-light tracking-wider transition"
+                ),
+                on_click(new ExitTestingGrounds())
+              ]),
+              toList([text3("BACK TO GAME")])
+            )
+          ])
+        )
+      ])
+    );
+  } else {
+    return div(
+      toList([class$("p-6")]),
+      toList([
+        p(
+          toList([class$("text-gray-600")]),
+          toList([text3("No simulation results available")])
+        )
+      ])
+    );
+  }
+}
+function view_test_bag_contents(bag) {
+  let $ = is_empty(bag);
+  if ($) {
+    return p(
+      toList([class$("text-gray-400 text-sm italic")]),
+      toList([text3("No orbs added yet")])
+    );
+  } else {
+    return div(
+      toList([class$("flex flex-wrap gap-2")]),
+      index_map(
+        bag,
+        (orb, index3) => {
+          return div(
+            toList([
+              class$(
+                "flex items-center bg-white rounded border px-2 py-1"
+              )
+            ]),
+            toList([
+              span(
+                toList([class$("text-xs mr-2")]),
+                toList([text3(get_orb_name(orb))])
+              ),
+              button(
+                toList([
+                  class$("text-red-500 hover:text-red-700 text-xs"),
+                  on_click(new RemoveTestOrb(index3))
+                ]),
+                toList([text3("\xD7")])
+              )
+            ])
+          );
+        }
+      )
+    );
+  }
+}
+function view_orb_selector() {
+  let available_orbs = toList([
+    new Point(8),
+    new Point(12),
+    new Point(15),
+    new Health(2),
+    new Health(4),
+    new Bomb(2),
+    new Bomb(3),
+    new Collector(),
+    new Survivor(),
+    new Multiplier()
+  ]);
+  return div(
+    toList([]),
+    toList([
+      p(
+        toList([class$("text-sm font-light mb-2")]),
+        toList([text3("Add orbs to your test bag:")])
+      ),
+      div(
+        toList([class$("grid grid-cols-2 gap-2")]),
+        map(
+          available_orbs,
+          (orb) => {
+            return button(
+              toList([
+                class$(
+                  "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition"
+                ),
+                on_click(new AddTestOrb(orb))
+              ]),
+              toList([text3(get_orb_name(orb))])
+            );
+          }
+        )
+      )
+    ])
+  );
+}
+function view_test_bag_builder(config) {
+  return div(
+    toList([class$("mb-6")]),
+    toList([
+      h3(
+        toList([class$("text-lg font-light mb-3")]),
+        toList([text3("Test Bag Configuration")])
+      ),
+      div(
+        toList([class$("mb-4 p-4 bg-gray-50 rounded border")]),
+        toList([
+          p(
+            toList([class$("text-sm text-gray-600 mb-2")]),
+            toList([
+              text3(
+                "Orbs in bag: " + to_string(length2(config.test_bag))
+              )
+            ])
+          ),
+          view_test_bag_contents(config.test_bag)
+        ])
+      ),
+      view_orb_selector()
+    ])
+  );
+}
+function view_test_settings(config) {
+  return div(
+    toList([class$("mb-6 p-4 bg-gray-50 rounded border")]),
+    toList([
+      h3(
+        toList([class$("text-lg font-light mb-3")]),
+        toList([text3("Test Settings")])
+      ),
+      div(
+        toList([class$("grid grid-cols-2 gap-4")]),
+        toList([
+          div(
+            toList([]),
+            toList([
+              label(
+                toList([class$("block text-sm font-light mb-1")]),
+                toList([text3("Target Score:")])
+              ),
+              p(
+                toList([class$("text-lg")]),
+                toList([text3(to_string(config.target_milestone))])
+              )
+            ])
+          ),
+          div(
+            toList([]),
+            toList([
+              label(
+                toList([class$("block text-sm font-light mb-1")]),
+                toList([text3("Starting Health:")])
+              ),
+              p(
+                toList([class$("text-lg")]),
+                toList([text3(to_string(config.starting_health))])
+              )
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("mt-4")]),
+        toList([
+          label(
+            toList([class$("block text-sm font-light mb-1")]),
+            toList([text3("Simulation Count:")])
+          ),
+          p(
+            toList([class$("text-lg")]),
+            toList([text3(to_string(config.simulation_count))])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view_test_actions(config) {
+  let can_run = !is_empty(config.test_bag);
+  let _block;
+  if (can_run) {
+    _block = "bg-green-600 hover:bg-green-700 text-white";
+  } else {
+    _block = "bg-gray-300 cursor-not-allowed text-gray-500";
+  }
+  let button_classes = _block;
+  return div(
+    toList([class$("space-y-3")]),
+    toList([
+      button(
+        toList([
+          class$(
+            concat2(
+              toList([
+                "w-full py-4 px-6 rounded font-light text-sm tracking-wider transition transform hover:scale-[1.02] ",
+                button_classes
+              ])
+            )
+          ),
+          on_click(new StartSimulations())
+        ]),
+        toList([
+          text3(
+            (() => {
+              if (can_run) {
+                return "RUN SIMULATIONS";
+              } else {
+                return "ADD ORBS TO BEGIN";
+              }
+            })()
+          )
+        ])
+      ),
+      button(
+        toList([
+          class$(
+            "w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-light text-sm tracking-wider transition"
+          ),
+          on_click(new ResetTestConfig())
+        ]),
+        toList([text3("RESET CONFIGURATION")])
+      )
+    ])
+  );
+}
+function view_test_configuration(model) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    return div(
+      toList([]),
+      toList([
+        view_test_bag_builder(config),
+        view_test_settings(config),
+        view_test_actions(config)
+      ])
+    );
+  } else {
+    return div(toList([]), toList([text3("Configuration error")]));
+  }
+}
+function view_testing_grounds(model) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      view_testing_header(),
+      (() => {
+        let $ = model.testing_mode;
+        if ($ instanceof ConfiguringTest) {
+          return view_test_configuration(model);
+        } else if ($ instanceof RunningSimulations) {
+          return view_simulation_progress(model);
+        } else {
+          return view_test_results(model);
+        }
+      })()
+    ])
+  );
+}
 function view_game_content(model) {
   let $ = model.status;
   if ($ instanceof Playing) {
@@ -5592,8 +6541,10 @@ function view_game_content(model) {
     return view_lost_state();
   } else if ($ instanceof ShowingReward) {
     return view_reward_state(model);
-  } else {
+  } else if ($ instanceof InMarketplace) {
     return view_marketplace(model);
+  } else {
+    return view_testing_grounds(model);
   }
 }
 function view_game_card(model) {
@@ -5631,7 +6582,10 @@ function init(_) {
     0,
     1,
     0,
-    false
+    false,
+    new None(),
+    new ConfiguringTest(),
+    new None()
   );
 }
 function handle_next_level(model) {
@@ -5647,7 +6601,10 @@ function handle_next_level(model) {
     0,
     1,
     model.credits,
-    model.shuffle_enabled
+    model.shuffle_enabled,
+    model.testing_config,
+    model.testing_mode,
+    model.testing_stats
   );
 }
 function handle_accept_reward(model) {
@@ -5663,7 +6620,10 @@ function handle_accept_reward(model) {
     _record.bombs_pulled_this_level,
     _record.current_multiplier,
     _record.credits,
-    _record.shuffle_enabled
+    _record.shuffle_enabled,
+    _record.testing_config,
+    _record.testing_mode,
+    _record.testing_stats
   );
 }
 function handle_enter_marketplace(model) {
@@ -5679,7 +6639,285 @@ function handle_enter_marketplace(model) {
     _record.bombs_pulled_this_level,
     _record.current_multiplier,
     _record.credits,
-    _record.shuffle_enabled
+    _record.shuffle_enabled,
+    _record.testing_config,
+    _record.testing_mode,
+    _record.testing_stats
+  );
+}
+function handle_enter_testing_grounds(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new InTestingGrounds(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
+    new ConfiguringTest(),
+    new None()
+  );
+}
+function handle_exit_testing_grounds(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new Playing(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    new None(),
+    _record.testing_mode,
+    new None()
+  );
+}
+function handle_add_test_orb(model, orb) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    let _block;
+    let _record = config;
+    _block = new TestingConfiguration(
+      prepend(orb, config.test_bag),
+      _record.target_milestone,
+      _record.starting_health,
+      _record.simulation_count
+    );
+    let new_config = _block;
+    let _record$1 = model;
+    return new Model(
+      _record$1.health,
+      _record$1.points,
+      _record$1.level,
+      _record$1.milestone,
+      _record$1.bag,
+      _record$1.status,
+      _record$1.last_orb,
+      _record$1.bombs_pulled_this_level,
+      _record$1.current_multiplier,
+      _record$1.credits,
+      _record$1.shuffle_enabled,
+      new Some(new_config),
+      _record$1.testing_mode,
+      _record$1.testing_stats
+    );
+  } else {
+    return model;
+  }
+}
+function handle_remove_test_orb(model, index3) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    let before = take(config.test_bag, index3);
+    let after = drop(config.test_bag, index3 + 1);
+    let new_bag = append2(before, after);
+    let _block;
+    let _record = config;
+    _block = new TestingConfiguration(
+      new_bag,
+      _record.target_milestone,
+      _record.starting_health,
+      _record.simulation_count
+    );
+    let new_config = _block;
+    let _record$1 = model;
+    return new Model(
+      _record$1.health,
+      _record$1.points,
+      _record$1.level,
+      _record$1.milestone,
+      _record$1.bag,
+      _record$1.status,
+      _record$1.last_orb,
+      _record$1.bombs_pulled_this_level,
+      _record$1.current_multiplier,
+      _record$1.credits,
+      _record$1.shuffle_enabled,
+      new Some(new_config),
+      _record$1.testing_mode,
+      _record$1.testing_stats
+    );
+  } else {
+    return model;
+  }
+}
+function handle_set_test_milestone(model, milestone) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    let _block;
+    let _record = config;
+    _block = new TestingConfiguration(
+      _record.test_bag,
+      milestone,
+      _record.starting_health,
+      _record.simulation_count
+    );
+    let new_config = _block;
+    let _record$1 = model;
+    return new Model(
+      _record$1.health,
+      _record$1.points,
+      _record$1.level,
+      _record$1.milestone,
+      _record$1.bag,
+      _record$1.status,
+      _record$1.last_orb,
+      _record$1.bombs_pulled_this_level,
+      _record$1.current_multiplier,
+      _record$1.credits,
+      _record$1.shuffle_enabled,
+      new Some(new_config),
+      _record$1.testing_mode,
+      _record$1.testing_stats
+    );
+  } else {
+    return model;
+  }
+}
+function handle_set_test_health(model, health) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    let _block;
+    let _record = config;
+    _block = new TestingConfiguration(
+      _record.test_bag,
+      _record.target_milestone,
+      health,
+      _record.simulation_count
+    );
+    let new_config = _block;
+    let _record$1 = model;
+    return new Model(
+      _record$1.health,
+      _record$1.points,
+      _record$1.level,
+      _record$1.milestone,
+      _record$1.bag,
+      _record$1.status,
+      _record$1.last_orb,
+      _record$1.bombs_pulled_this_level,
+      _record$1.current_multiplier,
+      _record$1.credits,
+      _record$1.shuffle_enabled,
+      new Some(new_config),
+      _record$1.testing_mode,
+      _record$1.testing_stats
+    );
+  } else {
+    return model;
+  }
+}
+function handle_set_simulation_count(model, count2) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    let _block;
+    let _record = config;
+    _block = new TestingConfiguration(
+      _record.test_bag,
+      _record.target_milestone,
+      _record.starting_health,
+      count2
+    );
+    let new_config = _block;
+    let _record$1 = model;
+    return new Model(
+      _record$1.health,
+      _record$1.points,
+      _record$1.level,
+      _record$1.milestone,
+      _record$1.bag,
+      _record$1.status,
+      _record$1.last_orb,
+      _record$1.bombs_pulled_this_level,
+      _record$1.current_multiplier,
+      _record$1.credits,
+      _record$1.shuffle_enabled,
+      new Some(new_config),
+      _record$1.testing_mode,
+      _record$1.testing_stats
+    );
+  } else {
+    return model;
+  }
+}
+function handle_start_simulations(model) {
+  let $ = model.testing_config;
+  if ($ instanceof Some) {
+    let config = $[0];
+    let stats = run_simulations(config);
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      new ViewingResults(),
+      new Some(stats)
+    );
+  } else {
+    return model;
+  }
+}
+function handle_view_test_results(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.status,
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    _record.testing_config,
+    new ViewingResults(),
+    _record.testing_stats
+  );
+}
+function handle_reset_test_config(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.status,
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits,
+    _record.shuffle_enabled,
+    new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
+    new ConfiguringTest(),
+    new None()
   );
 }
 function check_game_status(model) {
@@ -5698,7 +6936,10 @@ function check_game_status(model) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       _record.credits,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else if ($1) {
     let _record = model;
@@ -5713,7 +6954,10 @@ function check_game_status(model) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       model.credits + model.points,
-      _record.shuffle_enabled
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
   } else {
     return model;
@@ -5753,7 +6997,10 @@ function handle_pull_orb(model) {
           _record.bombs_pulled_this_level,
           _record.current_multiplier,
           _record.credits,
-          _record.shuffle_enabled
+          _record.shuffle_enabled,
+          _record.testing_config,
+          _record.testing_mode,
+          _record.testing_stats
         );
         let updated_model = _block$1;
         return check_game_status(updated_model);
@@ -5777,7 +7024,7 @@ function update2(model, msg) {
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
     return purchase_orb(model, orb);
-  } else {
+  } else if (msg instanceof ToggleShuffle) {
     let _record = model;
     return new Model(
       _record.health,
@@ -5790,8 +7037,36 @@ function update2(model, msg) {
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
       _record.credits,
-      !model.shuffle_enabled
+      !model.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
     );
+  } else if (msg instanceof EnterTestingGrounds) {
+    return handle_enter_testing_grounds(model);
+  } else if (msg instanceof ExitTestingGrounds) {
+    return handle_exit_testing_grounds(model);
+  } else if (msg instanceof AddTestOrb) {
+    let orb = msg[0];
+    return handle_add_test_orb(model, orb);
+  } else if (msg instanceof RemoveTestOrb) {
+    let index3 = msg[0];
+    return handle_remove_test_orb(model, index3);
+  } else if (msg instanceof SetTestMilestone) {
+    let milestone = msg[0];
+    return handle_set_test_milestone(model, milestone);
+  } else if (msg instanceof SetTestHealth) {
+    let health = msg[0];
+    return handle_set_test_health(model, health);
+  } else if (msg instanceof SetSimulationCount) {
+    let count2 = msg[0];
+    return handle_set_simulation_count(model, count2);
+  } else if (msg instanceof StartSimulations) {
+    return handle_start_simulations(model);
+  } else if (msg instanceof ViewTestResults) {
+    return handle_view_test_results(model);
+  } else {
+    return handle_reset_test_config(model);
   }
 }
 function main() {
@@ -5804,10 +7079,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      11,
+      12,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 303, end: 393, pattern_start: 314, pattern_end: 319 }
+      { value: $, start: 529, end: 619, pattern_start: 540, pattern_end: 545 }
     );
   }
   return void 0;
