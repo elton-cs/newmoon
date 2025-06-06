@@ -4590,30 +4590,31 @@ function create_level_bag(loop$level) {
     let level = loop$level;
     if (level === 1) {
       return toList([
-        new Collector(),
-        new Multiplier(),
-        new Survivor(),
-        new Point(5),
-        new Point(5),
-        new Collector(),
-        new Point(7),
         new Point(8),
-        new Bomb(1),
-        new Bomb(1),
+        new Point(10),
+        new Point(12),
+        new Point(6),
+        new Point(8),
+        new Point(10),
         new Bomb(2),
-        new Health(1),
-        new Health(3)
+        new Bomb(2),
+        new Bomb(3),
+        new Health(2),
+        new Health(3),
+        new Collector()
       ]);
     } else if (level === 2) {
       return toList([
-        new Point(7),
+        new Point(12),
+        new Point(10),
         new Point(8),
-        new Point(8),
-        new Point(9),
-        new Bomb(1),
+        new Point(10),
+        new Point(15),
+        new Bomb(2),
         new Bomb(2),
         new Bomb(3),
-        new Health(1),
+        new Bomb(3),
+        new Health(2),
         new Health(3),
         new Collector(),
         new Multiplier(),
@@ -4682,7 +4683,19 @@ function create_level_bag(loop$level) {
   }
 }
 function get_milestone_for_level(level) {
-  return 100 + (level - 1) * 200;
+  if (level === 1) {
+    return 50;
+  } else if (level === 2) {
+    return 80;
+  } else if (level === 3) {
+    return 120;
+  } else if (level === 4) {
+    return 180;
+  } else if (level === 5) {
+    return 250;
+  } else {
+    return 250 + (level - 5) * 50;
+  }
 }
 
 // build/dev/javascript/lustre/lustre/event.mjs
