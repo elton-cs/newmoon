@@ -1,6 +1,7 @@
 import gleam/int
 import gleam/list
-import types.{type Model, type Orb, Bomb, Collector, Health, Multiplier, Point, Survivor}
+import gleam/option
+import types.{type Model, type Orb, Bomb, Collector, Health, Multiplier, Point, Survivor, Choice, ChoosingOrb}
 
 pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
   case orb {
@@ -61,6 +62,7 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
       "✱ SIGNAL BOOST ["
       <> int.to_string(model.current_multiplier)
       <> "× AMPLIFICATION ACTIVE]"
+    Choice -> "◆ CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]"
   }
 }
 
@@ -72,6 +74,7 @@ pub fn get_orb_result_color(orb: Orb) -> String {
     Collector -> "blue"
     Survivor -> "purple"
     Multiplier -> "yellow"
+    Choice -> "orange"
   }
 }
 
@@ -104,6 +107,89 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
       let new_multiplier = model.current_multiplier * 2
       types.Model(..model, current_multiplier: new_multiplier)
     }
+    Choice -> handle_choice_orb(model)
+  }
+}
+
+// Helper function to handle Choice orb logic
+fn handle_choice_orb(model: Model) -> Model {
+  case model.bag {
+    // Empty bag - no effect
+    [] -> model
+    
+    // Single orb - duplicate it for choice UI
+    [single_orb] -> 
+      types.Model(
+        ..model,
+        status: ChoosingOrb,
+        pending_choice: option.Some(#(single_orb, single_orb)),
+        bag: [],
+      )
+    
+    // Multiple orbs - draw 2 non-Choice orbs
+    _ -> draw_two_non_choice_orbs(model, model.bag, [])
+  }
+}
+
+// Recursively draw 2 non-Choice orbs, moving Choice orbs to the end
+fn draw_two_non_choice_orbs(model: Model, remaining_bag: List(Orb), choice_orbs_found: List(Orb)) -> Model {
+  case remaining_bag {
+    [] -> 
+      // Not enough non-Choice orbs, fallback to no effect
+      types.Model(..model, bag: choice_orbs_found)
+    
+    [Choice, ..rest] ->
+      // Skip Choice orb, add to end, continue drawing
+      draw_two_non_choice_orbs(model, rest, list.append(choice_orbs_found, [Choice]))
+    
+    [first_orb, Choice, ..rest] ->
+      // Found first orb, skip second Choice orb, continue for second orb
+      draw_second_non_choice_orb(model, rest, [Choice], first_orb, choice_orbs_found)
+    
+    [first_orb, second_orb, ..rest] ->
+      // Found both orbs successfully
+      types.Model(
+        ..model,
+        status: ChoosingOrb,
+        pending_choice: option.Some(#(first_orb, second_orb)),
+        bag: list.append(rest, choice_orbs_found),
+      )
+    
+    [single_orb] ->
+      // Only one non-Choice orb available, duplicate it
+      types.Model(
+        ..model,
+        status: ChoosingOrb,
+        pending_choice: option.Some(#(single_orb, single_orb)),
+        bag: choice_orbs_found,
+      )
+  }
+}
+
+// Helper to find the second non-Choice orb
+fn draw_second_non_choice_orb(model: Model, remaining_bag: List(Orb), more_choice_orbs: List(Orb), first_orb: Orb, original_choice_orbs: List(Orb)) -> Model {
+  case remaining_bag {
+    [] ->
+      // No second orb available, duplicate the first
+      types.Model(
+        ..model,
+        status: ChoosingOrb,
+        pending_choice: option.Some(#(first_orb, first_orb)),
+        bag: list.append(original_choice_orbs, more_choice_orbs),
+      )
+    
+    [Choice, ..rest] ->
+      // Skip another Choice orb
+      draw_second_non_choice_orb(model, rest, list.append(more_choice_orbs, [Choice]), first_orb, original_choice_orbs)
+    
+    [second_orb, ..rest] ->
+      // Found second orb
+      types.Model(
+        ..model,
+        status: ChoosingOrb,
+        pending_choice: option.Some(#(first_orb, second_orb)),
+        bag: list.append(list.append(rest, original_choice_orbs), more_choice_orbs),
+      )
   }
 }
 
@@ -115,5 +201,6 @@ pub fn get_orb_name(orb: Orb) -> String {
     Collector -> "Scanner Sample"
     Survivor -> "Analyzer Sample"
     Multiplier -> "Amplifier Sample"
+    Choice -> "Choice Sample"
   }
 }

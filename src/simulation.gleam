@@ -112,6 +112,12 @@ fn apply_orb_simulation(
       let new_multiplier = multiplier * 2
       #(health, points, new_multiplier, bombs_hit)
     }
+    types.Choice -> {
+      // For simulation purposes, Choice orb has no direct effect
+      // In real gameplay it would trigger choice selection, but in simulation
+      // we can't make choices, so it's essentially a no-op
+      #(health, points, multiplier, bombs_hit)
+    }
   }
 }
 

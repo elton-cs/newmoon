@@ -1,9 +1,11 @@
-import types.{type Orb, Bomb, Collector, Health, Multiplier, Point, Survivor}
+import types.{type Orb, Bomb, Collector, Health, Multiplier, Point, Survivor, Choice}
 
 pub fn create_level_bag(level: Int) -> List(Orb) {
   case level {
     1 -> [
-      // Level 1: Tutorial level (12 orbs total)
+      // Level 1: Tutorial level (13 orbs total)
+      // Choice orb first to introduce mechanic early
+      Choice,
       // 6 Point orbs - enough to win with some strategy
       Point(8),
       Point(10),
@@ -60,10 +62,10 @@ pub fn create_level_bag(level: Int) -> List(Orb) {
       // 2 Health orbs
       Health(1),
       Health(3),
-      // 2 Collector, 1 Multiplier
-      Collector,
+      // Strategic orbs including first Choice orb
       Collector,
       Multiplier,
+      Choice,
     ]
 
     4 -> [
@@ -84,10 +86,10 @@ pub fn create_level_bag(level: Int) -> List(Orb) {
       Health(1),
       Health(3),
       Health(3),
-      // 2 Multiplier, 1 Survivor
-      Multiplier,
+      // Strategic orbs with Choice
       Multiplier,
       Survivor,
+      Choice,
     ]
 
     5 -> [
@@ -110,10 +112,10 @@ pub fn create_level_bag(level: Int) -> List(Orb) {
       Health(3),
       Health(3),
       Health(3),
-      // 2 Collector, 1 Survivor
-      Collector,
+      // Strategic orbs with multiple Choice
       Collector,
       Survivor,
+      Choice,
     ]
 
     _ -> create_level_bag(5)

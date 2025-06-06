@@ -4850,6 +4850,8 @@ var Survivor = class extends CustomType {
 };
 var Multiplier = class extends CustomType {
 };
+var Choice = class extends CustomType {
+};
 var MainMenu = class extends CustomType {
 };
 var Playing = class extends CustomType {
@@ -4864,8 +4866,10 @@ var InMarketplace = class extends CustomType {
 };
 var InTestingGrounds = class extends CustomType {
 };
+var ChoosingOrb = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence, pending_choice) {
     super();
     this.health = health;
     this.points = points;
@@ -4884,6 +4888,7 @@ var Model = class extends CustomType {
     this.testing_stats = testing_stats;
     this.log_entries = log_entries;
     this.log_sequence = log_sequence;
+    this.pending_choice = pending_choice;
   }
 };
 var StartNewGame = class extends CustomType {
@@ -4919,6 +4924,10 @@ var BuyOrb = class extends CustomType {
 var ToggleShuffle = class extends CustomType {
 };
 var ToggleDevMode = class extends CustomType {
+};
+var SelectFirstChoice = class extends CustomType {
+};
+var SelectSecondChoice = class extends CustomType {
 };
 var ExitTestingGrounds = class extends CustomType {
 };
@@ -5019,6 +5028,7 @@ function create_level_bag(loop$level) {
     let level = loop$level;
     if (level === 1) {
       return toList([
+        new Choice(),
         new Point(8),
         new Point(10),
         new Point(12),
@@ -5063,8 +5073,8 @@ function create_level_bag(loop$level) {
         new Health(1),
         new Health(3),
         new Collector(),
-        new Collector(),
-        new Multiplier()
+        new Multiplier(),
+        new Choice()
       ]);
     } else if (level === 4) {
       return toList([
@@ -5082,8 +5092,8 @@ function create_level_bag(loop$level) {
         new Health(3),
         new Health(3),
         new Multiplier(),
-        new Multiplier(),
-        new Survivor()
+        new Survivor(),
+        new Choice()
       ]);
     } else if (level === 5) {
       return toList([
@@ -5103,8 +5113,8 @@ function create_level_bag(loop$level) {
         new Health(3),
         new Health(3),
         new Collector(),
-        new Collector(),
-        new Survivor()
+        new Survivor(),
+        new Choice()
       ]);
     } else {
       loop$level = 5;
@@ -5208,8 +5218,10 @@ function get_orb_result_message(orb, model) {
     } else {
       return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
     }
-  } else {
+  } else if (orb instanceof Multiplier) {
     return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
+  } else {
+    return "\u25C6 CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]";
   }
 }
 function get_orb_result_color(orb) {
@@ -5223,8 +5235,221 @@ function get_orb_result_color(orb) {
     return "blue";
   } else if (orb instanceof Survivor) {
     return "purple";
-  } else {
+  } else if (orb instanceof Multiplier) {
     return "yellow";
+  } else {
+    return "orange";
+  }
+}
+function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_choice_orbs, loop$first_orb, loop$original_choice_orbs) {
+  while (true) {
+    let model = loop$model;
+    let remaining_bag = loop$remaining_bag;
+    let more_choice_orbs = loop$more_choice_orbs;
+    let first_orb = loop$first_orb;
+    let original_choice_orbs = loop$original_choice_orbs;
+    if (remaining_bag instanceof Empty) {
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        append2(original_choice_orbs, more_choice_orbs),
+        new ChoosingOrb(),
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        new Some([first_orb, first_orb])
+      );
+    } else {
+      let $ = remaining_bag.head;
+      if ($ instanceof Choice) {
+        let rest = remaining_bag.tail;
+        loop$model = model;
+        loop$remaining_bag = rest;
+        loop$more_choice_orbs = append2(
+          more_choice_orbs,
+          toList([new Choice()])
+        );
+        loop$first_orb = first_orb;
+        loop$original_choice_orbs = original_choice_orbs;
+      } else {
+        let second_orb = $;
+        let rest = remaining_bag.tail;
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          append2(
+            append2(rest, original_choice_orbs),
+            more_choice_orbs
+          ),
+          new ChoosingOrb(),
+          _record.last_orb,
+          _record.bombs_pulled_this_level,
+          _record.current_multiplier,
+          _record.credits,
+          _record.shuffle_enabled,
+          _record.dev_mode,
+          _record.testing_config,
+          _record.testing_mode,
+          _record.testing_stats,
+          _record.log_entries,
+          _record.log_sequence,
+          new Some([first_orb, second_orb])
+        );
+      }
+    }
+  }
+}
+function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_orbs_found) {
+  while (true) {
+    let model = loop$model;
+    let remaining_bag = loop$remaining_bag;
+    let choice_orbs_found = loop$choice_orbs_found;
+    if (remaining_bag instanceof Empty) {
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        choice_orbs_found,
+        _record.status,
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        _record.pending_choice
+      );
+    } else {
+      let $ = remaining_bag.head;
+      if ($ instanceof Choice) {
+        let rest = remaining_bag.tail;
+        loop$model = model;
+        loop$remaining_bag = rest;
+        loop$choice_orbs_found = append2(
+          choice_orbs_found,
+          toList([new Choice()])
+        );
+      } else {
+        let $1 = remaining_bag.tail;
+        if ($1 instanceof Empty) {
+          let single_orb = $;
+          let _record = model;
+          return new Model(
+            _record.health,
+            _record.points,
+            _record.level,
+            _record.milestone,
+            choice_orbs_found,
+            new ChoosingOrb(),
+            _record.last_orb,
+            _record.bombs_pulled_this_level,
+            _record.current_multiplier,
+            _record.credits,
+            _record.shuffle_enabled,
+            _record.dev_mode,
+            _record.testing_config,
+            _record.testing_mode,
+            _record.testing_stats,
+            _record.log_entries,
+            _record.log_sequence,
+            new Some([single_orb, single_orb])
+          );
+        } else {
+          let $2 = $1.head;
+          if ($2 instanceof Choice) {
+            let first_orb = $;
+            let rest = $1.tail;
+            return draw_second_non_choice_orb(
+              model,
+              rest,
+              toList([new Choice()]),
+              first_orb,
+              choice_orbs_found
+            );
+          } else {
+            let first_orb = $;
+            let second_orb = $2;
+            let rest = $1.tail;
+            let _record = model;
+            return new Model(
+              _record.health,
+              _record.points,
+              _record.level,
+              _record.milestone,
+              append2(rest, choice_orbs_found),
+              new ChoosingOrb(),
+              _record.last_orb,
+              _record.bombs_pulled_this_level,
+              _record.current_multiplier,
+              _record.credits,
+              _record.shuffle_enabled,
+              _record.dev_mode,
+              _record.testing_config,
+              _record.testing_mode,
+              _record.testing_stats,
+              _record.log_entries,
+              _record.log_sequence,
+              new Some([first_orb, second_orb])
+            );
+          }
+        }
+      }
+    }
+  }
+}
+function handle_choice_orb(model) {
+  let $ = model.bag;
+  if ($ instanceof Empty) {
+    return model;
+  } else {
+    let $1 = $.tail;
+    if ($1 instanceof Empty) {
+      let single_orb = $.head;
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        toList([]),
+        new ChoosingOrb(),
+        _record.last_orb,
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats,
+        _record.log_entries,
+        _record.log_sequence,
+        new Some([single_orb, single_orb])
+      );
+    } else {
+      return draw_two_non_choice_orbs(model, model.bag, toList([]));
+    }
   }
 }
 function apply_orb_effect(orb, model) {
@@ -5248,7 +5473,8 @@ function apply_orb_effect(orb, model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
@@ -5271,7 +5497,8 @@ function apply_orb_effect(orb, model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
@@ -5294,7 +5521,8 @@ function apply_orb_effect(orb, model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (orb instanceof Collector) {
     let remaining_orbs = length2(model.bag) - 1;
@@ -5317,7 +5545,8 @@ function apply_orb_effect(orb, model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (orb instanceof Survivor) {
     let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
@@ -5339,9 +5568,10 @@ function apply_orb_effect(orb, model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
-  } else {
+  } else if (orb instanceof Multiplier) {
     let new_multiplier = model.current_multiplier * 2;
     let _record = model;
     return new Model(
@@ -5361,8 +5591,11 @@ function apply_orb_effect(orb, model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
+  } else {
+    return handle_choice_orb(model);
   }
 }
 function get_orb_name(orb) {
@@ -5379,8 +5612,10 @@ function get_orb_name(orb) {
     return "Scanner Sample";
   } else if (orb instanceof Survivor) {
     return "Analyzer Sample";
-  } else {
+  } else if (orb instanceof Multiplier) {
     return "Amplifier Sample";
+  } else {
+    return "Choice Sample";
   }
 }
 
@@ -5407,6 +5642,11 @@ function get_market_items() {
       new Multiplier(),
       45,
       "Signal amplifier - doubles point multiplier"
+    ),
+    new MarketItem(
+      new Choice(),
+      50,
+      "Choice protocol - select optimal sample from two"
     )
   ]);
 }
@@ -5442,7 +5682,8 @@ function purchase_orb(model, orb) {
         _record.testing_mode,
         _record.testing_stats,
         _record.log_entries,
-        _record.log_sequence
+        _record.log_sequence,
+        _record.pending_choice
       );
     } else {
       return model;
@@ -5607,9 +5848,11 @@ function apply_orb_simulation(orb, health, points, multiplier, bombs_hit) {
   } else if (orb instanceof Survivor) {
     let survivor_points = bombs_hit * 2 * multiplier;
     return [health, points + survivor_points, multiplier, bombs_hit];
-  } else {
+  } else if (orb instanceof Multiplier) {
     let new_multiplier = multiplier * 2;
     return [health, points, new_multiplier, bombs_hit];
+  } else {
+    return [health, points, multiplier, bombs_hit];
   }
 }
 function simulate_game(loop$bag, loop$health, loop$points, loop$target, loop$orbs_pulled, loop$bombs_hit, loop$multiplier) {
@@ -5985,13 +6228,21 @@ function get_orb_box_style(orb) {
       "text-yellow-700",
       "\u25C8"
     );
-  } else {
+  } else if (orb instanceof Multiplier) {
     return new OrbBoxStyle(
       "bg-white",
       "border-indigo-200",
       "text-indigo-600",
       "text-indigo-700",
       "\u2731"
+    );
+  } else {
+    return new OrbBoxStyle(
+      "bg-white",
+      "border-orange-200",
+      "text-orange-600",
+      "text-orange-700",
+      "\u25C6"
     );
   }
 }
@@ -6133,6 +6384,131 @@ function view_game_toggles(model) {
     toList([
       view_shuffle_toggle_button(model),
       view_dev_mode_toggle_button(model)
+    ])
+  );
+}
+function view_choice_option(orb, select_msg, is_single) {
+  let orb_style = get_orb_box_style(orb);
+  let _block;
+  if (is_single) {
+    _block = "w-full max-w-xs mx-auto";
+  } else {
+    _block = "w-full";
+  }
+  let button_width = _block;
+  return button(
+    toList([
+      class$(
+        concat2(
+          toList([
+            button_width,
+            " p-4 rounded border-2 transition-all duration-200 hover:scale-105 hover:shadow-md ",
+            orb_style.background,
+            " ",
+            orb_style.border
+          ])
+        )
+      ),
+      on_click(select_msg)
+    ]),
+    toList([
+      div(
+        toList([class$("flex flex-col items-center")]),
+        toList([
+          div(
+            toList([class$("text-2xl mb-2 " + orb_style.icon)]),
+            toList([text3(orb_style.symbol)])
+          ),
+          p(
+            toList([class$("text-sm font-medium " + orb_style.text)]),
+            toList([text3(get_orb_name(orb))])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view_choice_selection(first_orb, second_orb) {
+  let $ = isEqual(first_orb, second_orb);
+  if ($) {
+    return div(
+      toList([class$("space-y-4")]),
+      toList([
+        p(
+          toList([class$("text-sm text-gray-600 mb-4")]),
+          toList([text3("Only one sample available:")])
+        ),
+        view_choice_option(first_orb, new SelectFirstChoice(), true)
+      ])
+    );
+  } else {
+    return div(
+      toList([class$("space-y-4")]),
+      toList([
+        p(
+          toList([class$("text-sm text-gray-600 mb-4")]),
+          toList([text3("Choose one sample to extract:")])
+        ),
+        div(
+          toList([class$("grid grid-cols-2 gap-4")]),
+          toList([
+            view_choice_option(first_orb, new SelectFirstChoice(), false),
+            view_choice_option(second_orb, new SelectSecondChoice(), false)
+          ])
+        )
+      ])
+    );
+  }
+}
+function view_choosing_orb_state(model) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "mb-6 p-6 bg-orange-50 border border-orange-200 rounded"
+          )
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("CHOICE PROTOCOL ACTIVATED")])
+          ),
+          p(
+            toList([
+              class$("text-orange-700 text-sm font-light mb-4")
+            ]),
+            toList([
+              text3(
+                "Select one sample to extract. The other will return to your container."
+              )
+            ])
+          )
+        ])
+      ),
+      (() => {
+        let $ = model.pending_choice;
+        if ($ instanceof Some) {
+          let first_orb = $[0][0];
+          let second_orb = $[0][1];
+          return view_choice_selection(first_orb, second_orb);
+        } else {
+          return div(
+            toList([class$("p-4 bg-gray-50 rounded border")]),
+            toList([
+              p(
+                toList([class$("text-gray-600")]),
+                toList([text3("No samples available for selection")])
+              )
+            ])
+          );
+        }
+      })()
     ])
   );
 }
@@ -6939,7 +7315,8 @@ function view_orb_selector() {
     new Bomb(3),
     new Collector(),
     new Survivor(),
-    new Multiplier()
+    new Multiplier(),
+    new Choice()
   ]);
   return div(
     toList([]),
@@ -7222,8 +7599,10 @@ function view_game_content(model) {
     return view_game_over_state(model);
   } else if ($ instanceof InMarketplace) {
     return view_marketplace(model);
-  } else {
+  } else if ($ instanceof InTestingGrounds) {
     return view_testing_grounds(model);
+  } else {
+    return view_choosing_orb_state(model);
   }
 }
 function view_game_card(model) {
@@ -7284,7 +7663,8 @@ function init(_) {
     new ConfiguringTest(),
     new None(),
     toList([]),
-    0
+    0,
+    new None()
   );
 }
 function handle_next_level(model) {
@@ -7315,7 +7695,8 @@ function handle_next_level(model) {
     model.testing_mode,
     model.testing_stats,
     toList([]),
-    0
+    0,
+    new None()
   );
 }
 function handle_enter_testing_grounds(model) {
@@ -7337,7 +7718,8 @@ function handle_enter_testing_grounds(model) {
     new ConfiguringTest(),
     new None(),
     _record.log_entries,
-    _record.log_sequence
+    _record.log_sequence,
+    _record.pending_choice
   );
 }
 function handle_add_test_orb(model, orb) {
@@ -7371,7 +7753,8 @@ function handle_add_test_orb(model, orb) {
       _record$1.testing_mode,
       _record$1.testing_stats,
       _record$1.log_entries,
-      _record$1.log_sequence
+      _record$1.log_sequence,
+      _record$1.pending_choice
     );
   } else {
     return model;
@@ -7411,7 +7794,8 @@ function handle_remove_test_orb(model, index3) {
       _record$1.testing_mode,
       _record$1.testing_stats,
       _record$1.log_entries,
-      _record$1.log_sequence
+      _record$1.log_sequence,
+      _record$1.pending_choice
     );
   } else {
     return model;
@@ -7448,7 +7832,8 @@ function handle_set_test_milestone(model, milestone) {
       _record$1.testing_mode,
       _record$1.testing_stats,
       _record$1.log_entries,
-      _record$1.log_sequence
+      _record$1.log_sequence,
+      _record$1.pending_choice
     );
   } else {
     return model;
@@ -7485,7 +7870,8 @@ function handle_set_test_health(model, health) {
       _record$1.testing_mode,
       _record$1.testing_stats,
       _record$1.log_entries,
-      _record$1.log_sequence
+      _record$1.log_sequence,
+      _record$1.pending_choice
     );
   } else {
     return model;
@@ -7522,7 +7908,8 @@ function handle_set_simulation_count(model, count2) {
       _record$1.testing_mode,
       _record$1.testing_stats,
       _record$1.log_entries,
-      _record$1.log_sequence
+      _record$1.log_sequence,
+      _record$1.pending_choice
     );
   } else {
     return model;
@@ -7551,7 +7938,8 @@ function handle_start_simulations(model) {
       new ViewingResults(),
       new Some(stats),
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else {
     return model;
@@ -7576,7 +7964,8 @@ function handle_view_test_results(model) {
     new ViewingResults(),
     _record.testing_stats,
     _record.log_entries,
-    _record.log_sequence
+    _record.log_sequence,
+    _record.pending_choice
   );
 }
 function handle_reset_test_config(model) {
@@ -7598,7 +7987,8 @@ function handle_reset_test_config(model) {
     new ConfiguringTest(),
     new None(),
     _record.log_entries,
-    _record.log_sequence
+    _record.log_sequence,
+    _record.pending_choice
   );
 }
 function start_new_game() {
@@ -7620,7 +8010,8 @@ function start_new_game() {
     new ConfiguringTest(),
     new None(),
     toList([]),
-    0
+    0,
+    new None()
   );
 }
 function restart_current_level(model) {
@@ -7650,7 +8041,8 @@ function restart_current_level(model) {
     model.testing_mode,
     model.testing_stats,
     toList([]),
-    0
+    0,
+    new None()
   );
 }
 function handle_toggle_shuffle(model) {
@@ -7676,7 +8068,8 @@ function handle_toggle_shuffle(model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else {
     let _record = model;
@@ -7697,7 +8090,8 @@ function handle_toggle_shuffle(model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   }
 }
@@ -7723,7 +8117,8 @@ function check_game_status(model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if ($1) {
     let _record = model;
@@ -7744,7 +8139,8 @@ function check_game_status(model) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else {
     return model;
@@ -7786,11 +8182,70 @@ function handle_pull_orb(model) {
         _record.testing_mode,
         _record.testing_stats,
         prepend(new_log_entry, model.log_entries),
-        new_sequence
+        new_sequence,
+        _record.pending_choice
       );
       let updated_model = _block;
       return check_game_status(updated_model);
     }
+  } else {
+    return model;
+  }
+}
+function handle_choice_selection(model, select_first) {
+  let $ = model.pending_choice;
+  if ($ instanceof Some) {
+    let first_orb = $[0][0];
+    let second_orb = $[0][1];
+    let _block;
+    if (select_first) {
+      _block = [first_orb, second_orb];
+    } else {
+      _block = [second_orb, first_orb];
+    }
+    let $1 = _block;
+    let chosen_orb = $1[0];
+    let unchosen_orb = $1[1];
+    let after_effect = apply_orb_effect(chosen_orb, model);
+    let new_sequence = model.log_sequence + 1;
+    let log_message = get_orb_result_message(chosen_orb, after_effect);
+    let new_log_entry = new LogEntry(
+      new_sequence,
+      chosen_orb,
+      log_message
+    );
+    let _block$1;
+    let $2 = isEqual(first_orb, second_orb);
+    if ($2) {
+      _block$1 = after_effect.bag;
+    } else {
+      _block$1 = append2(after_effect.bag, toList([unchosen_orb]));
+    }
+    let new_bag = _block$1;
+    let _block$2;
+    let _record = after_effect;
+    _block$2 = new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      new_bag,
+      new Playing(),
+      new Some(chosen_orb),
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats,
+      prepend(new_log_entry, model.log_entries),
+      new_sequence,
+      new None()
+    );
+    let updated_model = _block$2;
+    return check_game_status(updated_model);
   } else {
     return model;
   }
@@ -7817,7 +8272,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof ShowHowToPlay) {
     return model;
@@ -7842,7 +8298,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof ResumeGame) {
     let _record = model;
@@ -7863,7 +8320,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
@@ -7888,7 +8346,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof GoToMarketplace) {
     let _record = model;
@@ -7909,7 +8368,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof GoToTestingGrounds) {
     return handle_enter_testing_grounds(model);
@@ -7932,7 +8392,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
@@ -7958,8 +8419,13 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
+  } else if (msg instanceof SelectFirstChoice) {
+    return handle_choice_selection(model, true);
+  } else if (msg instanceof SelectSecondChoice) {
+    return handle_choice_selection(model, false);
   } else if (msg instanceof ExitTestingGrounds) {
     let _record = model;
     return new Model(
@@ -7979,7 +8445,8 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats,
       _record.log_entries,
-      _record.log_sequence
+      _record.log_sequence,
+      _record.pending_choice
     );
   } else if (msg instanceof AddTestOrb) {
     let orb = msg[0];
@@ -8017,7 +8484,7 @@ function main() {
       12,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 649, end: 739, pattern_start: 660, pattern_end: 665 }
+      { value: $, start: 688, end: 778, pattern_start: 699, pattern_end: 704 }
     );
   }
   return void 0;

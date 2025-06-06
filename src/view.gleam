@@ -16,7 +16,7 @@ import types.{
   NextLevel, PauseGame, Paused, Playing, PullOrb, RemoveTestOrb, ResetTestConfig,
   RestartLevel, ResumeGame, RunningSimulations, ShowHowToPlay, StartNewGame,
   StartSimulations, ToggleDevMode, ToggleShuffle, ViewTestResults,
-  ViewingResults,
+  ViewingResults, ChoosingOrb, SelectFirstChoice, SelectSecondChoice,
 }
 
 pub fn view(model: Model) -> Element(Msg) {
@@ -174,6 +174,7 @@ fn view_game_content(model: Model) -> Element(Msg) {
     GameOver -> view_game_over_state(model)
     InMarketplace -> marketplace.view_marketplace(model)
     InTestingGrounds -> view_testing_grounds(model)
+    ChoosingOrb -> view_choosing_orb_state(model)
   }
 }
 
@@ -315,6 +316,14 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
         text: "text-indigo-700",
         symbol: "✱",
       )
+    types.Choice ->
+      OrbBoxStyle(
+        background: "bg-white",
+        border: "border-orange-200",
+        icon: "text-orange-600",
+        text: "text-orange-700",
+        symbol: "◆",
+      )
   }
 }
 
@@ -380,6 +389,89 @@ fn view_dev_mode_toggle_button(model: Model) -> Element(Msg) {
       event.on_click(ToggleDevMode),
     ],
     [html.text(toggle_text)],
+  )
+}
+
+fn view_choosing_orb_state(model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.div(
+      [attribute.class("mb-6 p-6 bg-orange-50 border border-orange-200 rounded")],
+      [
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("CHOICE PROTOCOL ACTIVATED")],
+        ),
+        html.p([attribute.class("text-orange-700 text-sm font-light mb-4")], [
+          html.text("Select one sample to extract. The other will return to your container."),
+        ]),
+      ],
+    ),
+    case model.pending_choice {
+      option.Some(#(first_orb, second_orb)) -> view_choice_selection(first_orb, second_orb)
+      option.None -> 
+        html.div([attribute.class("p-4 bg-gray-50 rounded border")], [
+          html.p([attribute.class("text-gray-600")], [
+            html.text("No samples available for selection"),
+          ]),
+        ])
+    },
+  ])
+}
+
+fn view_choice_selection(first_orb: types.Orb, second_orb: types.Orb) -> Element(Msg) {
+  case first_orb == second_orb {
+    True -> 
+      // Only one unique orb - show single choice
+      html.div([attribute.class("space-y-4")], [
+        html.p([attribute.class("text-sm text-gray-600 mb-4")], [
+          html.text("Only one sample available:"),
+        ]),
+        view_choice_option(first_orb, SelectFirstChoice, True),
+      ])
+    False ->
+      // Two different orbs - show both choices
+      html.div([attribute.class("space-y-4")], [
+        html.p([attribute.class("text-sm text-gray-600 mb-4")], [
+          html.text("Choose one sample to extract:"),
+        ]),
+        html.div([attribute.class("grid grid-cols-2 gap-4")], [
+          view_choice_option(first_orb, SelectFirstChoice, False),
+          view_choice_option(second_orb, SelectSecondChoice, False),
+        ]),
+      ])
+  }
+}
+
+fn view_choice_option(orb: types.Orb, select_msg: types.Msg, is_single: Bool) -> Element(Msg) {
+  let orb_style = get_orb_box_style(orb)
+  let button_width = case is_single {
+    True -> "w-full max-w-xs mx-auto"
+    False -> "w-full"
+  }
+  
+  html.button(
+    [
+      attribute.class(
+        string.concat([
+          button_width,
+          " p-4 rounded border-2 transition-all duration-200 hover:scale-105 hover:shadow-md ",
+          orb_style.background,
+          " ",
+          orb_style.border,
+        ]),
+      ),
+      event.on_click(select_msg),
+    ],
+    [
+      html.div([attribute.class("flex flex-col items-center")], [
+        html.div([attribute.class("text-2xl mb-2 " <> orb_style.icon)], [
+          html.text(orb_style.symbol),
+        ]),
+        html.p([attribute.class("text-sm font-medium " <> orb_style.text)], [
+          html.text(orb.get_orb_name(orb)),
+        ]),
+      ]),
+    ],
   )
 }
 
@@ -1018,6 +1110,7 @@ fn view_orb_selector() -> Element(Msg) {
     types.Collector,
     types.Survivor,
     types.Multiplier,
+    types.Choice,
   ]
 
   html.div([], [

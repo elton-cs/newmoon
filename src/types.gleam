@@ -7,6 +7,7 @@ pub type Orb {
   Collector
   Survivor
   Multiplier
+  Choice
 }
 
 pub type GameStatus {
@@ -17,6 +18,7 @@ pub type GameStatus {
   GameOver
   InMarketplace
   InTestingGrounds
+  ChoosingOrb
 }
 
 pub type Model {
@@ -38,6 +40,7 @@ pub type Model {
     testing_stats: Option(TestingStats),
     log_entries: List(LogEntry),
     log_sequence: Int,
+    pending_choice: Option(#(Orb, Orb)),
   )
 }
 
@@ -68,6 +71,10 @@ pub type Msg {
   // Game Settings
   ToggleShuffle
   ToggleDevMode
+  
+  // Choice Orb Actions
+  SelectFirstChoice
+  SelectSecondChoice
   
   // Testing Grounds Actions
   ExitTestingGrounds

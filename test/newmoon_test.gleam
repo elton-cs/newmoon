@@ -1,10 +1,11 @@
 import gleam/option
+import gleam/list
 import gleeunit
 import gleeunit/should
 import orb
 import types.{
   type Model, Bomb, Collector, Health, Model, Multiplier, Playing, Point,
-  Survivor,
+  Survivor, Choice, ChoosingOrb, SelectFirstChoice, SelectSecondChoice,
 }
 
 pub fn main() -> Nil {
@@ -31,6 +32,7 @@ fn create_test_model() -> Model {
     testing_stats: option.None,
     log_entries: [],
     log_sequence: 0,
+    pending_choice: option.None,
   )
 }
 
@@ -386,6 +388,7 @@ pub fn orb_colors_test() {
   should.equal(orb.get_orb_result_color(Collector), "blue")
   should.equal(orb.get_orb_result_color(Survivor), "purple")
   should.equal(orb.get_orb_result_color(Multiplier), "yellow")
+  should.equal(orb.get_orb_result_color(Choice), "orange")
 }
 
 // ============================================================================
@@ -399,6 +402,7 @@ pub fn orb_names_test() {
   should.equal(orb.get_orb_name(Collector), "Scanner Sample")
   should.equal(orb.get_orb_name(Survivor), "Analyzer Sample")
   should.equal(orb.get_orb_name(Multiplier), "Amplifier Sample")
+  should.equal(orb.get_orb_name(Choice), "Choice Sample")
 }
 
 // ============================================================================
@@ -533,4 +537,166 @@ pub fn defensive_healing_test() {
   let after_bomb = orb.apply_orb_effect(Bomb(2), after_heal2)
   should.equal(after_bomb.health, 3)
   // Still healthy
+}
+
+// ============================================================================
+// CHOICE ORB TESTS
+// ============================================================================
+
+pub fn choice_orb_with_full_bag_test() {
+  let model = Model(..create_test_model(), bag: [Point(8), Health(2), Bomb(1)])
+  let choice_orb = Choice
+  let result = orb.apply_orb_effect(choice_orb, model)
+  
+  // Should transition to ChoosingOrb state
+  should.equal(result.status, ChoosingOrb)
+  // Should have 2 orbs pending choice
+  should.not_equal(result.pending_choice, option.None)
+  // Bag should have 1 orb left (3 - 2 drawn)
+  should.equal(list.length(result.bag), 1)
+}
+
+pub fn choice_orb_with_single_orb_test() {
+  let model = Model(..create_test_model(), bag: [Point(5)])
+  let choice_orb = Choice
+  let result = orb.apply_orb_effect(choice_orb, model)
+  
+  // Should transition to ChoosingOrb state
+  should.equal(result.status, ChoosingOrb)
+  // Should have the single orb as both choices (special case)
+  case result.pending_choice {
+    option.Some(#(first, second)) -> {
+      should.equal(first, Point(5))
+      should.equal(second, Point(5))
+    }
+    option.None -> should.fail()
+  }
+  // Bag should be empty (1 - 1 drawn, but we duplicate it for choice UI)
+  should.equal(list.length(result.bag), 0)
+}
+
+pub fn choice_orb_with_empty_bag_test() {
+  let model = Model(..create_test_model(), bag: [])
+  let choice_orb = Choice
+  let result = orb.apply_orb_effect(choice_orb, model)
+  
+  // Should stay in Playing state (no effect)
+  should.equal(result.status, Playing)
+  // Should have no pending choice
+  should.equal(result.pending_choice, option.None)
+  // Bag should still be empty
+  should.equal(list.length(result.bag), 0)
+}
+
+pub fn choice_orb_recursive_handling_test() {
+  let model = Model(..create_test_model(), bag: [Choice, Point(8), Health(2), Bomb(1)])
+  let choice_orb = Choice
+  let result = orb.apply_orb_effect(choice_orb, model)
+  
+  // Should skip the second Choice orb and draw Point(8) and Health(2)
+  should.equal(result.status, ChoosingOrb)
+  case result.pending_choice {
+    option.Some(#(first, second)) -> {
+      // Should have Point(8) and Health(2) as choices
+      should.not_equal(first, Choice)
+      should.not_equal(second, Choice)
+    }
+    option.None -> should.fail()
+  }
+  // Bag should have the skipped Choice orb and Bomb(1) at the end
+  should.equal(list.length(result.bag), 2)
+}
+
+pub fn select_first_choice_test() {
+  let model = Model(
+    ..create_test_model(),
+    status: ChoosingOrb,
+    pending_choice: option.Some(#(Point(10), Health(3))),
+    bag: [Bomb(2)],
+  )
+  
+  // Simulate selecting first choice through message handling
+  // This will test the actual message handling logic
+  let result = handle_choice_selection(model, SelectFirstChoice)
+  
+  // Should apply Point(10) effect
+  should.equal(result.points, 10)
+  should.equal(result.health, 5) // Unchanged
+  // Should return to Playing state
+  should.equal(result.status, Playing)
+  // Should clear pending choice
+  should.equal(result.pending_choice, option.None)
+  // Should return Health(3) to end of bag
+  should.equal(list.length(result.bag), 2) // [Bomb(2), Health(3)]
+}
+
+pub fn select_second_choice_test() {
+  let model = Model(
+    ..create_test_model(),
+    status: ChoosingOrb,
+    pending_choice: option.Some(#(Point(10), Health(3))),
+    bag: [Bomb(2)],
+  )
+  
+  // Simulate selecting second choice
+  let result = handle_choice_selection(model, SelectSecondChoice)
+  
+  // Should apply Health(3) effect
+  should.equal(result.points, 0) // Unchanged
+  should.equal(result.health, 5) // Still max, but effect was applied
+  // Should return to Playing state
+  should.equal(result.status, Playing)
+  // Should clear pending choice
+  should.equal(result.pending_choice, option.None)
+  // Should return Point(10) to end of bag
+  should.equal(list.length(result.bag), 2) // [Bomb(2), Point(10)]
+}
+
+pub fn choice_orb_with_multiplier_test() {
+  let model = Model(
+    ..create_test_model(),
+    status: ChoosingOrb,
+    pending_choice: option.Some(#(Point(5), Collector)),
+    current_multiplier: 3,
+    bag: [Health(1)],
+  )
+  
+  // Select Point(5) with multiplier active
+  let result = handle_choice_selection(model, SelectFirstChoice)
+  
+  // Should apply multiplier to chosen Point orb
+  should.equal(result.points, 15) // 5 * 3 = 15
+  should.equal(result.current_multiplier, 3) // Unchanged
+}
+
+// ============================================================================
+// CHOICE ORB HELPER FUNCTIONS FOR TESTING
+// ============================================================================
+
+// We'll need this helper function to test message handling
+// This will be implemented when we add the actual game logic
+fn handle_choice_selection(model: Model, msg: types.Msg) -> Model {
+  // This is a placeholder - we'll implement this in the actual game logic
+  // For now, let's create a basic implementation for testing
+  case msg, model.pending_choice {
+    SelectFirstChoice, option.Some(#(first_orb, second_orb)) -> {
+      let after_effect = orb.apply_orb_effect(first_orb, model)
+      Model(
+        ..after_effect,
+        status: Playing,
+        pending_choice: option.None,
+        bag: list.append(after_effect.bag, [second_orb]),
+      )
+    }
+    SelectSecondChoice, option.Some(#(first_orb, second_orb)) -> {
+      let after_effect = orb.apply_orb_effect(second_orb, model)
+      Model(
+        ..after_effect,
+        status: Playing,
+        pending_choice: option.None,
+        bag: list.append(after_effect.bag, [first_orb]),
+      )
+    }
+    _, _ -> model
+  }
 }

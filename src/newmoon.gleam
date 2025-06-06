@@ -5,7 +5,7 @@ import level
 import marketplace
 import orb
 import simulation
-import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest}
+import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, SelectFirstChoice, SelectSecondChoice}
 import view
 
 pub fn main() -> Nil {
@@ -34,6 +34,7 @@ fn init(_) -> Model {
     testing_stats: option.None,
     log_entries: [],
     log_sequence: 0,
+    pending_choice: option.None,
   )
 }
 
@@ -66,6 +67,10 @@ fn update(model: Model, msg: Msg) -> Model {
     // Game Settings
     ToggleShuffle -> handle_toggle_shuffle(model)
     ToggleDevMode -> types.Model(..model, dev_mode: !model.dev_mode)
+    
+    // Choice Orb Actions
+    SelectFirstChoice -> handle_choice_selection(model, True)
+    SelectSecondChoice -> handle_choice_selection(model, False)
     
     // Testing Grounds Actions
     ExitTestingGrounds -> types.Model(..model, status: MainMenu)
@@ -136,6 +141,7 @@ fn handle_next_level(model: Model) -> Model {
     testing_stats: model.testing_stats,
     log_entries: [],
     log_sequence: 0,
+    pending_choice: option.None,
   )
 }
 
@@ -270,6 +276,7 @@ fn start_new_game() -> Model {
     testing_stats: option.None,
     log_entries: [],
     log_sequence: 0,
+    pending_choice: option.None,
   )
 }
 
@@ -297,6 +304,7 @@ fn restart_current_level(model: Model) -> Model {
     testing_stats: model.testing_stats,
     log_entries: [],
     log_sequence: 0,
+    pending_choice: option.None,
   )
 }
 
@@ -312,6 +320,48 @@ fn handle_toggle_shuffle(model: Model) -> Model {
       // If disabling shuffle or not playing, just toggle the setting
       types.Model(..model, shuffle_enabled: new_shuffle_enabled)
     }
+  }
+}
+
+fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
+  case model.pending_choice {
+    option.Some(#(first_orb, second_orb)) -> {
+      let #(chosen_orb, unchosen_orb) = case select_first {
+        True -> #(first_orb, second_orb)
+        False -> #(second_orb, first_orb)
+      }
+      
+      // Apply the chosen orb's effect
+      let after_effect = orb.apply_orb_effect(chosen_orb, model)
+      
+      // Create log entry for the chosen orb
+      let new_sequence = model.log_sequence + 1
+      let log_message = orb.get_orb_result_message(chosen_orb, after_effect)
+      let new_log_entry = types.LogEntry(
+        sequence: new_sequence,
+        orb: chosen_orb,
+        message: log_message,
+      )
+      
+      // Return unchosen orb to end of bag (unless it's a duplicate from single orb case)
+      let new_bag = case first_orb == second_orb {
+        True -> after_effect.bag  // Don't return duplicate orb
+        False -> list.append(after_effect.bag, [unchosen_orb])
+      }
+      
+      let updated_model = types.Model(
+        ..after_effect,
+        status: Playing,
+        pending_choice: option.None,
+        bag: new_bag,
+        last_orb: option.Some(chosen_orb),
+        log_entries: [new_log_entry, ..model.log_entries],
+        log_sequence: new_sequence,
+      )
+      
+      check_game_status(updated_model)
+    }
+    option.None -> model  // No pending choice, do nothing
   }
 }
 
