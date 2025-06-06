@@ -3,7 +3,7 @@ import lustre
 import level
 import marketplace
 import orb
-import types.{type Model, type Msg, BuyOrb, EnterMarketplace, ExitMarketplace, InMarketplace, NextLevel, Playing, PullOrb, RestartGame}
+import types.{type Model, type Msg, AcceptReward, BuyOrb, EnterMarketplace, InMarketplace, NextLevel, Playing, PullOrb, RestartGame, ShowingReward}
 import view
 
 pub fn main() -> Nil {
@@ -34,8 +34,8 @@ fn update(model: Model, msg: Msg) -> Model {
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> init(Nil)
+    AcceptReward -> handle_accept_reward(model)
     EnterMarketplace -> handle_enter_marketplace(model)
-    ExitMarketplace -> handle_exit_marketplace(model)
     BuyOrb(orb) -> marketplace.purchase_orb(model, orb)
   }
 }
@@ -59,7 +59,7 @@ fn handle_pull_orb(model: Model) -> Model {
 
 fn handle_next_level(model: Model) -> Model {
   let new_level = model.level + 1
-  let earned_credits = model.points
+  // Credits are already awarded when level completes, no need to add again
   types.Model(
     health: 5,
     points: 0,
@@ -70,23 +70,25 @@ fn handle_next_level(model: Model) -> Model {
     last_orb: None,
     bombs_pulled_this_level: 0,
     current_multiplier: 1,
-    credits: model.credits + earned_credits,
+    credits: model.credits,
   )
 }
 
-fn handle_enter_marketplace(model: Model) -> Model {
-  let earned_credits = model.points
-  types.Model(..model, status: InMarketplace, credits: model.credits + earned_credits)
-}
-
-fn handle_exit_marketplace(model: Model) -> Model {
+fn handle_accept_reward(model: Model) -> Model {
+  // Credits already awarded in check_game_status, just change status to Won
   types.Model(..model, status: types.Won)
 }
+
+fn handle_enter_marketplace(model: Model) -> Model {
+  // Credits already awarded when level completed, just change status
+  types.Model(..model, status: InMarketplace)
+}
+
 
 fn check_game_status(model: Model) -> Model {
   case model.health <= 0, model.points >= model.milestone {
     True, _ -> types.Model(..model, status: types.Lost)
-    False, True -> types.Model(..model, status: types.Won)
+    False, True -> types.Model(..model, status: ShowingReward, credits: model.credits + model.points)
     False, False -> model
   }
 }

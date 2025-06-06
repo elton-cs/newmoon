@@ -6,7 +6,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import orb
-import types.{type MarketItem, type Model, type Msg, type Orb, Bomb, BuyOrb, Collector, ExitMarketplace, Health, MarketItem, Multiplier, Point, Survivor}
+import types.{type MarketItem, type Model, type Msg, type Orb, Bomb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor}
 
 pub fn get_market_items() -> List(MarketItem) {
   [
@@ -67,11 +67,11 @@ pub fn view_marketplace(model: Model) -> Element(Msg) {
     html.button(
       [
         attribute.class(
-          "w-full bg-gray-600 hover:bg-gray-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
         ),
-        event.on_click(ExitMarketplace),
+        event.on_click(NextLevel),
       ],
-      [html.text("RETURN TO SECTOR")],
+      [html.text("ADVANCE TO NEXT SECTOR")],
     ),
   ])
 }

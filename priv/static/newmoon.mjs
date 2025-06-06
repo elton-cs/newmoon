@@ -4542,6 +4542,8 @@ var Won = class extends CustomType {
 };
 var Lost = class extends CustomType {
 };
+var ShowingReward = class extends CustomType {
+};
 var InMarketplace = class extends CustomType {
 };
 var Model = class extends CustomType {
@@ -4565,9 +4567,9 @@ var NextLevel = class extends CustomType {
 };
 var RestartGame = class extends CustomType {
 };
-var EnterMarketplace = class extends CustomType {
+var AcceptReward = class extends CustomType {
 };
-var ExitMarketplace = class extends CustomType {
+var EnterMarketplace = class extends CustomType {
 };
 var BuyOrb = class extends CustomType {
   constructor($0) {
@@ -5083,11 +5085,11 @@ function view_marketplace(model) {
       button(
         toList([
           class$(
-            "w-full bg-gray-600 hover:bg-gray-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
           ),
-          on_click(new ExitMarketplace())
+          on_click(new NextLevel())
         ]),
-        toList([text3("RETURN TO SECTOR")])
+        toList([text3("ADVANCE TO NEXT SECTOR")])
       )
     ])
   );
@@ -5324,24 +5326,24 @@ function view_playing_state(model) {
     ])
   );
 }
-function view_won_state(model) {
+function view_reward_state(model) {
   return div(
     toList([class$("text-center")]),
     toList([
       div(
         toList([
           class$(
-            "mb-6 p-6 bg-gray-50 border border-gray-200 rounded"
+            "mb-6 p-6 bg-green-50 border border-green-200 rounded"
           )
         ]),
         toList([
           h2(
             toList([
               class$(
-                "text-xl font-light text-black mb-2 tracking-wide"
+                "text-xl font-light text-black mb-4 tracking-wide"
               )
             ]),
-            toList([text3("SECTOR COMPLETE")])
+            toList([text3("\u{1F389} SECTOR COMPLETE")])
           ),
           p(
             toList([class$("text-gray-600 text-sm font-light mb-2")]),
@@ -5358,10 +5360,55 @@ function view_won_state(model) {
             ])
           ),
           p(
+            toList([
+              class$("text-green-700 text-lg font-medium mb-4")
+            ]),
+            toList([
+              text3("Credits awarded: +" + to_string(model.points))
+            ])
+          ),
+          p(
             toList([class$("text-purple-600 text-sm font-light")]),
             toList([
-              text3("Credits earned: +" + to_string(model.points))
+              text3("Total credits: " + to_string(model.credits))
             ])
+          )
+        ])
+      ),
+      button(
+        toList([
+          class$(
+            "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          ),
+          on_click(new AcceptReward())
+        ]),
+        toList([text3("ACCEPT REWARD")])
+      )
+    ])
+  );
+}
+function view_won_state(_) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "mb-6 p-6 bg-gray-50 border border-gray-200 rounded"
+          )
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("READY FOR NEXT MISSION")])
+          ),
+          p(
+            toList([class$("text-gray-600 text-sm font-light")]),
+            toList([text3("Choose your next action")])
           )
         ])
       ),
@@ -5438,6 +5485,8 @@ function view_game_content(model) {
     return view_won_state(model);
   } else if ($ instanceof Lost) {
     return view_lost_state();
+  } else if ($ instanceof ShowingReward) {
+    return view_reward_state(model);
   } else {
     return view_marketplace(model);
   }
@@ -5481,7 +5530,6 @@ function init(_) {
 }
 function handle_next_level(model) {
   let new_level = model.level + 1;
-  let earned_credits = model.points;
   return new Model(
     5,
     0,
@@ -5492,26 +5540,10 @@ function handle_next_level(model) {
     new None(),
     0,
     1,
-    model.credits + earned_credits
+    model.credits
   );
 }
-function handle_enter_marketplace(model) {
-  let earned_credits = model.points;
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    new InMarketplace(),
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    model.credits + earned_credits
-  );
-}
-function handle_exit_marketplace(model) {
+function handle_accept_reward(model) {
   let _record = model;
   return new Model(
     _record.health,
@@ -5520,6 +5552,21 @@ function handle_exit_marketplace(model) {
     _record.milestone,
     _record.bag,
     new Won(),
+    _record.last_orb,
+    _record.bombs_pulled_this_level,
+    _record.current_multiplier,
+    _record.credits
+  );
+}
+function handle_enter_marketplace(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new InMarketplace(),
     _record.last_orb,
     _record.bombs_pulled_this_level,
     _record.current_multiplier,
@@ -5551,11 +5598,11 @@ function check_game_status(model) {
       _record.level,
       _record.milestone,
       _record.bag,
-      new Won(),
+      new ShowingReward(),
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      _record.credits
+      model.credits + model.points
     );
   } else {
     return model;
@@ -5599,10 +5646,10 @@ function update2(model, msg) {
     return handle_next_level(model);
   } else if (msg instanceof RestartGame) {
     return init(void 0);
+  } else if (msg instanceof AcceptReward) {
+    return handle_accept_reward(model);
   } else if (msg instanceof EnterMarketplace) {
     return handle_enter_marketplace(model);
-  } else if (msg instanceof ExitMarketplace) {
-    return handle_exit_marketplace(model);
   } else {
     let orb = msg[0];
     return purchase_orb(model, orb);
@@ -5621,7 +5668,7 @@ function main() {
       10,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 258, end: 348, pattern_start: 269, pattern_end: 274 }
+      { value: $, start: 270, end: 360, pattern_start: 281, pattern_end: 286 }
     );
   }
   return void 0;

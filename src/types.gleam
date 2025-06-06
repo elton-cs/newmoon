@@ -13,6 +13,7 @@ pub type GameStatus {
   Playing
   Won
   Lost
+  ShowingReward
   InMarketplace
 }
 
@@ -35,8 +36,8 @@ pub type Msg {
   PullOrb
   NextLevel
   RestartGame
+  AcceptReward
   EnterMarketplace
-  ExitMarketplace
   BuyOrb(Orb)
 }
 

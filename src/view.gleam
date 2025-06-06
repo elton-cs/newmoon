@@ -8,7 +8,7 @@ import lustre/element/html
 import lustre/event
 import marketplace
 import orb
-import types.{type Model, type Msg, InMarketplace, Lost, NextLevel, Playing, PullOrb, RestartGame, Won}
+import types.{type Model, type Msg, AcceptReward, EnterMarketplace, InMarketplace, Lost, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, Won}
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div(
@@ -143,6 +143,7 @@ pub fn view_result_card(
 fn view_game_content(model: Model) -> Element(Msg) {
   case model.status {
     Playing -> view_playing_state(model)
+    ShowingReward -> view_reward_state(model)
     Won -> view_won_state(model)
     Lost -> view_lost_state()
     InMarketplace -> marketplace.view_marketplace(model)
@@ -207,14 +208,14 @@ fn view_pull_orb_button(model: Model) -> Element(Msg) {
   )
 }
 
-fn view_won_state(model: Model) -> Element(Msg) {
+fn view_reward_state(model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-gray-50 border border-gray-200 rounded")],
+      [attribute.class("mb-6 p-6 bg-green-50 border border-green-200 rounded")],
       [
         html.h2(
-          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-          [html.text("SECTOR COMPLETE")],
+          [attribute.class("text-xl font-light text-black mb-4 tracking-wide")],
+          [html.text("🎉 SECTOR COMPLETE")],
         ),
         html.p([attribute.class("text-gray-600 text-sm font-light mb-2")], [
           html.text(
@@ -225,8 +226,37 @@ fn view_won_state(model: Model) -> Element(Msg) {
             ]),
           ),
         ]),
+        html.p([attribute.class("text-green-700 text-lg font-medium mb-4")], [
+          html.text("Credits awarded: +" <> int.to_string(model.points)),
+        ]),
         html.p([attribute.class("text-purple-600 text-sm font-light")], [
-          html.text("Credits earned: +" <> int.to_string(model.points)),
+          html.text("Total credits: " <> int.to_string(model.credits)),
+        ]),
+      ],
+    ),
+    html.button(
+      [
+        attribute.class(
+          "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+        ),
+        event.on_click(AcceptReward),
+      ],
+      [html.text("ACCEPT REWARD")],
+    ),
+  ])
+}
+
+fn view_won_state(_model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.div(
+      [attribute.class("mb-6 p-6 bg-gray-50 border border-gray-200 rounded")],
+      [
+        html.h2(
+          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+          [html.text("READY FOR NEXT MISSION")],
+        ),
+        html.p([attribute.class("text-gray-600 text-sm font-light")], [
+          html.text("Choose your next action"),
         ]),
       ],
     ),
@@ -236,7 +266,7 @@ fn view_won_state(model: Model) -> Element(Msg) {
           attribute.class(
             "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
           ),
-          event.on_click(types.EnterMarketplace),
+          event.on_click(EnterMarketplace),
         ],
         [html.text("VISIT MARKETPLACE")],
       ),
