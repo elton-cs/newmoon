@@ -209,7 +209,7 @@ fn view_recent_orb_panel(model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.p(
       [attribute.class("text-gray-500 mb-2 text-xs font-light tracking-wide")],
-      [html.text("RECENT ORB")],
+      [html.text("RECENT SAMPLE")],
     ),
     view_orb_box(model.last_orb),
   ])
@@ -238,7 +238,7 @@ fn view_orb_box(last_orb: option.Option(types.Orb)) -> Element(Msg) {
         ],
         [
           html.p([attribute.class("text-xs text-gray-400 font-light")], [
-            html.text("No orb yet"),
+            html.text("No sample yet"),
           ]),
         ],
       )
@@ -684,7 +684,7 @@ fn view_field_testing_header() -> Element(Msg) {
     [
       html.h2(
         [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-        [html.text("ORB FIELD TESTING")],
+        [html.text("SAMPLE FIELD TESTING")],
       ),
       html.p([attribute.class("text-blue-700 text-sm font-light")], [
         html.text("Simulate strategies and optimize your approach"),
@@ -851,7 +851,7 @@ fn generate_insights(stats: types.TestingStats) -> List(String) {
   let win_rate_insight = case stats.win_rate {
     rate if rate >=. 0.8 -> "Excellent strategy! Very high success rate."
     rate if rate >=. 0.6 -> "Good strategy with solid win rate."
-    rate if rate >=. 0.4 -> "Moderate success. Consider more health orbs."
+    rate if rate >=. 0.4 -> "Moderate success. Consider more health samples."
     _ -> "Low win rate. Strategy needs significant improvement."
   }
 
@@ -875,12 +875,12 @@ fn generate_insights(stats: types.TestingStats) -> List(String) {
 fn view_test_bag_builder(config: types.TestingConfiguration) -> Element(Msg) {
   html.div([attribute.class("mb-6")], [
     html.h3([attribute.class("text-lg font-light mb-3")], [
-      html.text("Test Bag Configuration"),
+      html.text("Test Sample Configuration"),
     ]),
     html.div([attribute.class("mb-4 p-4 bg-gray-50 rounded border")], [
       html.p([attribute.class("text-sm text-gray-600 mb-2")], [
         html.text(
-          "Orbs in bag: " <> int.to_string(list.length(config.test_bag)),
+          "Samples in container: " <> int.to_string(list.length(config.test_bag)),
         ),
       ]),
       view_test_bag_contents(config.test_bag),
@@ -893,7 +893,7 @@ fn view_test_bag_contents(bag: List(types.Orb)) -> Element(Msg) {
   case list.is_empty(bag) {
     True ->
       html.p([attribute.class("text-gray-400 text-sm italic")], [
-        html.text("No orbs added yet"),
+        html.text("No samples added yet"),
       ])
     False ->
       html.div(
@@ -939,7 +939,7 @@ fn view_orb_selector() -> Element(Msg) {
 
   html.div([], [
     html.p([attribute.class("text-sm font-light mb-2")], [
-      html.text("Add orbs to your test bag:"),
+      html.text("Add samples to your test container:"),
     ]),
     html.div(
       [attribute.class("grid grid-cols-2 gap-2")],
@@ -1013,7 +1013,7 @@ fn view_test_actions(config: types.TestingConfiguration) -> Element(Msg) {
       [
         html.text(case can_run {
           True -> "RUN SIMULATIONS"
-          False -> "ADD ORBS TO BEGIN"
+          False -> "ADD SAMPLES TO BEGIN"
         }),
       ],
     ),
@@ -1055,7 +1055,7 @@ fn view_next_orb_preview(model: Model) -> Element(Msg) {
   case model.bag {
     [] ->
       html.p([attribute.class("text-xs text-red-700 mb-1")], [
-        html.text("Next: No orbs remaining"),
+        html.text("Next: No samples remaining"),
       ])
     [next_orb, ..] ->
       html.p([attribute.class("text-xs text-red-700 mb-1")], [
@@ -1068,7 +1068,7 @@ fn view_bag_order_display(model: Model) -> Element(Msg) {
   case model.bag {
     [] ->
       html.p([attribute.class("text-xs text-red-600")], [
-        html.text("Bag: Empty"),
+        html.text("Container: Empty"),
       ])
     orbs -> {
       let orb_names = list.map(orbs, orb.get_orb_name)
@@ -1078,7 +1078,7 @@ fn view_bag_order_display(model: Model) -> Element(Msg) {
         False -> orb_list
       }
       html.p([attribute.class("text-xs text-red-600")], [
-        html.text("Order: " <> display_text),
+        html.text("Sample Order: " <> display_text),
       ])
     }
   }

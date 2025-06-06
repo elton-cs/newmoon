@@ -21,7 +21,7 @@ pub fn get_market_items() -> List(MarketItem) {
     MarketItem(Health(5), 40, "Emergency repair kit - full restoration"),
     
     // Strategic orbs - high value, high cost
-    MarketItem(Collector, 30, "Deep scanner - points for remaining orbs"),
+    MarketItem(Collector, 30, "Deep scanner - points for remaining samples"),
     MarketItem(Survivor, 35, "Damage analyzer - points for bombs survived"),
     MarketItem(Multiplier, 45, "Signal amplifier - doubles point multiplier"),
   ]

@@ -5274,19 +5274,19 @@ function apply_orb_effect(orb, model) {
 function get_orb_name(orb) {
   if (orb instanceof Bomb) {
     let damage = orb[0];
-    return "Bomb Orb (-" + to_string(damage) + " health)";
+    return "Hazard Sample (-" + to_string(damage) + " health)";
   } else if (orb instanceof Point) {
     let value = orb[0];
-    return "Point Orb (+" + to_string(value) + ")";
+    return "Data Sample (+" + to_string(value) + ")";
   } else if (orb instanceof Health) {
     let value = orb[0];
-    return "Health Orb (+" + to_string(value) + " health)";
+    return "Medical Sample (+" + to_string(value) + " health)";
   } else if (orb instanceof Collector) {
-    return "Collector Orb";
+    return "Scanner Sample";
   } else if (orb instanceof Survivor) {
-    return "Survivor Orb";
+    return "Analyzer Sample";
   } else {
-    return "Multiplier Orb";
+    return "Amplifier Sample";
   }
 }
 
@@ -5302,7 +5302,7 @@ function get_market_items() {
     new MarketItem(
       new Collector(),
       30,
-      "Deep scanner - points for remaining orbs"
+      "Deep scanner - points for remaining samples"
     ),
     new MarketItem(
       new Survivor(),
@@ -5930,7 +5930,7 @@ function view_orb_box(last_orb) {
       toList([
         p(
           toList([class$("text-xs text-gray-400 font-light")]),
-          toList([text3("No orb yet")])
+          toList([text3("No sample yet")])
         )
       ])
     );
@@ -5946,7 +5946,7 @@ function view_recent_orb_panel(model) {
             "text-gray-500 mb-2 text-xs font-light tracking-wide"
           )
         ]),
-        toList([text3("RECENT ORB")])
+        toList([text3("RECENT SAMPLE")])
       ),
       view_orb_box(model.last_orb)
     ])
@@ -6428,7 +6428,7 @@ function view_field_testing_header() {
         toList([
           class$("text-xl font-light text-black mb-2 tracking-wide")
         ]),
-        toList([text3("ORB FIELD TESTING")])
+        toList([text3("SAMPLE FIELD TESTING")])
       ),
       p(
         toList([class$("text-blue-700 text-sm font-light")]),
@@ -6497,7 +6497,7 @@ function generate_insights(stats) {
     } else {
       let rate$2 = $;
       if (rate$2 >= 0.4) {
-        _block = "Moderate success. Consider more health orbs.";
+        _block = "Moderate success. Consider more health samples.";
       } else {
         _block = "Low win rate. Strategy needs significant improvement.";
       }
@@ -6688,7 +6688,7 @@ function view_test_bag_contents(bag) {
   if ($) {
     return p(
       toList([class$("text-gray-400 text-sm italic")]),
-      toList([text3("No orbs added yet")])
+      toList([text3("No samples added yet")])
     );
   } else {
     return div(
@@ -6739,7 +6739,7 @@ function view_orb_selector() {
     toList([
       p(
         toList([class$("text-sm font-light mb-2")]),
-        toList([text3("Add orbs to your test bag:")])
+        toList([text3("Add samples to your test container:")])
       ),
       div(
         toList([class$("grid grid-cols-2 gap-2")]),
@@ -6767,7 +6767,7 @@ function view_test_bag_builder(config) {
     toList([
       h3(
         toList([class$("text-lg font-light mb-3")]),
-        toList([text3("Test Bag Configuration")])
+        toList([text3("Test Sample Configuration")])
       ),
       div(
         toList([class$("mb-4 p-4 bg-gray-50 rounded border")]),
@@ -6776,7 +6776,9 @@ function view_test_bag_builder(config) {
             toList([class$("text-sm text-gray-600 mb-2")]),
             toList([
               text3(
-                "Orbs in bag: " + to_string(length2(config.test_bag))
+                "Samples in container: " + to_string(
+                  length2(config.test_bag)
+                )
               )
             ])
           ),
@@ -6872,7 +6874,7 @@ function view_test_actions(config) {
               if (can_run) {
                 return "RUN SIMULATIONS";
               } else {
-                return "ADD ORBS TO BEGIN";
+                return "ADD SAMPLES TO BEGIN";
               }
             })()
           )
@@ -6929,7 +6931,7 @@ function view_next_orb_preview(model) {
   if ($ instanceof Empty) {
     return p(
       toList([class$("text-xs text-red-700 mb-1")]),
-      toList([text3("Next: No orbs remaining")])
+      toList([text3("Next: No samples remaining")])
     );
   } else {
     let next_orb = $.head;
@@ -6944,7 +6946,7 @@ function view_bag_order_display(model) {
   if ($ instanceof Empty) {
     return p(
       toList([class$("text-xs text-red-600")]),
-      toList([text3("Bag: Empty")])
+      toList([text3("Container: Empty")])
     );
   } else {
     let orbs = $;
@@ -6960,7 +6962,7 @@ function view_bag_order_display(model) {
     let display_text = _block;
     return p(
       toList([class$("text-xs text-red-600")]),
-      toList([text3("Order: " + display_text)])
+      toList([text3("Sample Order: " + display_text)])
     );
   }
 }

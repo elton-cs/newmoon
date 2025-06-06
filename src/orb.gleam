@@ -109,11 +109,11 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
 
 pub fn get_orb_name(orb: Orb) -> String {
   case orb {
-    Point(value) -> "Point Orb (+" <> int.to_string(value) <> ")"
-    Bomb(damage) -> "Bomb Orb (-" <> int.to_string(damage) <> " health)"
-    Health(value) -> "Health Orb (+" <> int.to_string(value) <> " health)"
-    Collector -> "Collector Orb"
-    Survivor -> "Survivor Orb"
-    Multiplier -> "Multiplier Orb"
+    Point(value) -> "Data Sample (+" <> int.to_string(value) <> ")"
+    Bomb(damage) -> "Hazard Sample (-" <> int.to_string(damage) <> " health)"
+    Health(value) -> "Medical Sample (+" <> int.to_string(value) <> " health)"
+    Collector -> "Scanner Sample"
+    Survivor -> "Analyzer Sample"
+    Multiplier -> "Amplifier Sample"
   }
 }
