@@ -10,10 +10,11 @@ pub type Orb {
 }
 
 pub type GameStatus {
+  MainMenu
   Playing
-  Won
-  Lost
-  ShowingReward
+  Paused
+  LevelComplete
+  GameOver
   InMarketplace
   InTestingGrounds
 }
@@ -38,14 +39,33 @@ pub type Model {
 }
 
 pub type Msg {
+  // Main Menu Navigation
+  StartNewGame
+  ContinueGame
+  ShowHowToPlay
+  
+  // Gameplay Actions
   PullOrb
+  PauseGame
+  ResumeGame
+  
+  // Level Progression
   NextLevel
-  RestartGame
-  AcceptReward
-  EnterMarketplace
+  RestartLevel
+  
+  // Screen Navigation
+  GoToMainMenu
+  GoToMarketplace
+  GoToTestingGrounds
+  AcceptLevelReward
+  
+  // Marketplace Actions
   BuyOrb(Orb)
+  
+  // Game Settings
   ToggleShuffle
-  EnterTestingGrounds
+  
+  // Testing Grounds Actions
   ExitTestingGrounds
   AddTestOrb(Orb)
   RemoveTestOrb(Int)

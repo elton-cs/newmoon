@@ -4753,13 +4753,15 @@ var Survivor = class extends CustomType {
 };
 var Multiplier = class extends CustomType {
 };
+var MainMenu = class extends CustomType {
+};
 var Playing = class extends CustomType {
 };
-var Won = class extends CustomType {
+var Paused = class extends CustomType {
 };
-var Lost = class extends CustomType {
+var LevelComplete = class extends CustomType {
 };
-var ShowingReward = class extends CustomType {
+var GameOver = class extends CustomType {
 };
 var InMarketplace = class extends CustomType {
 };
@@ -4784,15 +4786,29 @@ var Model = class extends CustomType {
     this.testing_stats = testing_stats;
   }
 };
+var StartNewGame = class extends CustomType {
+};
+var ContinueGame = class extends CustomType {
+};
+var ShowHowToPlay = class extends CustomType {
+};
 var PullOrb = class extends CustomType {
+};
+var PauseGame = class extends CustomType {
+};
+var ResumeGame = class extends CustomType {
 };
 var NextLevel = class extends CustomType {
 };
-var RestartGame = class extends CustomType {
+var RestartLevel = class extends CustomType {
 };
-var AcceptReward = class extends CustomType {
+var GoToMainMenu = class extends CustomType {
 };
-var EnterMarketplace = class extends CustomType {
+var GoToMarketplace = class extends CustomType {
+};
+var GoToTestingGrounds = class extends CustomType {
+};
+var AcceptLevelReward = class extends CustomType {
 };
 var BuyOrb = class extends CustomType {
   constructor($0) {
@@ -4801,8 +4817,6 @@ var BuyOrb = class extends CustomType {
   }
 };
 var ToggleShuffle = class extends CustomType {
-};
-var EnterTestingGrounds = class extends CustomType {
 };
 var ExitTestingGrounds = class extends CustomType {
 };
@@ -5414,14 +5428,28 @@ function view_marketplace(model) {
           }
         )
       ),
-      button(
+      div(
+        toList([class$("space-y-3")]),
         toList([
-          class$(
-            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          button(
+            toList([
+              class$(
+                "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new NextLevel())
+            ]),
+            toList([text3("ADVANCE TO NEXT SECTOR")])
           ),
-          on_click(new NextLevel())
-        ]),
-        toList([text3("ADVANCE TO NEXT SECTOR")])
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-2 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToMainMenu())
+            ]),
+            toList([text3("MAIN MENU")])
+          )
+        ])
       )
     ])
   );
@@ -5854,18 +5882,176 @@ function view_pull_orb_button(model) {
     toList([text3("EXTRACT SAMPLE")])
   );
 }
-function view_playing_state(model) {
+function view_main_menu(model) {
+  let has_progress = model.level > 1 || model.credits > 0;
   return div(
-    toList([]),
+    toList([class$("text-center")]),
     toList([
-      view_last_orb_result(model),
-      view_bag_info(model),
-      view_shuffle_toggle(model),
-      view_pull_orb_button(model)
+      div(
+        toList([class$("mb-8")]),
+        toList([
+          h1(
+            toList([
+              class$(
+                "text-4xl font-light text-black mb-2 tracking-wider"
+              )
+            ]),
+            toList([text3("NEW MOON")])
+          ),
+          p(
+            toList([
+              class$(
+                "text-lg text-gray-500 mb-2 font-light tracking-wide"
+              )
+            ]),
+            toList([text3("DEEP SPACE EXPLORATION")])
+          ),
+          p(
+            toList([
+              class$(
+                "text-sm text-gray-400 font-light tracking-wider"
+              )
+            ]),
+            toList([
+              text3("Extract samples \u2022 Manage risk \u2022 Survive the unknown")
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("space-y-4")]),
+        toList([
+          button(
+            toList([
+              class$(
+                "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new StartNewGame())
+            ]),
+            toList([text3("START NEW MISSION")])
+          ),
+          (() => {
+            if (has_progress) {
+              return button(
+                toList([
+                  class$(
+                    "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+                  ),
+                  on_click(new ContinueGame())
+                ]),
+                toList([text3("CONTINUE MISSION")])
+              );
+            } else {
+              return div(toList([]), toList([]));
+            }
+          })(),
+          button(
+            toList([
+              class$(
+                "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new GoToTestingGrounds())
+            ]),
+            toList([text3("FIELD TESTING")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new ShowHowToPlay())
+            ]),
+            toList([text3("HOW TO PLAY")])
+          )
+        ])
+      ),
+      (() => {
+        if (has_progress) {
+          return div(
+            toList([class$("mt-6 p-3 bg-gray-50 rounded border")]),
+            toList([
+              p(
+                toList([class$("text-xs text-gray-600")]),
+                toList([
+                  text3(
+                    "Progress: Sector " + to_string(model.level) + " \u2022 Credits: " + to_string(
+                      model.credits
+                    )
+                  )
+                ])
+              )
+            ])
+          );
+        } else {
+          return div(toList([]), toList([]));
+        }
+      })()
     ])
   );
 }
-function view_reward_state(model) {
+function view_paused_state(_) {
+  return div(
+    toList([class$("text-center")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "mb-6 p-6 bg-yellow-50 border border-yellow-200 rounded"
+          )
+        ]),
+        toList([
+          h2(
+            toList([
+              class$(
+                "text-xl font-light text-black mb-2 tracking-wide"
+              )
+            ]),
+            toList([text3("MISSION PAUSED")])
+          ),
+          p(
+            toList([class$("text-yellow-700 text-sm font-light")]),
+            toList([
+              text3("Your progress is safe. Choose your next action.")
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([class$("space-y-3")]),
+        toList([
+          button(
+            toList([
+              class$(
+                "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new ResumeGame())
+            ]),
+            toList([text3("RESUME MISSION")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new RestartLevel())
+            ]),
+            toList([text3("RESTART SECTOR")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToMainMenu())
+            ]),
+            toList([text3("MAIN MENU")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view_level_complete_state(model) {
   return div(
     toList([class$("text-center")]),
     toList([
@@ -5879,31 +6065,48 @@ function view_reward_state(model) {
           h2(
             toList([
               class$(
-                "text-xl font-light text-black mb-4 tracking-wide"
+                "text-2xl font-light text-black mb-4 tracking-wide"
               )
             ]),
-            toList([text3("SECTOR COMPLETE")])
-          ),
-          p(
-            toList([class$("text-gray-600 text-sm font-light mb-2")]),
             toList([
               text3(
-                concat2(
-                  toList([
-                    "Data target achieved: ",
-                    to_string(model.milestone),
-                    " units"
-                  ])
-                )
+                "SECTOR " + to_string(model.level) + " COMPLETE"
+              )
+            ])
+          ),
+          div(
+            toList([class$("mb-4")]),
+            toList([
+              p(
+                toList([
+                  class$("text-green-700 text-lg font-medium mb-2")
+                ]),
+                toList([text3("Mission successful!")])
+              ),
+              p(
+                toList([class$("text-gray-600 text-sm mb-1")]),
+                toList([
+                  text3(
+                    "Target achieved: " + to_string(model.milestone) + " data units"
+                  )
+                ])
+              ),
+              p(
+                toList([class$("text-gray-600 text-sm")]),
+                toList([
+                  text3(
+                    "Final score: " + to_string(model.points) + " points"
+                  )
+                ])
               )
             ])
           ),
           p(
             toList([
-              class$("text-green-700 text-lg font-medium mb-4")
+              class$("text-green-600 text-lg font-medium mb-2")
             ]),
             toList([
-              text3("Credits awarded: +" + to_string(model.points))
+              text3("Credits earned: +" + to_string(model.points))
             ])
           ),
           p(
@@ -5914,64 +6117,9 @@ function view_reward_state(model) {
           )
         ])
       ),
-      button(
-        toList([
-          class$(
-            "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
-          ),
-          on_click(new AcceptReward())
-        ]),
-        toList([text3("ACCEPT REWARD")])
-      )
-    ])
-  );
-}
-function view_won_state(_) {
-  return div(
-    toList([class$("text-center")]),
-    toList([
-      div(
-        toList([
-          class$(
-            "mb-6 p-6 bg-gray-50 border border-gray-200 rounded"
-          )
-        ]),
-        toList([
-          h2(
-            toList([
-              class$(
-                "text-xl font-light text-black mb-2 tracking-wide"
-              )
-            ]),
-            toList([text3("READY FOR NEXT MISSION")])
-          ),
-          p(
-            toList([class$("text-gray-600 text-sm font-light")]),
-            toList([text3("Choose your next action")])
-          )
-        ])
-      ),
       div(
         toList([class$("space-y-3")]),
         toList([
-          button(
-            toList([
-              class$(
-                "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
-              ),
-              on_click(new EnterMarketplace())
-            ]),
-            toList([text3("VISIT MARKETPLACE")])
-          ),
-          button(
-            toList([
-              class$(
-                "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
-              ),
-              on_click(new EnterTestingGrounds())
-            ]),
-            toList([text3("TESTING GROUNDS")])
-          ),
           button(
             toList([
               class$(
@@ -5979,22 +6127,49 @@ function view_won_state(_) {
               ),
               on_click(new NextLevel())
             ]),
-            toList([text3("ADVANCE TO NEXT SECTOR")])
+            toList([
+              text3("ADVANCE TO SECTOR " + to_string(model.level + 1))
+            ])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToMarketplace())
+            ]),
+            toList([text3("VISIT MARKETPLACE")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToTestingGrounds())
+            ]),
+            toList([text3("FIELD TESTING")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-2 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToMainMenu())
+            ]),
+            toList([text3("MAIN MENU")])
           )
         ])
       )
     ])
   );
 }
-function view_lost_state() {
+function view_game_over_state(model) {
   return div(
     toList([class$("text-center")]),
     toList([
       div(
         toList([
-          class$(
-            "mb-6 p-6 bg-gray-100 border border-gray-300 rounded"
-          )
+          class$("mb-6 p-6 bg-red-50 border border-red-200 rounded")
         ]),
         toList([
           h2(
@@ -6006,26 +6181,111 @@ function view_lost_state() {
             toList([text3("MISSION FAILED")])
           ),
           p(
-            toList([class$("text-gray-700 text-sm font-light")]),
+            toList([class$("text-red-700 text-sm font-light mb-3")]),
+            toList([text3("All systems compromised. Mission terminated.")])
+          ),
+          div(
+            toList([class$("text-sm text-gray-600")]),
             toList([
-              text3("All systems compromised. Initiating reset protocol.")
+              p(
+                toList([class$("mb-1")]),
+                toList([text3("Sector: " + to_string(model.level))])
+              ),
+              p(
+                toList([class$("mb-1")]),
+                toList([
+                  text3(
+                    "Final score: " + to_string(model.points) + " / " + to_string(
+                      model.milestone
+                    )
+                  )
+                ])
+              ),
+              p(
+                toList([]),
+                toList([
+                  text3(
+                    "Credits retained: " + to_string(model.credits)
+                  )
+                ])
+              )
             ])
           )
         ])
       ),
-      button(
+      div(
+        toList([class$("space-y-3")]),
         toList([
-          class$(
-            "w-full bg-gray-800 hover:bg-black text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+          button(
+            toList([
+              class$(
+                "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+              ),
+              on_click(new RestartLevel())
+            ]),
+            toList([text3("RETRY SECTOR " + to_string(model.level))])
           ),
-          on_click(new RestartGame())
-        ]),
-        toList([text3("RESTART MISSION")])
+          button(
+            toList([
+              class$(
+                "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToTestingGrounds())
+            ]),
+            toList([text3("ANALYZE IN FIELD TESTING")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-600 hover:bg-gray-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new StartNewGame())
+            ]),
+            toList([text3("START NEW MISSION")])
+          ),
+          button(
+            toList([
+              class$(
+                "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-2 px-6 rounded transition text-sm tracking-wider"
+              ),
+              on_click(new GoToMainMenu())
+            ]),
+            toList([text3("MAIN MENU")])
+          )
+        ])
       )
     ])
   );
 }
-function view_testing_header() {
+function view_pause_button() {
+  return div(
+    toList([class$("flex justify-end mb-4")]),
+    toList([
+      button(
+        toList([
+          class$(
+            "px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-light tracking-wider transition"
+          ),
+          on_click(new PauseGame())
+        ]),
+        toList([text3("\u23F8 PAUSE")])
+      )
+    ])
+  );
+}
+function view_playing_state(model) {
+  return div(
+    toList([]),
+    toList([
+      view_pause_button(),
+      view_last_orb_result(model),
+      view_bag_info(model),
+      view_shuffle_toggle(model),
+      view_pull_orb_button(model)
+    ])
+  );
+}
+function view_field_testing_header() {
   return div(
     toList([
       class$("mb-6 p-4 bg-blue-50 border border-blue-200 rounded")
@@ -6035,7 +6295,7 @@ function view_testing_header() {
         toList([
           class$("text-xl font-light text-black mb-2 tracking-wide")
         ]),
-        toList([text3("ORB TESTING GROUNDS")])
+        toList([text3("ORB FIELD TESTING")])
       ),
       p(
         toList([class$("text-blue-700 text-sm font-light")]),
@@ -6517,7 +6777,7 @@ function view_testing_grounds(model) {
   return div(
     toList([class$("text-center")]),
     toList([
-      view_testing_header(),
+      view_field_testing_header(),
       (() => {
         let $ = model.testing_mode;
         if ($ instanceof ConfiguringTest) {
@@ -6533,14 +6793,16 @@ function view_testing_grounds(model) {
 }
 function view_game_content(model) {
   let $ = model.status;
-  if ($ instanceof Playing) {
+  if ($ instanceof MainMenu) {
+    return view_main_menu(model);
+  } else if ($ instanceof Playing) {
     return view_playing_state(model);
-  } else if ($ instanceof Won) {
-    return view_won_state(model);
-  } else if ($ instanceof Lost) {
-    return view_lost_state();
-  } else if ($ instanceof ShowingReward) {
-    return view_reward_state(model);
+  } else if ($ instanceof Paused) {
+    return view_paused_state(model);
+  } else if ($ instanceof LevelComplete) {
+    return view_level_complete_state(model);
+  } else if ($ instanceof GameOver) {
+    return view_game_over_state(model);
   } else if ($ instanceof InMarketplace) {
     return view_marketplace(model);
   } else {
@@ -6554,7 +6816,24 @@ function view_game_card(model) {
         "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200"
       )
     ]),
-    toList([view_header(), view_game_stats(model), view_game_content(model)])
+    (() => {
+      let $ = model.status;
+      if ($ instanceof Playing) {
+        return toList([
+          view_header(),
+          view_game_stats(model),
+          view_game_content(model)
+        ]);
+      } else if ($ instanceof Paused) {
+        return toList([
+          view_header(),
+          view_game_stats(model),
+          view_game_content(model)
+        ]);
+      } else {
+        return toList([view_game_content(model)]);
+      }
+    })()
   );
 }
 function view(model) {
@@ -6577,7 +6856,7 @@ function init(_) {
     1,
     get_milestone_for_level(1),
     create_level_bag(1),
-    new Playing(),
+    new MainMenu(),
     new None(),
     0,
     1,
@@ -6607,44 +6886,6 @@ function handle_next_level(model) {
     model.testing_stats
   );
 }
-function handle_accept_reward(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    new Won(),
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
-    _record.shuffle_enabled,
-    _record.testing_config,
-    _record.testing_mode,
-    _record.testing_stats
-  );
-}
-function handle_enter_marketplace(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    new InMarketplace(),
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
-    _record.shuffle_enabled,
-    _record.testing_config,
-    _record.testing_mode,
-    _record.testing_stats
-  );
-}
 function handle_enter_testing_grounds(model) {
   let _record = model;
   return new Model(
@@ -6661,25 +6902,6 @@ function handle_enter_testing_grounds(model) {
     _record.shuffle_enabled,
     new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
     new ConfiguringTest(),
-    new None()
-  );
-}
-function handle_exit_testing_grounds(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    new Playing(),
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
-    _record.shuffle_enabled,
-    new None(),
-    _record.testing_mode,
     new None()
   );
 }
@@ -6920,6 +7142,42 @@ function handle_reset_test_config(model) {
     new None()
   );
 }
+function start_new_game() {
+  return new Model(
+    5,
+    0,
+    1,
+    get_milestone_for_level(1),
+    create_level_bag(1),
+    new Playing(),
+    new None(),
+    0,
+    1,
+    0,
+    false,
+    new None(),
+    new ConfiguringTest(),
+    new None()
+  );
+}
+function restart_current_level(model) {
+  return new Model(
+    5,
+    0,
+    model.level,
+    model.milestone,
+    create_level_bag(model.level),
+    new Playing(),
+    new None(),
+    0,
+    1,
+    model.credits,
+    model.shuffle_enabled,
+    model.testing_config,
+    model.testing_mode,
+    model.testing_stats
+  );
+}
 function check_game_status(model) {
   let $ = model.health <= 0;
   let $1 = model.points >= model.milestone;
@@ -6931,7 +7189,7 @@ function check_game_status(model) {
       _record.level,
       _record.milestone,
       _record.bag,
-      new Lost(),
+      new GameOver(),
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
@@ -6949,7 +7207,7 @@ function check_game_status(model) {
       _record.level,
       _record.milestone,
       _record.bag,
-      new ShowingReward(),
+      new LevelComplete(),
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
@@ -7011,16 +7269,126 @@ function handle_pull_orb(model) {
   }
 }
 function update2(model, msg) {
-  if (msg instanceof PullOrb) {
+  if (msg instanceof StartNewGame) {
+    return start_new_game();
+  } else if (msg instanceof ContinueGame) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Playing(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  } else if (msg instanceof ShowHowToPlay) {
+    return model;
+  } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
+  } else if (msg instanceof PauseGame) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Paused(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  } else if (msg instanceof ResumeGame) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new Playing(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
-  } else if (msg instanceof RestartGame) {
-    return init(void 0);
-  } else if (msg instanceof AcceptReward) {
-    return handle_accept_reward(model);
-  } else if (msg instanceof EnterMarketplace) {
-    return handle_enter_marketplace(model);
+  } else if (msg instanceof RestartLevel) {
+    return restart_current_level(model);
+  } else if (msg instanceof GoToMainMenu) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new MainMenu(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  } else if (msg instanceof GoToMarketplace) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new InMarketplace(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  } else if (msg instanceof GoToTestingGrounds) {
+    return handle_enter_testing_grounds(model);
+  } else if (msg instanceof AcceptLevelReward) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new LevelComplete(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
     return purchase_orb(model, orb);
@@ -7042,10 +7410,24 @@ function update2(model, msg) {
       _record.testing_mode,
       _record.testing_stats
     );
-  } else if (msg instanceof EnterTestingGrounds) {
-    return handle_enter_testing_grounds(model);
   } else if (msg instanceof ExitTestingGrounds) {
-    return handle_exit_testing_grounds(model);
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      new MainMenu(),
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
   } else if (msg instanceof AddTestOrb) {
     let orb = msg[0];
     return handle_add_test_orb(model, orb);
@@ -7082,7 +7464,7 @@ function main() {
       12,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 529, end: 619, pattern_start: 540, pattern_end: 545 }
+      { value: $, start: 641, end: 731, pattern_start: 652, pattern_end: 657 }
     );
   }
   return void 0;

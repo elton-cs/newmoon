@@ -5,7 +5,7 @@ import level
 import marketplace
 import orb
 import simulation
-import types.{type Model, type Msg, AcceptReward, BuyOrb, ConfiguringTest, EnterMarketplace, EnterTestingGrounds, ExitTestingGrounds, InMarketplace, InTestingGrounds, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig}
+import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest}
 import view
 
 pub fn main() -> Nil {
@@ -22,8 +22,8 @@ fn init(_) -> Model {
     level: 1,
     milestone: level.get_milestone_for_level(1),
     bag: level.create_level_bag(1),
-    status: Playing,
-    last_orb: None,
+    status: MainMenu,
+    last_orb: option.None,
     bombs_pulled_this_level: 0,
     current_multiplier: 1,
     credits: 0,
@@ -37,15 +37,34 @@ fn init(_) -> Model {
 
 fn update(model: Model, msg: Msg) -> Model {
   case msg {
+    // Main Menu Navigation
+    StartNewGame -> start_new_game()
+    ContinueGame -> types.Model(..model, status: Playing)
+    ShowHowToPlay -> model // TODO: Implement help screen
+    
+    // Gameplay Actions
     PullOrb -> handle_pull_orb(model)
+    PauseGame -> types.Model(..model, status: Paused)
+    ResumeGame -> types.Model(..model, status: Playing)
+    
+    // Level Progression
     NextLevel -> handle_next_level(model)
-    RestartGame -> init(Nil)
-    AcceptReward -> handle_accept_reward(model)
-    EnterMarketplace -> handle_enter_marketplace(model)
+    RestartLevel -> restart_current_level(model)
+    
+    // Screen Navigation
+    GoToMainMenu -> types.Model(..model, status: MainMenu)
+    GoToMarketplace -> types.Model(..model, status: InMarketplace)
+    GoToTestingGrounds -> handle_enter_testing_grounds(model)
+    AcceptLevelReward -> types.Model(..model, status: LevelComplete)
+    
+    // Marketplace Actions
     BuyOrb(orb) -> marketplace.purchase_orb(model, orb)
+    
+    // Game Settings
     ToggleShuffle -> types.Model(..model, shuffle_enabled: !model.shuffle_enabled)
-    EnterTestingGrounds -> handle_enter_testing_grounds(model)
-    ExitTestingGrounds -> handle_exit_testing_grounds(model)
+    
+    // Testing Grounds Actions
+    ExitTestingGrounds -> types.Model(..model, status: MainMenu)
     AddTestOrb(orb) -> handle_add_test_orb(model, orb)
     RemoveTestOrb(index) -> handle_remove_test_orb(model, index)
     SetTestMilestone(milestone) -> handle_set_test_milestone(model, milestone)
@@ -104,15 +123,6 @@ fn handle_next_level(model: Model) -> Model {
   )
 }
 
-fn handle_accept_reward(model: Model) -> Model {
-  // Credits already awarded in check_game_status, just change status to Won
-  types.Model(..model, status: types.Won)
-}
-
-fn handle_enter_marketplace(model: Model) -> Model {
-  // Credits already awarded when level completed, just change status
-  types.Model(..model, status: InMarketplace)
-}
 
 
 fn handle_enter_testing_grounds(model: Model) -> Model {
@@ -130,14 +140,6 @@ fn handle_enter_testing_grounds(model: Model) -> Model {
   )
 }
 
-fn handle_exit_testing_grounds(model: Model) -> Model {
-  types.Model(
-    ..model,
-    status: Playing,
-    testing_config: option.None,
-    testing_stats: option.None,
-  )
-}
 
 fn handle_add_test_orb(model: Model, orb: types.Orb) -> Model {
   case model.testing_config {
@@ -231,10 +233,48 @@ fn handle_reset_test_config(model: Model) -> Model {
   )
 }
 
+fn start_new_game() -> Model {
+  types.Model(
+    health: 5,
+    points: 0,
+    level: 1,
+    milestone: level.get_milestone_for_level(1),
+    bag: level.create_level_bag(1),
+    status: Playing,
+    last_orb: option.None,
+    bombs_pulled_this_level: 0,
+    current_multiplier: 1,
+    credits: 0,
+    shuffle_enabled: False,
+    testing_config: option.None,
+    testing_mode: ConfiguringTest,
+    testing_stats: option.None,
+  )
+}
+
+fn restart_current_level(model: Model) -> Model {
+  types.Model(
+    health: 5,
+    points: 0,
+    level: model.level,
+    milestone: model.milestone,
+    bag: level.create_level_bag(model.level),
+    status: Playing,
+    last_orb: option.None,
+    bombs_pulled_this_level: 0,
+    current_multiplier: 1,
+    credits: model.credits,
+    shuffle_enabled: model.shuffle_enabled,
+    testing_config: model.testing_config,
+    testing_mode: model.testing_mode,
+    testing_stats: model.testing_stats,
+  )
+}
+
 fn check_game_status(model: Model) -> Model {
   case model.health <= 0, model.points >= model.milestone {
-    True, _ -> types.Model(..model, status: types.Lost)
-    False, True -> types.Model(..model, status: ShowingReward, credits: model.credits + model.points)
+    True, _ -> types.Model(..model, status: GameOver)
+    False, True -> types.Model(..model, status: LevelComplete, credits: model.credits + model.points)
     False, False -> model
   }
 }

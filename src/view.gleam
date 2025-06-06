@@ -9,7 +9,7 @@ import lustre/element/html
 import lustre/event
 import marketplace
 import orb
-import types.{type Model, type Msg, AcceptReward, EnterMarketplace, EnterTestingGrounds, ExitTestingGrounds, InMarketplace, InTestingGrounds, Lost, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle, Won, AddTestOrb, RemoveTestOrb, StartSimulations, ViewTestResults, ResetTestConfig, ConfiguringTest, RunningSimulations, ViewingResults}
+import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, ToggleShuffle, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, RunningSimulations, ViewingResults}
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div(
@@ -29,7 +29,11 @@ fn view_game_card(model: Model) -> Element(Msg) {
         "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200",
       ),
     ],
-    [view_header(), view_game_stats(model), view_game_content(model)],
+    case model.status {
+      Playing -> [view_header(), view_game_stats(model), view_game_content(model)]
+      Paused -> [view_header(), view_game_stats(model), view_game_content(model)]
+      _ -> [view_game_content(model)]
+    },
   )
 }
 
@@ -143,10 +147,11 @@ pub fn view_result_card(
 
 fn view_game_content(model: Model) -> Element(Msg) {
   case model.status {
+    MainMenu -> view_main_menu(model)
     Playing -> view_playing_state(model)
-    ShowingReward -> view_reward_state(model)
-    Won -> view_won_state(model)
-    Lost -> view_lost_state()
+    Paused -> view_paused_state(model)
+    LevelComplete -> view_level_complete_state(model)
+    GameOver -> view_game_over_state(model)
     InMarketplace -> marketplace.view_marketplace(model)
     InTestingGrounds -> view_testing_grounds(model)
   }
@@ -154,6 +159,7 @@ fn view_game_content(model: Model) -> Element(Msg) {
 
 fn view_playing_state(model: Model) -> Element(Msg) {
   html.div([], [
+    view_pause_button(),
     view_last_orb_result(model),
     view_bag_info(model),
     view_shuffle_toggle(model),
@@ -237,55 +243,94 @@ fn view_pull_orb_button(model: Model) -> Element(Msg) {
   )
 }
 
-fn view_reward_state(model: Model) -> Element(Msg) {
+fn view_main_menu(model: Model) -> Element(Msg) {
+  let has_progress = model.level > 1 || model.credits > 0
+  
   html.div([attribute.class("text-center")], [
-    html.div(
-      [attribute.class("mb-6 p-6 bg-green-50 border border-green-200 rounded")],
-      [
-        html.h2(
-          [attribute.class("text-xl font-light text-black mb-4 tracking-wide")],
-          [html.text("SECTOR COMPLETE")],
-        ),
-        html.p([attribute.class("text-gray-600 text-sm font-light mb-2")], [
-          html.text(
-            string.concat([
-              "Data target achieved: ",
-              int.to_string(model.milestone),
-              " units",
-            ]),
+    // Game branding
+    html.div([attribute.class("mb-8")], [
+      html.h1(
+        [attribute.class("text-4xl font-light text-black mb-2 tracking-wider")],
+        [html.text("NEW MOON")],
+      ),
+      html.p(
+        [attribute.class("text-lg text-gray-500 mb-2 font-light tracking-wide")],
+        [html.text("DEEP SPACE EXPLORATION")],
+      ),
+      html.p(
+        [attribute.class("text-sm text-gray-400 font-light tracking-wider")],
+        [html.text("Extract samples • Manage risk • Survive the unknown")],
+      ),
+    ]),
+    
+    // Menu options
+    html.div([attribute.class("space-y-4")], [
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
           ),
-        ]),
-        html.p([attribute.class("text-green-700 text-lg font-medium mb-4")], [
-          html.text("Credits awarded: +" <> int.to_string(model.points)),
-        ]),
-        html.p([attribute.class("text-purple-600 text-sm font-light")], [
-          html.text("Total credits: " <> int.to_string(model.credits)),
-        ]),
-      ],
-    ),
-    html.button(
-      [
-        attribute.class(
-          "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
-        ),
-        event.on_click(AcceptReward),
-      ],
-      [html.text("ACCEPT REWARD")],
-    ),
+          event.on_click(StartNewGame),
+        ],
+        [html.text("START NEW MISSION")],
+      ),
+      case has_progress {
+        True ->
+          html.button(
+            [
+              attribute.class(
+                "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+              ),
+              event.on_click(ContinueGame),
+            ],
+            [html.text("CONTINUE MISSION")],
+          )
+        False -> html.div([], [])
+      },
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          ),
+          event.on_click(GoToTestingGrounds),
+        ],
+        [html.text("FIELD TESTING")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(ShowHowToPlay),
+        ],
+        [html.text("HOW TO PLAY")],
+      ),
+    ]),
+    
+    // Progress indicator
+    case has_progress {
+      True ->
+        html.div([attribute.class("mt-6 p-3 bg-gray-50 rounded border")], [
+          html.p([attribute.class("text-xs text-gray-600")], [
+            html.text("Progress: Sector " <> int.to_string(model.level) <> " • Credits: " <> int.to_string(model.credits)),
+          ]),
+        ])
+      False -> html.div([], [])
+    },
   ])
 }
 
-fn view_won_state(_model: Model) -> Element(Msg) {
+fn view_paused_state(_model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-gray-50 border border-gray-200 rounded")],
+      [attribute.class("mb-6 p-6 bg-yellow-50 border border-yellow-200 rounded")],
       [
         html.h2(
           [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-          [html.text("READY FOR NEXT MISSION")],
+          [html.text("MISSION PAUSED")],
         ),
-        html.p([attribute.class("text-gray-600 text-sm font-light")], [
-          html.text("Choose your next action"),
+        html.p([attribute.class("text-yellow-700 text-sm font-light")], [
+          html.text("Your progress is safe. Choose your next action."),
         ]),
       ],
     ),
@@ -293,21 +338,63 @@ fn view_won_state(_model: Model) -> Element(Msg) {
       html.button(
         [
           attribute.class(
-            "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+            "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
           ),
-          event.on_click(EnterMarketplace),
+          event.on_click(ResumeGame),
         ],
-        [html.text("VISIT MARKETPLACE")],
+        [html.text("RESUME MISSION")],
       ),
       html.button(
         [
           attribute.class(
-            "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+            "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider",
           ),
-          event.on_click(EnterTestingGrounds),
+          event.on_click(RestartLevel),
         ],
-        [html.text("TESTING GROUNDS")],
+        [html.text("RESTART SECTOR")],
       ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToMainMenu),
+        ],
+        [html.text("MAIN MENU")],
+      ),
+    ]),
+  ])
+}
+
+fn view_level_complete_state(model: Model) -> Element(Msg) {
+  html.div([attribute.class("text-center")], [
+    html.div(
+      [attribute.class("mb-6 p-6 bg-green-50 border border-green-200 rounded")],
+      [
+        html.h2(
+          [attribute.class("text-2xl font-light text-black mb-4 tracking-wide")],
+          [html.text("SECTOR " <> int.to_string(model.level) <> " COMPLETE")],
+        ),
+        html.div([attribute.class("mb-4")], [
+          html.p([attribute.class("text-green-700 text-lg font-medium mb-2")], [
+            html.text("Mission successful!"),
+          ]),
+          html.p([attribute.class("text-gray-600 text-sm mb-1")], [
+            html.text("Target achieved: " <> int.to_string(model.milestone) <> " data units"),
+          ]),
+          html.p([attribute.class("text-gray-600 text-sm")], [
+            html.text("Final score: " <> int.to_string(model.points) <> " points"),
+          ]),
+        ]),
+        html.p([attribute.class("text-green-600 text-lg font-medium mb-2")], [
+          html.text("Credits earned: +" <> int.to_string(model.points)),
+        ]),
+        html.p([attribute.class("text-purple-600 text-sm font-light")], [
+          html.text("Total credits: " <> int.to_string(model.credits)),
+        ]),
+      ],
+    ),
+    html.div([attribute.class("space-y-3")], [
       html.button(
         [
           attribute.class(
@@ -315,41 +402,122 @@ fn view_won_state(_model: Model) -> Element(Msg) {
           ),
           event.on_click(NextLevel),
         ],
-        [html.text("ADVANCE TO NEXT SECTOR")],
+        [html.text("ADVANCE TO SECTOR " <> int.to_string(model.level + 1))],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToMarketplace),
+        ],
+        [html.text("VISIT MARKETPLACE")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToTestingGrounds),
+        ],
+        [html.text("FIELD TESTING")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-2 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToMainMenu),
+        ],
+        [html.text("MAIN MENU")],
       ),
     ]),
   ])
 }
 
-fn view_lost_state() -> Element(Msg) {
+fn view_game_over_state(model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-gray-100 border border-gray-300 rounded")],
+      [attribute.class("mb-6 p-6 bg-red-50 border border-red-200 rounded")],
       [
         html.h2(
           [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
           [html.text("MISSION FAILED")],
         ),
-        html.p([attribute.class("text-gray-700 text-sm font-light")], [
-          html.text("All systems compromised. Initiating reset protocol."),
+        html.p([attribute.class("text-red-700 text-sm font-light mb-3")], [
+          html.text("All systems compromised. Mission terminated."),
+        ]),
+        html.div([attribute.class("text-sm text-gray-600")], [
+          html.p([attribute.class("mb-1")], [
+            html.text("Sector: " <> int.to_string(model.level)),
+          ]),
+          html.p([attribute.class("mb-1")], [
+            html.text("Final score: " <> int.to_string(model.points) <> " / " <> int.to_string(model.milestone)),
+          ]),
+          html.p([], [
+            html.text("Credits retained: " <> int.to_string(model.credits)),
+          ]),
         ]),
       ],
     ),
+    html.div([attribute.class("space-y-3")], [
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          ),
+          event.on_click(RestartLevel),
+        ],
+        [html.text("RETRY SECTOR " <> int.to_string(model.level))],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToTestingGrounds),
+        ],
+        [html.text("ANALYZE IN FIELD TESTING")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-600 hover:bg-gray-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(StartNewGame),
+        ],
+        [html.text("START NEW MISSION")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-2 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToMainMenu),
+        ],
+        [html.text("MAIN MENU")],
+      ),
+    ]),
+  ])
+}
+
+fn view_pause_button() -> Element(Msg) {
+  html.div([attribute.class("flex justify-end mb-4")], [
     html.button(
       [
         attribute.class(
-          "w-full bg-gray-800 hover:bg-black text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          "px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-light tracking-wider transition",
         ),
-        event.on_click(RestartGame),
+        event.on_click(PauseGame),
       ],
-      [html.text("RESTART MISSION")],
+      [html.text("⏸ PAUSE")],
     ),
   ])
 }
 
 fn view_testing_grounds(model: Model) -> Element(Msg) {
   html.div([attribute.class("text-center")], [
-    view_testing_header(),
+    view_field_testing_header(),
     case model.testing_mode {
       ConfiguringTest -> view_test_configuration(model)
       RunningSimulations -> view_simulation_progress(model)
@@ -358,13 +526,13 @@ fn view_testing_grounds(model: Model) -> Element(Msg) {
   ])
 }
 
-fn view_testing_header() -> Element(Msg) {
+fn view_field_testing_header() -> Element(Msg) {
   html.div(
     [attribute.class("mb-6 p-4 bg-blue-50 border border-blue-200 rounded")],
     [
       html.h2(
         [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-        [html.text("ORB TESTING GROUNDS")],
+        [html.text("ORB FIELD TESTING")],
       ),
       html.p([attribute.class("text-blue-700 text-sm font-light")], [
         html.text("Simulate strategies and optimize your approach"),

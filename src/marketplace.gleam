@@ -6,7 +6,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import orb
-import types.{type MarketItem, type Model, type Msg, type Orb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor}
+import types.{type MarketItem, type Model, type Msg, type Orb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor, GoToMainMenu}
 
 pub fn get_market_items() -> List(MarketItem) {
   [
@@ -70,15 +70,26 @@ pub fn view_marketplace(model: Model) -> Element(Msg) {
     html.div([attribute.class("space-y-3 mb-6 max-h-64 overflow-y-auto")], 
       list.map(market_items, fn(item) { view_market_item(model, item) })
     ),
-    html.button(
-      [
-        attribute.class(
-          "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
-        ),
-        event.on_click(NextLevel),
-      ],
-      [html.text("ADVANCE TO NEXT SECTOR")],
-    ),
+    html.div([attribute.class("space-y-3")], [
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
+          ),
+          event.on_click(NextLevel),
+        ],
+        [html.text("ADVANCE TO NEXT SECTOR")],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-2 px-6 rounded transition text-sm tracking-wider",
+          ),
+          event.on_click(GoToMainMenu),
+        ],
+        [html.text("MAIN MENU")],
+      ),
+    ]),
   ])
 }
 
