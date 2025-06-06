@@ -6,7 +6,11 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import orb
-import types.{type MarketItem, type Model, type Msg, type Orb, BuyOrb, Collector, Health, MarketItem, Multiplier, NextLevel, Point, Survivor, Choice, Gamble, GoToMainMenu}
+import types.{
+  type MarketItem, type Model, type Msg, type Orb, BuyOrb, Choice, Collector,
+  Gamble, GoToMainMenu, Health, MarketItem, Multiplier, NextLevel, Point,
+  Survivor,
+}
 
 pub fn get_market_items() -> List(MarketItem) {
   [
@@ -14,12 +18,10 @@ pub fn get_market_items() -> List(MarketItem) {
     MarketItem(Point(8), 12, "Basic data packet - reliable points"),
     MarketItem(Point(12), 18, "Advanced data packet - higher value"),
     MarketItem(Point(15), 25, "Premium data packet - maximum value"),
-    
     // Health orbs - safety and survival
     MarketItem(Health(2), 15, "Standard repair kit - moderate healing"),
     MarketItem(Health(4), 28, "Enhanced repair kit - superior healing"),
     MarketItem(Health(5), 40, "Emergency repair kit - full restoration"),
-    
     // Strategic orbs - high value, high cost
     MarketItem(Collector, 30, "Deep scanner - points for remaining samples"),
     MarketItem(Survivor, 35, "Damage analyzer - points for bombs survived"),
@@ -35,7 +37,7 @@ pub fn can_afford(model: Model, item: MarketItem) -> Bool {
 
 pub fn purchase_orb(model: Model, orb: Orb) -> Model {
   let market_items = get_market_items()
-  case list.find(market_items, fn(item) { item.orb == orb }) {
+  case market_items |> list.find(fn(item) { item.orb == orb }) {
     Ok(item) -> {
       case can_afford(model, item) {
         True -> {
@@ -52,10 +54,14 @@ pub fn purchase_orb(model: Model, orb: Orb) -> Model {
 
 pub fn view_marketplace(model: Model) -> Element(Msg) {
   let market_items = get_market_items()
-  
+
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-purple-50 border border-purple-200 rounded")],
+      [
+        attribute.class(
+          "mb-6 p-6 bg-purple-50 border border-purple-200 rounded",
+        ),
+      ],
       [
         html.h2(
           [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
@@ -69,8 +75,9 @@ pub fn view_marketplace(model: Model) -> Element(Msg) {
         ]),
       ],
     ),
-    html.div([attribute.class("space-y-3 mb-6 max-h-64 overflow-y-auto")], 
-      list.map(market_items, fn(item) { view_market_item(model, item) })
+    html.div(
+      [attribute.class("space-y-3 mb-6 max-h-64 overflow-y-auto")],
+      market_items |> list.map(fn(item) { view_market_item(model, item) }),
     ),
     html.div([attribute.class("space-y-3")], [
       html.button(
@@ -128,10 +135,12 @@ fn view_market_item(model: Model, item: MarketItem) -> Element(Msg) {
         ),
         event.on_click(BuyOrb(item.orb)),
       ],
-      [html.text(case can_buy {
-        True -> "PURCHASE"
-        False -> "INSUFFICIENT CREDITS"
-      })],
+      [
+        html.text(case can_buy {
+          True -> "PURCHASE"
+          False -> "INSUFFICIENT CREDITS"
+        }),
+      ],
     ),
   ])
 }

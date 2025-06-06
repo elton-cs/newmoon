@@ -1,18 +1,23 @@
 import gleam/int
 import gleam/list
-import types.{type Orb, type SimulationResult, type TestingConfiguration, type TestingStats, SimulationResult, TestingStats}
+import types.{
+  type Orb, type SimulationResult, type TestingConfiguration, type TestingStats,
+  SimulationResult, TestingStats,
+}
 
 pub fn run_simulations(config: TestingConfiguration) -> TestingStats {
-  let results = list.range(1, config.simulation_count)
+  let results =
+    config.simulation_count
+    |> list.range(1, _)
     |> list.map(fn(_) { run_single_simulation(config) })
-  
+
   calculate_stats(results)
 }
 
 fn run_single_simulation(config: TestingConfiguration) -> SimulationResult {
   // Shuffle the bag for each simulation to get varied results
-  let shuffled_bag = list.shuffle(config.test_bag)
-  
+  let shuffled_bag = config.test_bag |> list.shuffle
+
   simulate_game(
     bag: shuffled_bag,
     health: config.starting_health,
@@ -34,45 +39,50 @@ fn simulate_game(
   multiplier multiplier: Int,
 ) -> SimulationResult {
   case health <= 0 {
-    True -> SimulationResult(
-      won: False,
-      final_points: points,
-      final_health: health,
-      orbs_pulled: orbs_pulled,
-      bombs_hit: bombs_hit,
-    )
-    False -> case points >= target {
-      True -> SimulationResult(
-        won: True,
+    True ->
+      SimulationResult(
+        won: False,
         final_points: points,
         final_health: health,
         orbs_pulled: orbs_pulled,
         bombs_hit: bombs_hit,
       )
-      False -> case bag {
-        [] -> SimulationResult(
-          won: False,
-          final_points: points,
-          final_health: health,
-          orbs_pulled: orbs_pulled,
-          bombs_hit: bombs_hit,
-        )
-        [orb, ..rest] -> {
-          let #(new_health, new_points, new_multiplier, new_bombs) = 
-            apply_orb_simulation(orb, health, points, multiplier, bombs_hit)
-          
-          simulate_game(
-            bag: rest,
-            health: new_health,
-            points: new_points,
-            target: target,
-            orbs_pulled: orbs_pulled + 1,
-            bombs_hit: new_bombs,
-            multiplier: new_multiplier,
+    False ->
+      case points >= target {
+        True ->
+          SimulationResult(
+            won: True,
+            final_points: points,
+            final_health: health,
+            orbs_pulled: orbs_pulled,
+            bombs_hit: bombs_hit,
           )
-        }
+        False ->
+          case bag {
+            [] ->
+              SimulationResult(
+                won: False,
+                final_points: points,
+                final_health: health,
+                orbs_pulled: orbs_pulled,
+                bombs_hit: bombs_hit,
+              )
+            [orb, ..rest] -> {
+              let #(new_health, new_points, new_multiplier, new_bombs) =
+                apply_orb_simulation(orb, health, points, multiplier, bombs_hit)
+
+              simulate_game(
+                bag: rest,
+                health: new_health,
+                points: new_points,
+                target: target,
+                orbs_pulled: orbs_pulled + 1,
+                bombs_hit: new_bombs,
+                multiplier: new_multiplier,
+              )
+            }
+          }
       }
-    }
   }
 }
 
@@ -128,34 +138,34 @@ fn apply_orb_simulation(
 }
 
 fn calculate_stats(results: List(SimulationResult)) -> TestingStats {
-  let total_runs = list.length(results)
-  let wins = list.count(results, fn(result) { result.won })
+  let total_runs = results |> list.length
+  let wins = results |> list.count(fn(result) { result.won })
   let losses = total_runs - wins
-  
+
   let win_rate = case total_runs > 0 {
     True -> int.to_float(wins) /. int.to_float(total_runs)
     False -> 0.0
   }
-  
-  let point_values = list.map(results, fn(result) { result.final_points })
+
+  let point_values = results |> list.map(fn(result) { result.final_points })
   let average_points = case total_runs > 0 {
     True -> {
-      let total_points = list.fold(point_values, 0, int.add)
+      let total_points = point_values |> list.fold(0, int.add)
       int.to_float(total_points) /. int.to_float(total_runs)
     }
     False -> 0.0
   }
-  
-  let best_score = case list.sort(point_values, int.compare) |> list.reverse() {
+
+  let best_score = case point_values |> list.sort(int.compare) |> list.reverse {
     [best, ..] -> best
     [] -> 0
   }
-  
-  let worst_score = case list.sort(point_values, int.compare) {
+
+  let worst_score = case point_values |> list.sort(int.compare) {
     [worst, ..] -> worst
     [] -> 0
   }
-  
+
   TestingStats(
     total_runs: total_runs,
     wins: wins,

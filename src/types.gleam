@@ -57,38 +57,38 @@ pub type Msg {
   StartNewGame
   ContinueGame
   ShowHowToPlay
-  
+
   // Gameplay Actions
   PullOrb
   PauseGame
   ResumeGame
-  
+
   // Level Progression
   NextLevel
   RestartLevel
-  
+
   // Screen Navigation
   GoToMainMenu
   GoToMarketplace
   GoToTestingGrounds
   AcceptLevelReward
-  
+
   // Marketplace Actions
   BuyOrb(Orb)
-  
+
   // Game Settings
   ToggleShuffle
   ToggleDevMode
-  
+
   // Choice Orb Actions
   SelectFirstChoice
   SelectSecondChoice
-  
+
   // Gamble Orb Actions
   AcceptGamble
   DeclineGamble
   NextGambleOrb
-  
+
   // Testing Grounds Actions
   ExitTestingGrounds
   AddTestOrb(Orb)
@@ -144,9 +144,5 @@ pub type TestingMode {
 }
 
 pub type LogEntry {
-  LogEntry(
-    sequence: Int,
-    orb: Orb,
-    message: String,
-  )
+  LogEntry(sequence: Int, orb: Orb, message: String)
 }

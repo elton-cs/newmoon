@@ -1720,6 +1720,9 @@ function slice(string5, idx, len) {
     }
   }
 }
+function append2(first2, second) {
+  return first2 + second;
+}
 function concat_loop(loop$strings, loop$accumulator) {
   while (true) {
     let strings = loop$strings;
@@ -5224,7 +5227,10 @@ function get_orb_result_message(orb, model) {
       value
     ) + " SYS";
   } else if (orb instanceof Collector) {
-    let base_points = length(model.bag);
+    let _block;
+    let _pipe = model.bag;
+    _block = length(_pipe);
+    let base_points = _block;
     let multiplied_points = base_points * model.current_multiplier;
     let $ = model.current_multiplier > 1;
     if ($) {
@@ -5313,7 +5319,10 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         _record.points,
         _record.level,
         _record.milestone,
-        append(original_choice_orbs, more_choice_orbs),
+        (() => {
+          let _pipe = original_choice_orbs;
+          return append(_pipe, more_choice_orbs);
+        })(),
         new ChoosingOrb(),
         _record.last_orb,
         _record.bombs_pulled_this_level,
@@ -5338,10 +5347,10 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         let rest = remaining_bag.tail;
         loop$model = model;
         loop$remaining_bag = rest;
-        loop$more_choice_orbs = append(
-          more_choice_orbs,
-          toList([new Choice()])
-        );
+        loop$more_choice_orbs = (() => {
+          let _pipe = more_choice_orbs;
+          return append(_pipe, toList([new Choice()]));
+        })();
         loop$first_orb = first_orb;
         loop$original_choice_orbs = original_choice_orbs;
       } else {
@@ -5353,10 +5362,11 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
           _record.points,
           _record.level,
           _record.milestone,
-          append(
-            append(rest, original_choice_orbs),
-            more_choice_orbs
-          ),
+          (() => {
+            let _pipe = rest;
+            let _pipe$1 = append(_pipe, original_choice_orbs);
+            return append(_pipe$1, more_choice_orbs);
+          })(),
           new ChoosingOrb(),
           _record.last_orb,
           _record.bombs_pulled_this_level,
@@ -5416,10 +5426,10 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
         let rest = remaining_bag.tail;
         loop$model = model;
         loop$remaining_bag = rest;
-        loop$choice_orbs_found = append(
-          choice_orbs_found,
-          toList([new Choice()])
-        );
+        loop$choice_orbs_found = (() => {
+          let _pipe = choice_orbs_found;
+          return append(_pipe, toList([new Choice()]));
+        })();
       } else {
         let $1 = remaining_bag.tail;
         if ($1 instanceof Empty) {
@@ -5471,7 +5481,10 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
               _record.points,
               _record.level,
               _record.milestone,
-              append(rest, choice_orbs_found),
+              (() => {
+                let _pipe = rest;
+                return append(_pipe, choice_orbs_found);
+              })(),
               new ChoosingOrb(),
               _record.last_orb,
               _record.bombs_pulled_this_level,
@@ -5619,7 +5632,10 @@ function apply_orb_effect(orb, model) {
       _record.in_gamble_choice
     );
   } else if (orb instanceof Collector) {
-    let remaining_orbs = length(model.bag) - 1;
+    let remaining_orbs = (() => {
+      let _pipe = model.bag;
+      return length(_pipe);
+    })() - 1;
     let collector_points = remaining_orbs * model.current_multiplier;
     let _record = model;
     return new Model(
@@ -5770,9 +5786,12 @@ function can_afford(model, item) {
 }
 function purchase_orb(model, orb) {
   let market_items = get_market_items();
-  let $ = find2(market_items, (item) => {
-    return isEqual(item.orb, orb);
-  });
+  let $ = (() => {
+    let _pipe = market_items;
+    return find2(_pipe, (item) => {
+      return isEqual(item.orb, orb);
+    });
+  })();
   if ($ instanceof Ok) {
     let item = $[0];
     let $1 = can_afford(model, item);
@@ -5912,12 +5931,15 @@ function view_marketplace(model) {
       ),
       div(
         toList([class$("space-y-3 mb-6 max-h-64 overflow-y-auto")]),
-        map(
-          market_items,
-          (item) => {
-            return view_market_item(model, item);
-          }
-        )
+        (() => {
+          let _pipe = market_items;
+          return map(
+            _pipe,
+            (item) => {
+              return view_market_item(model, item);
+            }
+          );
+        })()
       ),
       div(
         toList([class$("space-y-3")]),
@@ -6034,7 +6056,10 @@ function simulate_game(loop$bag, loop$health, loop$points, loop$target, loop$orb
   }
 }
 function run_single_simulation(config) {
-  let shuffled_bag = shuffle(config.test_bag);
+  let _block;
+  let _pipe = config.test_bag;
+  _block = shuffle(_pipe);
+  let shuffled_bag = _block;
   return simulate_game(
     shuffled_bag,
     config.starting_health,
@@ -6046,58 +6071,71 @@ function run_single_simulation(config) {
   );
 }
 function calculate_stats(results) {
-  let total_runs = length(results);
-  let wins = count(results, (result) => {
+  let _block;
+  let _pipe = results;
+  _block = length(_pipe);
+  let total_runs = _block;
+  let _block$1;
+  let _pipe$1 = results;
+  _block$1 = count(_pipe$1, (result) => {
     return result.won;
   });
+  let wins = _block$1;
   let losses = total_runs - wins;
-  let _block;
+  let _block$2;
   let $ = total_runs > 0;
   if ($) {
-    _block = divideFloat(identity(wins), identity(total_runs));
+    _block$2 = divideFloat(identity(wins), identity(total_runs));
   } else {
-    _block = 0;
+    _block$2 = 0;
   }
-  let win_rate = _block;
-  let point_values = map(
-    results,
-    (result) => {
-      return result.final_points;
-    }
-  );
-  let _block$1;
+  let win_rate = _block$2;
+  let _block$3;
+  let _pipe$2 = results;
+  _block$3 = map(_pipe$2, (result) => {
+    return result.final_points;
+  });
+  let point_values = _block$3;
+  let _block$4;
   let $1 = total_runs > 0;
   if ($1) {
-    let total_points = fold(point_values, 0, add2);
-    _block$1 = divideFloat(
+    let _block$52;
+    let _pipe$3 = point_values;
+    _block$52 = fold(_pipe$3, 0, add2);
+    let total_points = _block$52;
+    _block$4 = divideFloat(
       identity(total_points),
       identity(total_runs)
     );
   } else {
-    _block$1 = 0;
+    _block$4 = 0;
   }
-  let average_points = _block$1;
-  let _block$2;
+  let average_points = _block$4;
+  let _block$5;
   let $2 = (() => {
-    let _pipe = sort(point_values, compare2);
-    return reverse(_pipe);
+    let _pipe$3 = point_values;
+    let _pipe$4 = sort(_pipe$3, compare2);
+    return reverse(_pipe$4);
   })();
   if ($2 instanceof Empty) {
-    _block$2 = 0;
+    _block$5 = 0;
   } else {
     let best = $2.head;
-    _block$2 = best;
+    _block$5 = best;
   }
-  let best_score = _block$2;
-  let _block$3;
-  let $3 = sort(point_values, compare2);
+  let best_score = _block$5;
+  let _block$6;
+  let $3 = (() => {
+    let _pipe$3 = point_values;
+    return sort(_pipe$3, compare2);
+  })();
   if ($3 instanceof Empty) {
-    _block$3 = 0;
+    _block$6 = 0;
   } else {
     let worst = $3.head;
-    _block$3 = worst;
+    _block$6 = worst;
   }
-  let worst_score = _block$3;
+  let worst_score = _block$6;
   return new TestingStats(
     total_runs,
     wins,
@@ -6111,8 +6149,11 @@ function calculate_stats(results) {
 }
 function run_simulations(config) {
   let _block;
-  let _pipe = range(1, config.simulation_count);
-  _block = map(_pipe, (_) => {
+  let _pipe = config.simulation_count;
+  let _pipe$1 = ((_capture) => {
+    return range(1, _capture);
+  })(_pipe);
+  _block = map(_pipe$1, (_) => {
     return run_single_simulation(config);
   });
   let results = _block;
@@ -6430,7 +6471,10 @@ function view_recent_orb_panel(model) {
   );
 }
 function view_bag_info(model) {
-  let orbs_left = length(model.bag);
+  let _block;
+  let _pipe = model.bag;
+  _block = length(_pipe);
+  let orbs_left = _block;
   return div(
     toList([
       class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
@@ -7028,7 +7072,10 @@ function view_log_entry(entry) {
   );
 }
 function view_log_entries(entries) {
-  let visible_entries = take(entries, 4);
+  let _block;
+  let _pipe = entries;
+  _block = take(_pipe, 4);
+  let visible_entries = _block;
   return div(
     toList([
       class$(
@@ -7038,13 +7085,19 @@ function view_log_entries(entries) {
     toList([
       div(
         toList([class$("space-y-1")]),
-        map(visible_entries, view_log_entry)
+        (() => {
+          let _pipe$1 = visible_entries;
+          return map(_pipe$1, view_log_entry);
+        })()
       )
     ])
   );
 }
 function view_extraction_log(model) {
-  let $ = is_empty(model.log_entries);
+  let $ = (() => {
+    let _pipe = model.log_entries;
+    return is_empty(_pipe);
+  })();
   if ($) {
     return div(toList([]), toList([]));
   } else {
@@ -7055,14 +7108,17 @@ function view_extraction_log(model) {
   }
 }
 function view_pull_orb_button(model) {
-  let is_disabled = is_empty(model.bag);
   let _block;
+  let _pipe = model.bag;
+  _block = is_empty(_pipe);
+  let is_disabled = _block;
+  let _block$1;
   if (is_disabled) {
-    _block = "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200";
+    _block$1 = "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200";
   } else {
-    _block = "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02] active:scale-95";
+    _block$1 = "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02] active:scale-95";
   }
-  let button_classes = _block;
+  let button_classes = _block$1;
   return button(
     toList([
       class$(
@@ -7592,28 +7648,34 @@ function view_performance_insights(stats) {
       ),
       div(
         toList([class$("space-y-2")]),
-        map(
-          insights,
-          (insight) => {
-            return p(
-              toList([class$("text-xs text-gray-600")]),
-              toList([text3(insight)])
-            );
-          }
-        )
+        (() => {
+          let _pipe = insights;
+          return map(
+            _pipe,
+            (insight) => {
+              return p(
+                toList([class$("text-xs text-gray-600")]),
+                toList([text3(insight)])
+              );
+            }
+          );
+        })()
       )
     ])
   );
 }
 function view_comprehensive_stats(stats) {
-  let win_rate_percent = (() => {
-    let _pipe2 = round(stats.win_rate * 100);
-    return to_string(_pipe2);
-  })() + "%";
   let _block;
-  let _pipe = round(stats.average_points);
-  _block = to_string(_pipe);
-  let avg_points = _block;
+  let _pipe = stats.win_rate * 100;
+  let _pipe$1 = round(_pipe);
+  let _pipe$2 = to_string(_pipe$1);
+  _block = append2(_pipe$2, "%");
+  let win_rate_percent = _block;
+  let _block$1;
+  let _pipe$3 = stats.average_points;
+  let _pipe$4 = round(_pipe$3);
+  _block$1 = to_string(_pipe$4);
+  let avg_points = _block$1;
   return div(
     toList([]),
     toList([
@@ -7735,7 +7797,10 @@ function view_test_results(model) {
   }
 }
 function view_test_bag_contents(bag) {
-  let $ = is_empty(bag);
+  let $ = (() => {
+    let _pipe = bag;
+    return is_empty(_pipe);
+  })();
   if ($) {
     return p(
       toList([class$("text-gray-400 text-sm italic")]),
@@ -7744,31 +7809,34 @@ function view_test_bag_contents(bag) {
   } else {
     return div(
       toList([class$("flex flex-wrap gap-2")]),
-      index_map(
-        bag,
-        (orb, index3) => {
-          return div(
-            toList([
-              class$(
-                "flex items-center bg-white rounded border px-2 py-1"
-              )
-            ]),
-            toList([
-              span(
-                toList([class$("text-xs mr-2")]),
-                toList([text3(get_orb_name(orb))])
-              ),
-              button(
-                toList([
-                  class$("text-red-500 hover:text-red-700 text-xs"),
-                  on_click(new RemoveTestOrb(index3))
-                ]),
-                toList([text3("\xD7")])
-              )
-            ])
-          );
-        }
-      )
+      (() => {
+        let _pipe = bag;
+        return index_map(
+          _pipe,
+          (orb, index3) => {
+            return div(
+              toList([
+                class$(
+                  "flex items-center bg-white rounded border px-2 py-1"
+                )
+              ]),
+              toList([
+                span(
+                  toList([class$("text-xs mr-2")]),
+                  toList([text3(get_orb_name(orb))])
+                ),
+                button(
+                  toList([
+                    class$("text-red-500 hover:text-red-700 text-xs"),
+                    on_click(new RemoveTestOrb(index3))
+                  ]),
+                  toList([text3("\xD7")])
+                )
+              ])
+            );
+          }
+        );
+      })()
     );
   }
 }
@@ -7796,20 +7864,23 @@ function view_orb_selector() {
       ),
       div(
         toList([class$("grid grid-cols-2 gap-2")]),
-        map(
-          available_orbs,
-          (orb) => {
-            return button(
-              toList([
-                class$(
-                  "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition"
-                ),
-                on_click(new AddTestOrb(orb))
-              ]),
-              toList([text3(get_orb_name(orb))])
-            );
-          }
-        )
+        (() => {
+          let _pipe = available_orbs;
+          return map(
+            _pipe,
+            (orb) => {
+              return button(
+                toList([
+                  class$(
+                    "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition"
+                  ),
+                  on_click(new AddTestOrb(orb))
+                ]),
+                toList([text3(get_orb_name(orb))])
+              );
+            }
+          );
+        })()
       )
     ])
   );
@@ -7829,9 +7900,11 @@ function view_test_bag_builder(config) {
             toList([class$("text-sm text-gray-600 mb-2")]),
             toList([
               text3(
-                "Samples in container: " + to_string(
-                  length(config.test_bag)
-                )
+                "Samples in container: " + (() => {
+                  let _pipe = config.test_bag;
+                  let _pipe$1 = length(_pipe);
+                  return to_string(_pipe$1);
+                })()
               )
             ])
           ),
@@ -7898,14 +7971,20 @@ function view_test_settings(config) {
   );
 }
 function view_test_actions(config) {
-  let can_run = !is_empty(config.test_bag);
   let _block;
+  let _pipe = config.test_bag;
+  let _pipe$1 = is_empty(_pipe);
+  _block = /* @__PURE__ */ ((x) => {
+    return !x;
+  })(_pipe$1);
+  let can_run = _block;
+  let _block$1;
   if (can_run) {
-    _block = "bg-green-600 hover:bg-green-700 text-white";
+    _block$1 = "bg-green-600 hover:bg-green-700 text-white";
   } else {
-    _block = "bg-gray-300 cursor-not-allowed text-gray-500";
+    _block$1 = "bg-gray-300 cursor-not-allowed text-gray-500";
   }
-  let button_classes = _block;
+  let button_classes = _block$1;
   return div(
     toList([class$("space-y-3")]),
     toList([
@@ -8003,16 +8082,27 @@ function view_bag_order_display(model) {
     );
   } else {
     let orbs = $;
-    let orb_names = map(orbs, get_orb_name);
-    let orb_list = join(orb_names, ", ");
     let _block;
-    let $1 = string_length(orb_list) > 60;
+    let _pipe = orbs;
+    _block = map(_pipe, get_orb_name);
+    let orb_names = _block;
+    let _block$1;
+    let _pipe$1 = orb_names;
+    _block$1 = join(_pipe$1, ", ");
+    let orb_list = _block$1;
+    let _block$2;
+    let $1 = (() => {
+      let _pipe$2 = orb_list;
+      return string_length(_pipe$2);
+    })() > 60;
     if ($1) {
-      _block = slice(orb_list, 0, 57) + "...";
+      let _pipe$2 = orb_list;
+      let _pipe$3 = slice(_pipe$2, 0, 57);
+      _block$2 = append2(_pipe$3, "...");
     } else {
-      _block = orb_list;
+      _block$2 = orb_list;
     }
-    let display_text = _block;
+    let display_text = _block$2;
     return p(
       toList([class$("text-xs text-red-600")]),
       toList([text3("Sample Order: " + display_text)])
@@ -8152,7 +8242,8 @@ function handle_next_level(model) {
   let _block;
   let $ = model.shuffle_enabled;
   if ($) {
-    _block = shuffle(base_bag);
+    let _pipe = base_bag;
+    _block = shuffle(_pipe);
   } else {
     _block = base_bag;
   }
@@ -8255,18 +8346,27 @@ function handle_remove_test_orb(model, index3) {
   let $ = model.testing_config;
   if ($ instanceof Some) {
     let config = $[0];
-    let before = take(config.test_bag, index3);
-    let after = drop(config.test_bag, index3 + 1);
-    let new_bag = append(before, after);
     let _block;
+    let _pipe = config.test_bag;
+    _block = take(_pipe, index3);
+    let before = _block;
+    let _block$1;
+    let _pipe$1 = config.test_bag;
+    _block$1 = drop(_pipe$1, index3 + 1);
+    let after = _block$1;
+    let _block$2;
+    let _pipe$2 = before;
+    _block$2 = append(_pipe$2, after);
+    let new_bag = _block$2;
+    let _block$3;
     let _record = config;
-    _block = new TestingConfiguration(
+    _block$3 = new TestingConfiguration(
       new_bag,
       _record.target_milestone,
       _record.starting_health,
       _record.simulation_count
     );
-    let new_config = _block;
+    let new_config = _block$3;
     let _record$1 = model;
     return new Model(
       _record$1.health,
@@ -8542,7 +8642,8 @@ function restart_current_level(model) {
   let _block;
   let $ = model.shuffle_enabled;
   if ($) {
-    _block = shuffle(base_bag);
+    let _pipe = base_bag;
+    _block = shuffle(_pipe);
   } else {
     _block = base_bag;
   }
@@ -8576,7 +8677,10 @@ function handle_toggle_shuffle(model) {
   let new_shuffle_enabled = !model.shuffle_enabled;
   let $ = isEqual(model.status, new Playing()) && new_shuffle_enabled;
   if ($) {
-    let shuffled_bag = shuffle(model.bag);
+    let _block;
+    let _pipe = model.bag;
+    _block = shuffle(_pipe);
+    let shuffled_bag = _block;
     let _record = model;
     return new Model(
       _record.health,
@@ -8631,7 +8735,10 @@ function handle_toggle_shuffle(model) {
   }
 }
 function handle_accept_gamble(model) {
-  let gamble_orbs = take(model.bag, 5);
+  let _block;
+  let _pipe = model.bag;
+  _block = take(_pipe, 5);
+  let gamble_orbs = _block;
   let _record = model;
   return new Model(
     _record.health,
@@ -8770,7 +8877,10 @@ function apply_gamble_orb_effect(orb, model) {
       _record.in_gamble_choice
     );
   } else if (orb instanceof Collector) {
-    let remaining_orbs = length(model.bag);
+    let _block;
+    let _pipe = model.bag;
+    _block = length(_pipe);
+    let remaining_orbs = _block;
     let collector_points = remaining_orbs * model.current_multiplier;
     let _record = model;
     return new Model(
@@ -8852,7 +8962,10 @@ function apply_gamble_orb_effect(orb, model) {
       _record.in_gamble_choice
     );
   } else if (orb instanceof Choice) {
-    let orbs_after_gamble = drop(model.bag, 5);
+    let _block;
+    let _pipe = model.bag;
+    _block = drop(_pipe, 5);
+    let orbs_after_gamble = _block;
     if (orbs_after_gamble instanceof Empty) {
       let gamble_points = 5 * 2 * model.current_multiplier;
       let _record = model;
@@ -9076,23 +9189,29 @@ function handle_choice_selection(model, select_first) {
         chosen_orb,
         log_message
       );
-      let orbs_after_gamble = drop(model.bag, 5);
       let _block$1;
+      let _pipe = model.bag;
+      _block$1 = drop(_pipe, 5);
+      let orbs_after_gamble = _block$1;
+      let _block$2;
       let $3 = isEqual(first_orb, second_orb);
       if ($3) {
-        _block$1 = drop(orbs_after_gamble, 1);
+        let _pipe$12 = orbs_after_gamble;
+        _block$2 = drop(_pipe$12, 1);
       } else {
-        let _pipe = drop(orbs_after_gamble, 2);
-        _block$1 = append(_pipe, toList([unchosen_orb]));
+        let _pipe$12 = orbs_after_gamble;
+        let _pipe$22 = drop(_pipe$12, 2);
+        _block$2 = append(_pipe$22, toList([unchosen_orb]));
       }
-      let remaining_after_gamble = _block$1;
-      let new_bag = append(
-        take(model.bag, 5),
-        remaining_after_gamble
-      );
-      let _block$2;
+      let remaining_after_gamble = _block$2;
+      let _block$3;
+      let _pipe$1 = model.bag;
+      let _pipe$2 = take(_pipe$1, 5);
+      _block$3 = append(_pipe$2, remaining_after_gamble);
+      let new_bag = _block$3;
+      let _block$4;
       let _record = after_effect;
-      _block$2 = new Model(
+      _block$4 = new Model(
         _record.health,
         _record.points,
         _record.level,
@@ -9116,7 +9235,7 @@ function handle_choice_selection(model, select_first) {
         _record.gamble_current_index,
         false
       );
-      let updated_model = _block$2;
+      let updated_model = _block$4;
       return check_game_status(updated_model);
     } else {
       let after_effect = apply_orb_effect(chosen_orb, model);
@@ -9132,7 +9251,8 @@ function handle_choice_selection(model, select_first) {
       if ($3) {
         _block$1 = after_effect.bag;
       } else {
-        _block$1 = append(after_effect.bag, toList([unchosen_orb]));
+        let _pipe = after_effect.bag;
+        _block$1 = append(_pipe, toList([unchosen_orb]));
       }
       let new_bag = _block$1;
       let _block$2;
@@ -9169,13 +9289,20 @@ function handle_choice_selection(model, select_first) {
   }
 }
 function apply_current_gamble_orb(model) {
-  let $ = first(drop(model.gamble_orbs, model.gamble_current_index));
+  let $ = (() => {
+    let _pipe = model.gamble_orbs;
+    let _pipe$1 = drop(_pipe, model.gamble_current_index);
+    return first(_pipe$1);
+  })();
   if ($ instanceof Ok) {
     let orb = $[0];
-    let remaining_bag = drop(model.bag, 1);
     let _block;
+    let _pipe = model.bag;
+    _block = drop(_pipe, 1);
+    let remaining_bag = _block;
+    let _block$1;
     let _record = model;
-    _block = new Model(
+    _block$1 = new Model(
       _record.health,
       _record.points,
       _record.level,
@@ -9199,14 +9326,14 @@ function apply_current_gamble_orb(model) {
       _record.gamble_current_index,
       _record.in_gamble_choice
     );
-    let model_with_consumed_orb = _block;
+    let model_with_consumed_orb = _block$1;
     let modified_model = apply_gamble_orb_effect(orb, model_with_consumed_orb);
     let new_sequence = model.log_sequence + 1;
     let log_message = get_orb_result_message(orb, modified_model);
     let new_log_entry = new LogEntry(new_sequence, orb, log_message);
-    let _block$1;
+    let _block$2;
     let _record$1 = modified_model;
-    _block$1 = new Model(
+    _block$2 = new Model(
       _record$1.health,
       _record$1.points,
       _record$1.level,
@@ -9230,7 +9357,7 @@ function apply_current_gamble_orb(model) {
       _record$1.gamble_current_index,
       _record$1.in_gamble_choice
     );
-    let updated_model = _block$1;
+    let updated_model = _block$2;
     return check_game_status(updated_model);
   } else {
     return model;
@@ -9298,7 +9425,10 @@ function handle_next_gamble_orb(model) {
     }
   } else if ($ instanceof ApplyingGambleOrbs) {
     let next_index = model.gamble_current_index + 1;
-    let $1 = next_index >= length(model.gamble_orbs);
+    let $1 = next_index >= (() => {
+      let _pipe = model.gamble_orbs;
+      return length(_pipe);
+    })();
     if ($1) {
       let _record = model;
       return new Model(
@@ -9628,10 +9758,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      13,
+      22,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 749, end: 839, pattern_start: 760, pattern_end: 765 }
+      { value: $, start: 768, end: 858, pattern_start: 779, pattern_end: 784 }
     );
   }
   return void 0;

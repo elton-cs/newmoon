@@ -10,14 +10,15 @@ import lustre/event
 import marketplace
 import orb
 import types.{
-  type LogEntry, type Model, type Msg, AddTestOrb, ConfiguringTest, ContinueGame,
-  ExitTestingGrounds, GameOver, GoToMainMenu, GoToMarketplace,
+  type LogEntry, type Model, type Msg, AcceptGamble, AddTestOrb,
+  ApplyingGambleOrbs, ChoosingOrb, ConfiguringTest, ContinueGame, DeclineGamble,
+  ExitTestingGrounds, GamblingChoice, GameOver, GoToMainMenu, GoToMarketplace,
   GoToTestingGrounds, InMarketplace, InTestingGrounds, LevelComplete, MainMenu,
-  NextLevel, PauseGame, Paused, Playing, PullOrb, RemoveTestOrb, ResetTestConfig,
-  RestartLevel, ResumeGame, RunningSimulations, ShowHowToPlay, StartNewGame,
+  NextGambleOrb, NextLevel, PauseGame, Paused, Playing, PullOrb, RemoveTestOrb,
+  ResetTestConfig, RestartLevel, ResumeGame, RunningSimulations,
+  SelectFirstChoice, SelectSecondChoice, ShowHowToPlay, StartNewGame,
   StartSimulations, ToggleDevMode, ToggleShuffle, ViewTestResults,
-  ViewingResults, ChoosingOrb, SelectFirstChoice, SelectSecondChoice,
-  GamblingChoice, ViewingGambleResults, ApplyingGambleOrbs, AcceptGamble, DeclineGamble, NextGambleOrb,
+  ViewingGambleResults, ViewingResults,
 }
 
 pub fn view(model: Model) -> Element(Msg) {
@@ -197,7 +198,7 @@ fn view_playing_state(model: Model) -> Element(Msg) {
 }
 
 fn view_bag_info(model: Model) -> Element(Msg) {
-  let orbs_left = list.length(model.bag)
+  let orbs_left = model.bag |> list.length
 
   html.div(
     [attribute.class("mb-6 p-4 bg-gray-50 rounded border border-gray-100")],
@@ -410,8 +411,10 @@ fn view_choosing_orb_state(model: Model) -> Element(Msg) {
     False -> "CHOICE PROTOCOL ACTIVATED"
   }
   let description_text = case model.in_gamble_choice {
-    True -> "Choice orb during gamble! Select one sample from beyond the gamble sequence."
-    False -> "Select one sample to extract. The other will return to your container."
+    True ->
+      "Choice orb during gamble! Select one sample from beyond the gamble sequence."
+    False ->
+      "Select one sample to extract. The other will return to your container."
   }
   let color_classes = case model.in_gamble_choice {
     True -> "bg-red-50 border border-red-200"
@@ -421,23 +424,21 @@ fn view_choosing_orb_state(model: Model) -> Element(Msg) {
     True -> "text-red-700"
     False -> "text-orange-700"
   }
-  
+
   html.div([attribute.class("text-center")], [
-    html.div(
-      [attribute.class("mb-6 p-6 " <> color_classes <> " rounded")],
-      [
-        html.h2(
-          [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-          [html.text(header_text)],
-        ),
-        html.p([attribute.class(text_color_class <> " text-sm font-light mb-4")], [
-          html.text(description_text),
-        ]),
-      ],
-    ),
+    html.div([attribute.class("mb-6 p-6 " <> color_classes <> " rounded")], [
+      html.h2(
+        [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+        [html.text(header_text)],
+      ),
+      html.p([attribute.class(text_color_class <> " text-sm font-light mb-4")], [
+        html.text(description_text),
+      ]),
+    ]),
     case model.pending_choice {
-      option.Some(#(first_orb, second_orb)) -> view_choice_selection(first_orb, second_orb)
-      option.None -> 
+      option.Some(#(first_orb, second_orb)) ->
+        view_choice_selection(first_orb, second_orb)
+      option.None ->
         html.div([attribute.class("p-4 bg-gray-50 rounded border")], [
           html.p([attribute.class("text-gray-600")], [
             html.text("No samples available for selection"),
@@ -447,9 +448,12 @@ fn view_choosing_orb_state(model: Model) -> Element(Msg) {
   ])
 }
 
-fn view_choice_selection(first_orb: types.Orb, second_orb: types.Orb) -> Element(Msg) {
+fn view_choice_selection(
+  first_orb: types.Orb,
+  second_orb: types.Orb,
+) -> Element(Msg) {
   case first_orb == second_orb {
-    True -> 
+    True ->
       // Only one unique orb - show single choice
       html.div([attribute.class("space-y-4")], [
         html.p([attribute.class("text-sm text-gray-600 mb-4")], [
@@ -481,7 +485,9 @@ fn view_gambling_choice_state(_model: Model) -> Element(Msg) {
           [html.text("GAMBLE PROTOCOL ACTIVATED")],
         ),
         html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
-          html.text("Draw 5 orbs simultaneously. Point orbs get 2X multiplier. High risk, high reward."),
+          html.text(
+            "Draw 5 orbs simultaneously. Point orbs get 2X multiplier. High risk, high reward.",
+          ),
         ]),
       ],
     ),
@@ -518,7 +524,9 @@ fn view_gamble_results_state(model: Model) -> Element(Msg) {
           [html.text("GAMBLE RESULTS")],
         ),
         html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
-          html.text("5 orbs drawn. Click 'Start Applying' to apply effects one by one."),
+          html.text(
+            "5 orbs drawn. Click 'Start Applying' to apply effects one by one.",
+          ),
         ]),
       ],
     ),
@@ -545,11 +553,19 @@ fn view_applying_gamble_orbs_state(model: Model) -> Element(Msg) {
           [html.text("APPLYING GAMBLE EFFECTS")],
         ),
         html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
-          html.text("Orb " <> int.to_string(model.gamble_current_index + 1) <> " of " <> int.to_string(list.length(model.gamble_orbs))),
+          html.text(
+            "Orb "
+            <> int.to_string(model.gamble_current_index + 1)
+            <> " of "
+            <> int.to_string(list.length(model.gamble_orbs)),
+          ),
         ]),
       ],
     ),
-    view_gamble_orbs_dice_pattern_with_progress(model.gamble_orbs, model.gamble_current_index),
+    view_gamble_orbs_dice_pattern_with_progress(
+      model.gamble_orbs,
+      model.gamble_current_index,
+    ),
     html.button(
       [
         attribute.class(
@@ -578,7 +594,10 @@ fn view_gamble_orbs_dice_pattern(orbs: List(types.Orb)) -> Element(Msg) {
   ])
 }
 
-fn view_gamble_orbs_dice_pattern_with_progress(orbs: List(types.Orb), current_index: Int) -> Element(Msg) {
+fn view_gamble_orbs_dice_pattern_with_progress(
+  orbs: List(types.Orb),
+  current_index: Int,
+) -> Element(Msg) {
   html.div([attribute.class("mb-6")], [
     // Row 1: 2 orbs
     html.div([attribute.class("flex justify-center gap-4 mb-3")], [
@@ -622,27 +641,38 @@ fn view_large_orb_box(orb_option: option.Option(types.Orb)) -> Element(Msg) {
           html.div([attribute.class("text-xl mb-1 " <> orb_style.icon)], [
             html.text(orb_style.symbol),
           ]),
-          html.p([attribute.class("text-xs font-light text-center leading-tight " <> orb_style.text)], [
-            html.text(get_short_orb_name(orb)),
-          ]),
+          html.p(
+            [
+              attribute.class(
+                "text-xs font-light text-center leading-tight "
+                <> orb_style.text,
+              ),
+            ],
+            [html.text(get_short_orb_name(orb))],
+          ),
         ],
       )
     }
   }
 }
 
-fn view_large_orb_box_with_progress(orb_option: option.Option(types.Orb), index: Int, current_index: Int) -> Element(Msg) {
+fn view_large_orb_box_with_progress(
+  orb_option: option.Option(types.Orb),
+  index: Int,
+  current_index: Int,
+) -> Element(Msg) {
   let opacity_class = case index <= current_index {
     True -> " opacity-50"
     False -> ""
   }
-  
+
   case orb_option {
     option.None ->
       html.div(
         [
           attribute.class(
-            "w-24 h-24 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center" <> opacity_class,
+            "w-24 h-24 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center"
+            <> opacity_class,
           ),
         ],
         [
@@ -657,16 +687,23 @@ fn view_large_orb_box_with_progress(orb_option: option.Option(types.Orb), index:
         [
           attribute.class(
             "w-24 h-24 rounded flex flex-col items-center justify-center border-2 bg-white transition-colors duration-700 "
-            <> orb_style.border <> opacity_class,
+            <> orb_style.border
+            <> opacity_class,
           ),
         ],
         [
           html.div([attribute.class("text-xl mb-1 " <> orb_style.icon)], [
             html.text(orb_style.symbol),
           ]),
-          html.p([attribute.class("text-xs font-light text-center leading-tight " <> orb_style.text)], [
-            html.text(get_short_orb_name(orb)),
-          ]),
+          html.p(
+            [
+              attribute.class(
+                "text-xs font-light text-center leading-tight "
+                <> orb_style.text,
+              ),
+            ],
+            [html.text(get_short_orb_name(orb))],
+          ),
         ],
       )
     }
@@ -695,13 +732,17 @@ fn list_at(list: List(a), index: Int) -> option.Option(a) {
   }
 }
 
-fn view_choice_option(orb: types.Orb, select_msg: types.Msg, is_single: Bool) -> Element(Msg) {
+fn view_choice_option(
+  orb: types.Orb,
+  select_msg: types.Msg,
+  is_single: Bool,
+) -> Element(Msg) {
   let orb_style = get_orb_box_style(orb)
   let button_width = case is_single {
     True -> "w-full max-w-xs mx-auto"
     False -> "w-full"
   }
-  
+
   html.button(
     [
       attribute.class(
@@ -729,7 +770,7 @@ fn view_choice_option(orb: types.Orb, select_msg: types.Msg, is_single: Bool) ->
 }
 
 fn view_extraction_log(model: Model) -> Element(Msg) {
-  case list.is_empty(model.log_entries) {
+  case model.log_entries |> list.is_empty {
     True -> html.div([], [])
     False ->
       html.div([attribute.class("mb-4")], [
@@ -741,21 +782,31 @@ fn view_extraction_log(model: Model) -> Element(Msg) {
 
 fn view_log_header() -> Element(Msg) {
   html.div([attribute.class("mb-2")], [
-    html.h3([attribute.class("text-xs font-medium text-gray-600 uppercase tracking-wider")], [
-      html.text("EXTRACTION LOG"),
-    ]),
+    html.h3(
+      [
+        attribute.class(
+          "text-xs font-medium text-gray-600 uppercase tracking-wider",
+        ),
+      ],
+      [html.text("EXTRACTION LOG")],
+    ),
   ])
 }
 
 fn view_log_entries(entries: List(LogEntry)) -> Element(Msg) {
-  let visible_entries = list.take(entries, 4) // Show last 4 entries
-  
+  let visible_entries = entries |> list.take(4)
+  // Show last 4 entries
+
   html.div(
-    [attribute.class("bg-gray-50 border border-gray-200 rounded p-3 max-h-20 overflow-y-auto")],
+    [
+      attribute.class(
+        "bg-gray-50 border border-gray-200 rounded p-3 max-h-20 overflow-y-auto",
+      ),
+    ],
     [
       html.div(
         [attribute.class("space-y-1")],
-        list.map(visible_entries, view_log_entry),
+        visible_entries |> list.map(view_log_entry),
       ),
     ],
   )
@@ -784,7 +835,7 @@ fn view_log_entry(entry: LogEntry) -> Element(Msg) {
 }
 
 fn view_pull_orb_button(model: Model) -> Element(Msg) {
-  let is_disabled = list.is_empty(model.bag)
+  let is_disabled = model.bag |> list.is_empty
   let button_classes = case is_disabled {
     True -> "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200"
     False ->
@@ -1207,8 +1258,11 @@ fn view_test_results(model: Model) -> Element(Msg) {
 
 fn view_comprehensive_stats(stats: types.TestingStats) -> Element(Msg) {
   let win_rate_percent =
-    float.round(stats.win_rate *. 100.0) |> int.to_string() <> "%"
-  let avg_points = float.round(stats.average_points) |> int.to_string()
+    stats.win_rate *. 100.0
+    |> float.round
+    |> int.to_string
+    |> string.append("%")
+  let avg_points = stats.average_points |> float.round |> int.to_string
 
   html.div([], [
     // Primary stats grid
@@ -1268,9 +1322,12 @@ fn view_performance_insights(stats: types.TestingStats) -> Element(Msg) {
     ]),
     html.div(
       [attribute.class("space-y-2")],
-      list.map(insights, fn(insight) {
-        html.p([attribute.class("text-xs text-gray-600")], [html.text(insight)])
-      }),
+      insights
+        |> list.map(fn(insight) {
+          html.p([attribute.class("text-xs text-gray-600")], [
+            html.text(insight),
+          ])
+        }),
     ),
   ])
 }
@@ -1308,7 +1365,8 @@ fn view_test_bag_builder(config: types.TestingConfiguration) -> Element(Msg) {
     html.div([attribute.class("mb-4 p-4 bg-gray-50 rounded border")], [
       html.p([attribute.class("text-sm text-gray-600 mb-2")], [
         html.text(
-          "Samples in container: " <> int.to_string(list.length(config.test_bag)),
+          "Samples in container: "
+          <> { config.test_bag |> list.length |> int.to_string },
         ),
       ]),
       view_test_bag_contents(config.test_bag),
@@ -1318,7 +1376,7 @@ fn view_test_bag_builder(config: types.TestingConfiguration) -> Element(Msg) {
 }
 
 fn view_test_bag_contents(bag: List(types.Orb)) -> Element(Msg) {
-  case list.is_empty(bag) {
+  case bag |> list.is_empty {
     True ->
       html.p([attribute.class("text-gray-400 text-sm italic")], [
         html.text("No samples added yet"),
@@ -1326,27 +1384,28 @@ fn view_test_bag_contents(bag: List(types.Orb)) -> Element(Msg) {
     False ->
       html.div(
         [attribute.class("flex flex-wrap gap-2")],
-        list.index_map(bag, fn(orb, index) {
-          html.div(
-            [
-              attribute.class(
-                "flex items-center bg-white rounded border px-2 py-1",
-              ),
-            ],
-            [
-              html.span([attribute.class("text-xs mr-2")], [
-                html.text(orb.get_orb_name(orb)),
-              ]),
-              html.button(
-                [
-                  attribute.class("text-red-500 hover:text-red-700 text-xs"),
-                  event.on_click(RemoveTestOrb(index)),
-                ],
-                [html.text("×")],
-              ),
-            ],
-          )
-        }),
+        bag
+          |> list.index_map(fn(orb, index) {
+            html.div(
+              [
+                attribute.class(
+                  "flex items-center bg-white rounded border px-2 py-1",
+                ),
+              ],
+              [
+                html.span([attribute.class("text-xs mr-2")], [
+                  html.text(orb.get_orb_name(orb)),
+                ]),
+                html.button(
+                  [
+                    attribute.class("text-red-500 hover:text-red-700 text-xs"),
+                    event.on_click(RemoveTestOrb(index)),
+                  ],
+                  [html.text("×")],
+                ),
+              ],
+            )
+          }),
       )
   }
 }
@@ -1373,17 +1432,18 @@ fn view_orb_selector() -> Element(Msg) {
     ]),
     html.div(
       [attribute.class("grid grid-cols-2 gap-2")],
-      list.map(available_orbs, fn(orb) {
-        html.button(
-          [
-            attribute.class(
-              "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition",
-            ),
-            event.on_click(AddTestOrb(orb)),
-          ],
-          [html.text(orb.get_orb_name(orb))],
-        )
-      }),
+      available_orbs
+        |> list.map(fn(orb) {
+          html.button(
+            [
+              attribute.class(
+                "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition",
+              ),
+              event.on_click(AddTestOrb(orb)),
+            ],
+            [html.text(orb.get_orb_name(orb))],
+          )
+        }),
     ),
   ])
 }
@@ -1423,7 +1483,7 @@ fn view_test_settings(config: types.TestingConfiguration) -> Element(Msg) {
 }
 
 fn view_test_actions(config: types.TestingConfiguration) -> Element(Msg) {
-  let can_run = !list.is_empty(config.test_bag)
+  let can_run = config.test_bag |> list.is_empty |> fn(x) { !x }
   let button_classes = case can_run {
     True -> "bg-green-600 hover:bg-green-700 text-white"
     False -> "bg-gray-300 cursor-not-allowed text-gray-500"
@@ -1492,10 +1552,10 @@ fn view_bag_order_display(model: Model) -> Element(Msg) {
         html.text("Container: Empty"),
       ])
     orbs -> {
-      let orb_names = list.map(orbs, orb.get_orb_name)
-      let orb_list = string.join(orb_names, ", ")
-      let display_text = case string.length(orb_list) > 60 {
-        True -> string.slice(orb_list, 0, 57) <> "..."
+      let orb_names = orbs |> list.map(orb.get_orb_name)
+      let orb_list = orb_names |> string.join(", ")
+      let display_text = case orb_list |> string.length > 60 {
+        True -> orb_list |> string.slice(0, 57) |> string.append("...")
         False -> orb_list
       }
       html.p([attribute.class("text-xs text-red-600")], [
@@ -1504,4 +1564,3 @@ fn view_bag_order_display(model: Model) -> Element(Msg) {
     }
   }
 }
-
