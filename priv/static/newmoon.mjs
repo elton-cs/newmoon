@@ -7067,12 +7067,21 @@ function init(_) {
 }
 function handle_next_level(model) {
   let new_level = model.level + 1;
+  let base_bag = create_level_bag(new_level);
+  let _block;
+  let $ = model.shuffle_enabled;
+  if ($) {
+    _block = shuffle(base_bag);
+  } else {
+    _block = base_bag;
+  }
+  let final_bag = _block;
   return new Model(
     5,
     0,
     new_level,
     get_milestone_for_level(new_level),
-    create_level_bag(new_level),
+    final_bag,
     new Playing(),
     new None(),
     0,
@@ -7351,12 +7360,13 @@ function handle_reset_test_config(model) {
   );
 }
 function start_new_game() {
+  let base_bag = create_level_bag(1);
   return new Model(
     5,
     0,
     1,
     get_milestone_for_level(1),
-    create_level_bag(1),
+    base_bag,
     new Playing(),
     new None(),
     0,
@@ -7370,12 +7380,21 @@ function start_new_game() {
   );
 }
 function restart_current_level(model) {
+  let base_bag = create_level_bag(model.level);
+  let _block;
+  let $ = model.shuffle_enabled;
+  if ($) {
+    _block = shuffle(base_bag);
+  } else {
+    _block = base_bag;
+  }
+  let final_bag = _block;
   return new Model(
     5,
     0,
     model.level,
     model.milestone,
-    create_level_bag(model.level),
+    final_bag,
     new Playing(),
     new None(),
     0,
@@ -7387,6 +7406,50 @@ function restart_current_level(model) {
     model.testing_mode,
     model.testing_stats
   );
+}
+function handle_toggle_shuffle(model) {
+  let new_shuffle_enabled = !model.shuffle_enabled;
+  let $ = isEqual(model.status, new Playing()) && new_shuffle_enabled;
+  if ($) {
+    let shuffled_bag = shuffle(model.bag);
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      shuffled_bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      new_shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  } else {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      new_shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  }
 }
 function check_game_status(model) {
   let $ = model.health <= 0;
@@ -7440,42 +7503,30 @@ function handle_pull_orb(model) {
     if ($1 instanceof Empty) {
       return model;
     } else {
+      let first_orb = $1.head;
+      let rest = $1.tail;
+      let new_model = apply_orb_effect(first_orb, model);
       let _block;
-      let $2 = model.shuffle_enabled;
-      if ($2) {
-        _block = shuffle(model.bag);
-      } else {
-        _block = model.bag;
-      }
-      let bag_to_use = _block;
-      if (bag_to_use instanceof Empty) {
-        return model;
-      } else {
-        let first_orb = bag_to_use.head;
-        let rest = bag_to_use.tail;
-        let new_model = apply_orb_effect(first_orb, model);
-        let _block$1;
-        let _record = new_model;
-        _block$1 = new Model(
-          _record.health,
-          _record.points,
-          _record.level,
-          _record.milestone,
-          rest,
-          _record.status,
-          new Some(first_orb),
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
-          _record.shuffle_enabled,
-          _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats
-        );
-        let updated_model = _block$1;
-        return check_game_status(updated_model);
-      }
+      let _record = new_model;
+      _block = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        rest,
+        _record.status,
+        new Some(first_orb),
+        _record.bombs_pulled_this_level,
+        _record.current_multiplier,
+        _record.credits,
+        _record.shuffle_enabled,
+        _record.dev_mode,
+        _record.testing_config,
+        _record.testing_mode,
+        _record.testing_stats
+      );
+      let updated_model = _block;
+      return check_game_status(updated_model);
     }
   } else {
     return model;
@@ -7612,24 +7663,7 @@ function update2(model, msg) {
     let orb = msg[0];
     return purchase_orb(model, orb);
   } else if (msg instanceof ToggleShuffle) {
-    let _record = model;
-    return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      !model.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats
-    );
+    return handle_toggle_shuffle(model);
   } else if (msg instanceof ToggleDevMode) {
     let _record = model;
     return new Model(

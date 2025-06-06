@@ -62,7 +62,7 @@ fn update(model: Model, msg: Msg) -> Model {
     BuyOrb(orb) -> marketplace.purchase_orb(model, orb)
     
     // Game Settings
-    ToggleShuffle -> types.Model(..model, shuffle_enabled: !model.shuffle_enabled)
+    ToggleShuffle -> handle_toggle_shuffle(model)
     ToggleDevMode -> types.Model(..model, dev_mode: !model.dev_mode)
     
     // Testing Grounds Actions
@@ -83,20 +83,11 @@ fn handle_pull_orb(model: Model) -> Model {
     Playing -> {
       case model.bag {
         [] -> model
-        _ -> {
-          let bag_to_use = case model.shuffle_enabled {
-            True -> list.shuffle(model.bag)
-            False -> model.bag
-          }
-          case bag_to_use {
-            [] -> model
-            [first_orb, ..rest] -> {
-              let new_model = orb.apply_orb_effect(first_orb, model)
-              let updated_model =
-                types.Model(..new_model, bag: rest, last_orb: option.Some(first_orb))
-              check_game_status(updated_model)
-            }
-          }
+        [first_orb, ..rest] -> {
+          let new_model = orb.apply_orb_effect(first_orb, model)
+          let updated_model =
+            types.Model(..new_model, bag: rest, last_orb: option.Some(first_orb))
+          check_game_status(updated_model)
         }
       }
     }
@@ -106,13 +97,18 @@ fn handle_pull_orb(model: Model) -> Model {
 
 fn handle_next_level(model: Model) -> Model {
   let new_level = model.level + 1
+  let base_bag = level.create_level_bag(new_level)
+  let final_bag = case model.shuffle_enabled {
+    True -> list.shuffle(base_bag)
+    False -> base_bag
+  }
   // Credits are already awarded when level completes, no need to add again
   types.Model(
     health: 5,
     points: 0,
     level: new_level,
     milestone: level.get_milestone_for_level(new_level),
-    bag: level.create_level_bag(new_level),
+    bag: final_bag,
     status: Playing,
     last_orb: option.None,
     bombs_pulled_this_level: 0,
@@ -237,12 +233,14 @@ fn handle_reset_test_config(model: Model) -> Model {
 }
 
 fn start_new_game() -> Model {
+  let base_bag = level.create_level_bag(1)
+  // Start with shuffle disabled for new games
   types.Model(
     health: 5,
     points: 0,
     level: 1,
     milestone: level.get_milestone_for_level(1),
-    bag: level.create_level_bag(1),
+    bag: base_bag,
     status: Playing,
     last_orb: option.None,
     bombs_pulled_this_level: 0,
@@ -257,12 +255,17 @@ fn start_new_game() -> Model {
 }
 
 fn restart_current_level(model: Model) -> Model {
+  let base_bag = level.create_level_bag(model.level)
+  let final_bag = case model.shuffle_enabled {
+    True -> list.shuffle(base_bag)
+    False -> base_bag
+  }
   types.Model(
     health: 5,
     points: 0,
     level: model.level,
     milestone: model.milestone,
-    bag: level.create_level_bag(model.level),
+    bag: final_bag,
     status: Playing,
     last_orb: option.None,
     bombs_pulled_this_level: 0,
@@ -274,6 +277,21 @@ fn restart_current_level(model: Model) -> Model {
     testing_mode: model.testing_mode,
     testing_stats: model.testing_stats,
   )
+}
+
+fn handle_toggle_shuffle(model: Model) -> Model {
+  let new_shuffle_enabled = !model.shuffle_enabled
+  case model.status == Playing && new_shuffle_enabled {
+    True -> {
+      // If enabling shuffle during gameplay, reshuffle the current bag
+      let shuffled_bag = list.shuffle(model.bag)
+      types.Model(..model, shuffle_enabled: new_shuffle_enabled, bag: shuffled_bag)
+    }
+    False -> {
+      // If disabling shuffle or not playing, just toggle the setting
+      types.Model(..model, shuffle_enabled: new_shuffle_enabled)
+    }
+  }
 }
 
 fn check_game_status(model: Model) -> Model {
