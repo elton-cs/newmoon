@@ -30,10 +30,9 @@ This is a Gleam-based web game called "New Moon" built with the Lustre framework
 - **Multiplier System**: Multiplier orbs boost all subsequent point gains
 
 ### Market Pricing
-- Basic Point Orbs: 10-15 credits
-- Health Orbs: 12-20 credits  
-- Special Orbs: 25-35 credits (Collector, Survivor, Multiplier)
-- Training Bombs: 5 credits
+- Point Orbs: 12-25 credits (8-15 point values)
+- Health Orbs: 15-40 credits (2-5 health restoration)  
+- Strategic Orbs: 30-45 credits (Collector, Survivor, Multiplier)
 
 ## Key Dependencies
 

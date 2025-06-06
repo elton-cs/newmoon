@@ -4918,26 +4918,27 @@ function get_orb_name(orb) {
 // build/dev/javascript/newmoon/marketplace.mjs
 function get_market_items() {
   return toList([
-    new MarketItem(new Point(5), 10, "Basic data packet - reliable points"),
-    new MarketItem(new Point(8), 15, "Advanced data packet - higher value"),
-    new MarketItem(new Health(2), 12, "Standard repair kit - moderate healing"),
-    new MarketItem(new Health(4), 20, "Enhanced repair kit - superior healing"),
+    new MarketItem(new Point(8), 12, "Basic data packet - reliable points"),
+    new MarketItem(new Point(12), 18, "Advanced data packet - higher value"),
+    new MarketItem(new Point(15), 25, "Premium data packet - maximum value"),
+    new MarketItem(new Health(2), 15, "Standard repair kit - moderate healing"),
+    new MarketItem(new Health(4), 28, "Enhanced repair kit - superior healing"),
+    new MarketItem(new Health(5), 40, "Emergency repair kit - full restoration"),
     new MarketItem(
       new Collector(),
-      25,
+      30,
       "Deep scanner - points for remaining orbs"
     ),
     new MarketItem(
       new Survivor(),
-      30,
+      35,
       "Damage analyzer - points for bombs survived"
     ),
     new MarketItem(
       new Multiplier(),
-      35,
+      45,
       "Signal amplifier - doubles point multiplier"
-    ),
-    new MarketItem(new Bomb(1), 5, "Minor explosive - low risk training")
+    )
   ]);
 }
 function can_afford(model, item) {
@@ -5017,7 +5018,7 @@ function view_market_item(model, item) {
           class$(
             concat2(
               toList([
-                "w-full py-2 px-4 rounded text-sm font-light transition transform hover:scale-[1.02] ",
+                "w-full py-4 px-6 rounded text-sm font-light transition transform hover:scale-[1.02] tracking-wider ",
                 button_classes
               ])
             )
@@ -5343,7 +5344,7 @@ function view_reward_state(model) {
                 "text-xl font-light text-black mb-4 tracking-wide"
               )
             ]),
-            toList([text3("\u{1F389} SECTOR COMPLETE")])
+            toList([text3("SECTOR COMPLETE")])
           ),
           p(
             toList([class$("text-gray-600 text-sm font-light mb-2")]),
@@ -5472,7 +5473,7 @@ function view_lost_state() {
           ),
           on_click(new RestartGame())
         ]),
-        toList([text3("\u{1F504} Play Again")])
+        toList([text3("RESTART MISSION")])
       )
     ])
   );

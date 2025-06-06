@@ -215,7 +215,7 @@ fn view_reward_state(model: Model) -> Element(Msg) {
       [
         html.h2(
           [attribute.class("text-xl font-light text-black mb-4 tracking-wide")],
-          [html.text("🎉 SECTOR COMPLETE")],
+          [html.text("SECTOR COMPLETE")],
         ),
         html.p([attribute.class("text-gray-600 text-sm font-light mb-2")], [
           html.text(
@@ -304,7 +304,7 @@ fn view_lost_state() -> Element(Msg) {
         ),
         event.on_click(RestartGame),
       ],
-      [html.text("🔄 Play Again")],
+      [html.text("RESTART MISSION")],
     ),
   ])
 }
