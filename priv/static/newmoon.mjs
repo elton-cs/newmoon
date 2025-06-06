@@ -5129,19 +5129,6 @@ function view_stat_card(symbol, label, value, color_class) {
     ])
   );
 }
-function view_credit_display(model) {
-  return div(
-    toList([class$("mb-2")]),
-    toList([
-      view_stat_card(
-        "\u25C8",
-        "CREDITS",
-        to_string(model.credits),
-        "text-purple-600"
-      )
-    ])
-  );
-}
 function view_result_card(message, color, centered) {
   let base_classes = "mb-4 p-3 rounded";
   let _block;
@@ -5210,7 +5197,7 @@ function view_game_stats(model) {
     toList([]),
     toList([
       div(
-        toList([class$("grid grid-cols-2 gap-3 mb-4")]),
+        toList([class$("grid grid-cols-2 gap-3 mb-3")]),
         toList([
           view_stat_card(
             "\u25CB",
@@ -5223,7 +5210,12 @@ function view_game_stats(model) {
             "DATA",
             to_string(model.points),
             "text-gray-700"
-          ),
+          )
+        ])
+      ),
+      div(
+        toList([class$("grid grid-cols-3 gap-2 mb-4")]),
+        toList([
           view_stat_card(
             "\u25CE",
             "TARGET",
@@ -5235,10 +5227,15 @@ function view_game_stats(model) {
             "SECTOR",
             to_string(model.level),
             "text-gray-500"
+          ),
+          view_stat_card(
+            "\u25C8",
+            "CREDITS",
+            to_string(model.credits),
+            "text-purple-600"
           )
         ])
       ),
-      view_credit_display(model),
       view_multiplier_status(model)
     ])
   );

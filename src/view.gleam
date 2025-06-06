@@ -47,10 +47,13 @@ fn view_header() -> Element(Msg) {
 
 fn view_game_stats(model: Model) -> Element(Msg) {
   html.div([], [
-    // Main stats grid
-    html.div([attribute.class("grid grid-cols-2 gap-3 mb-4")], [
+    // Primary stats - most important for gameplay
+    html.div([attribute.class("grid grid-cols-2 gap-3 mb-3")], [
       view_stat_card("○", "SYSTEMS", int.to_string(model.health), "text-black"),
       view_stat_card("●", "DATA", int.to_string(model.points), "text-gray-700"),
+    ]),
+    // Secondary stats - progression and resources
+    html.div([attribute.class("grid grid-cols-3 gap-2 mb-4")], [
       view_stat_card(
         "◎",
         "TARGET",
@@ -58,19 +61,13 @@ fn view_game_stats(model: Model) -> Element(Msg) {
         "text-gray-600",
       ),
       view_stat_card("◉", "SECTOR", int.to_string(model.level), "text-gray-500"),
+      view_stat_card("◈", "CREDITS", int.to_string(model.credits), "text-purple-600"),
     ]),
-    // Credits display
-    view_credit_display(model),
     // Multiplier status (only shown when active)
     view_multiplier_status(model),
   ])
 }
 
-fn view_credit_display(model: Model) -> Element(Msg) {
-  html.div([attribute.class("mb-2")], [
-    view_stat_card("◈", "CREDITS", int.to_string(model.credits), "text-purple-600"),
-  ])
-}
 
 fn view_stat_card(
   symbol: String,
