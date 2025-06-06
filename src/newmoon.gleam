@@ -1,9 +1,10 @@
+import gleam/list
 import gleam/option.{None}
 import lustre
 import level
 import marketplace
 import orb
-import types.{type Model, type Msg, AcceptReward, BuyOrb, EnterMarketplace, InMarketplace, NextLevel, Playing, PullOrb, RestartGame, ShowingReward}
+import types.{type Model, type Msg, AcceptReward, BuyOrb, EnterMarketplace, InMarketplace, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle}
 import view
 
 pub fn main() -> Nil {
@@ -25,6 +26,7 @@ fn init(_) -> Model {
     bombs_pulled_this_level: 0,
     current_multiplier: 1,
     credits: 0,
+    shuffle_enabled: False,
   )
 }
 
@@ -37,6 +39,7 @@ fn update(model: Model, msg: Msg) -> Model {
     AcceptReward -> handle_accept_reward(model)
     EnterMarketplace -> handle_enter_marketplace(model)
     BuyOrb(orb) -> marketplace.purchase_orb(model, orb)
+    ToggleShuffle -> types.Model(..model, shuffle_enabled: !model.shuffle_enabled)
   }
 }
 
@@ -45,11 +48,20 @@ fn handle_pull_orb(model: Model) -> Model {
     Playing -> {
       case model.bag {
         [] -> model
-        [first_orb, ..rest] -> {
-          let new_model = orb.apply_orb_effect(first_orb, model)
-          let updated_model =
-            types.Model(..new_model, bag: rest, last_orb: option.Some(first_orb))
-          check_game_status(updated_model)
+        _ -> {
+          let bag_to_use = case model.shuffle_enabled {
+            True -> list.shuffle(model.bag)
+            False -> model.bag
+          }
+          case bag_to_use {
+            [] -> model
+            [first_orb, ..rest] -> {
+              let new_model = orb.apply_orb_effect(first_orb, model)
+              let updated_model =
+                types.Model(..new_model, bag: rest, last_orb: option.Some(first_orb))
+              check_game_status(updated_model)
+            }
+          }
         }
       }
     }
@@ -71,6 +83,7 @@ fn handle_next_level(model: Model) -> Model {
     bombs_pulled_this_level: 0,
     current_multiplier: 1,
     credits: model.credits,
+    shuffle_enabled: model.shuffle_enabled,
   )
 }
 

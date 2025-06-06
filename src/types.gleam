@@ -29,6 +29,7 @@ pub type Model {
     bombs_pulled_this_level: Int,
     current_multiplier: Int,
     credits: Int,
+    shuffle_enabled: Bool,
   )
 }
 
@@ -39,6 +40,7 @@ pub type Msg {
   AcceptReward
   EnterMarketplace
   BuyOrb(Orb)
+  ToggleShuffle
 }
 
 pub type MarketItem {

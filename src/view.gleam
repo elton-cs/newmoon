@@ -8,7 +8,7 @@ import lustre/element/html
 import lustre/event
 import marketplace
 import orb
-import types.{type Model, type Msg, AcceptReward, EnterMarketplace, InMarketplace, Lost, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, Won}
+import types.{type Model, type Msg, AcceptReward, EnterMarketplace, InMarketplace, Lost, NextLevel, Playing, PullOrb, RestartGame, ShowingReward, ToggleShuffle, Won}
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div(
@@ -154,6 +154,7 @@ fn view_playing_state(model: Model) -> Element(Msg) {
   html.div([], [
     view_last_orb_result(model),
     view_bag_info(model),
+    view_shuffle_toggle(model),
     view_pull_orb_button(model),
   ])
 }
@@ -184,6 +185,32 @@ fn view_bag_info(model: Model) -> Element(Msg) {
       ]),
     ],
   )
+}
+
+fn view_shuffle_toggle(model: Model) -> Element(Msg) {
+  let toggle_text = case model.shuffle_enabled {
+    True -> "SHUFFLE: ENABLED"
+    False -> "SHUFFLE: DISABLED"
+  }
+  let toggle_color = case model.shuffle_enabled {
+    True -> "bg-yellow-100 border-yellow-300 text-yellow-700"
+    False -> "bg-gray-100 border-gray-300 text-gray-700"
+  }
+
+  html.div([attribute.class("mb-4")], [
+    html.button(
+      [
+        attribute.class(
+          string.concat([
+            "w-full py-2 px-4 rounded border font-light text-xs tracking-wider transition ",
+            toggle_color,
+          ]),
+        ),
+        event.on_click(ToggleShuffle),
+      ],
+      [html.text(toggle_text)],
+    ),
+  ])
 }
 
 fn view_pull_orb_button(model: Model) -> Element(Msg) {

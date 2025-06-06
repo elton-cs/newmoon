@@ -1087,6 +1087,21 @@ var Eq = class extends CustomType {
 var Gt = class extends CustomType {
 };
 
+// build/dev/javascript/gleam_stdlib/gleam/float.mjs
+function compare(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/int.mjs
 function min(a, b) {
   let $ = a < b;
@@ -1095,6 +1110,117 @@ function min(a, b) {
   } else {
     return b;
   }
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function concat_loop(loop$strings, loop$accumulator) {
+  while (true) {
+    let strings = loop$strings;
+    let accumulator = loop$accumulator;
+    if (strings instanceof Empty) {
+      return accumulator;
+    } else {
+      let string5 = strings.head;
+      let strings$1 = strings.tail;
+      loop$strings = strings$1;
+      loop$accumulator = accumulator + string5;
+    }
+  }
+}
+function concat2(strings) {
+  return concat_loop(strings, "");
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
+var Decoder = class extends CustomType {
+  constructor(function$) {
+    super();
+    this.function = function$;
+  }
+};
+function run(data, decoder) {
+  let $ = decoder.function(data);
+  let maybe_invalid_data = $[0];
+  let errors = $[1];
+  if (errors instanceof Empty) {
+    return new Ok(maybe_invalid_data);
+  } else {
+    return new Error(errors);
+  }
+}
+function success(data) {
+  return new Decoder((_) => {
+    return [data, toList([])];
+  });
+}
+function map2(decoder, transformer) {
+  return new Decoder(
+    (d) => {
+      let $ = decoder.function(d);
+      let data = $[0];
+      let errors = $[1];
+      return [transformer(data), errors];
+    }
+  );
+}
+
+// build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
+var Nil = void 0;
+var NOT_FOUND = {};
+function to_string(term) {
+  return term.toString();
+}
+function starts_with(haystack, needle) {
+  return haystack.startsWith(needle);
+}
+var unicode_whitespaces = [
+  " ",
+  // Space
+  "	",
+  // Horizontal tab
+  "\n",
+  // Line feed
+  "\v",
+  // Vertical tab
+  "\f",
+  // Form feed
+  "\r",
+  // Carriage return
+  "\x85",
+  // Next line
+  "\u2028",
+  // Line separator
+  "\u2029"
+  // Paragraph separator
+].join("");
+var trim_start_regex = /* @__PURE__ */ new RegExp(
+  `^[${unicode_whitespaces}]*`
+);
+var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
+function random_uniform() {
+  const random_uniform_result = Math.random();
+  if (random_uniform_result === 1) {
+    return random_uniform();
+  }
+  return random_uniform_result;
+}
+function new_map() {
+  return Dict.new();
+}
+function map_get(map4, key) {
+  const value = map4.get(key, NOT_FOUND);
+  if (value === NOT_FOUND) {
+    return new Error(Nil);
+  }
+  return new Ok(value);
+}
+function map_insert(key, value, map4) {
+  return map4.set(key, value);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/dict.mjs
+function insert(dict2, key, value) {
+  return map_insert(key, value, dict2);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/list.mjs
@@ -1115,7 +1241,7 @@ function length_loop(loop$list, loop$count) {
     }
   }
 }
-function length(list4) {
+function length2(list4) {
   return length_loop(list4, 0);
 }
 function reverse_and_prepend(loop$prefix, loop$suffix) {
@@ -1171,10 +1297,10 @@ function append_loop(loop$first, loop$second) {
     }
   }
 }
-function append(first, second) {
+function append2(first, second) {
   return append_loop(reverse(first), second);
 }
-function fold(loop$list, loop$initial, loop$fun) {
+function fold2(loop$list, loop$initial, loop$fun) {
   while (true) {
     let list4 = loop$list;
     let initial = loop$initial;
@@ -1543,109 +1669,39 @@ function sort(list4, compare4) {
     }
   }
 }
-
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function concat_loop(loop$strings, loop$accumulator) {
+function shuffle_pair_unwrap_loop(loop$list, loop$acc) {
   while (true) {
-    let strings = loop$strings;
-    let accumulator = loop$accumulator;
-    if (strings instanceof Empty) {
-      return accumulator;
+    let list4 = loop$list;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return acc;
     } else {
-      let string5 = strings.head;
-      let strings$1 = strings.tail;
-      loop$strings = strings$1;
-      loop$accumulator = accumulator + string5;
+      let elem_pair = list4.head;
+      let enumerable = list4.tail;
+      loop$list = enumerable;
+      loop$acc = prepend(elem_pair[1], acc);
     }
   }
 }
-function concat2(strings) {
-  return concat_loop(strings, "");
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
-var Decoder = class extends CustomType {
-  constructor(function$) {
-    super();
-    this.function = function$;
-  }
-};
-function run(data, decoder) {
-  let $ = decoder.function(data);
-  let maybe_invalid_data = $[0];
-  let errors = $[1];
-  if (errors instanceof Empty) {
-    return new Ok(maybe_invalid_data);
-  } else {
-    return new Error(errors);
-  }
-}
-function success(data) {
-  return new Decoder((_) => {
-    return [data, toList([])];
-  });
-}
-function map2(decoder, transformer) {
-  return new Decoder(
-    (d) => {
-      let $ = decoder.function(d);
-      let data = $[0];
-      let errors = $[1];
-      return [transformer(data), errors];
+function do_shuffle_by_pair_indexes(list_of_pairs) {
+  return sort(
+    list_of_pairs,
+    (a_pair, b_pair) => {
+      return compare(a_pair[0], b_pair[0]);
     }
   );
 }
-
-// build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
-var Nil = void 0;
-var NOT_FOUND = {};
-function to_string(term) {
-  return term.toString();
-}
-function starts_with(haystack, needle) {
-  return haystack.startsWith(needle);
-}
-var unicode_whitespaces = [
-  " ",
-  // Space
-  "	",
-  // Horizontal tab
-  "\n",
-  // Line feed
-  "\v",
-  // Vertical tab
-  "\f",
-  // Form feed
-  "\r",
-  // Carriage return
-  "\x85",
-  // Next line
-  "\u2028",
-  // Line separator
-  "\u2029"
-  // Paragraph separator
-].join("");
-var trim_start_regex = /* @__PURE__ */ new RegExp(
-  `^[${unicode_whitespaces}]*`
-);
-var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
-function new_map() {
-  return Dict.new();
-}
-function map_get(map4, key) {
-  const value = map4.get(key, NOT_FOUND);
-  if (value === NOT_FOUND) {
-    return new Error(Nil);
-  }
-  return new Ok(value);
-}
-function map_insert(key, value, map4) {
-  return map4.set(key, value);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/dict.mjs
-function insert(dict2, key, value) {
-  return map_insert(key, value, dict2);
+function shuffle(list4) {
+  let _pipe = list4;
+  let _pipe$1 = fold2(
+    _pipe,
+    toList([]),
+    (acc, a) => {
+      return prepend([random_uniform(), a], acc);
+    }
+  );
+  let _pipe$2 = do_shuffle_by_pair_indexes(_pipe$1);
+  return shuffle_pair_unwrap_loop(_pipe$2, toList([]));
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2967,12 +3023,12 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             if ($2) {
               let remove_from = node_index$1 + next_count - moved_offset;
               let patch = remove2(remove_from, child.patch.removed);
-              _block = append(
+              _block = append2(
                 child.patch.changes,
                 prepend(patch, changes)
               );
             } else {
-              _block = append(child.patch.changes, changes);
+              _block = append2(child.patch.changes, changes);
             }
             let changes$1 = _block;
             loop$old = old$1;
@@ -4053,7 +4109,7 @@ function listAppend(a, b) {
   } else if (b instanceof Empty) {
     return a;
   } else {
-    return append(a, b);
+    return append2(a, b);
   }
 }
 
@@ -4093,7 +4149,7 @@ function remove_event(events, path, name) {
   );
 }
 function remove_attributes(handlers, path, attributes) {
-  return fold(
+  return fold2(
     attributes,
     handlers,
     (events, attribute3) => {
@@ -4147,7 +4203,7 @@ function add_event(events, mapper, path, name, handler) {
   );
 }
 function add_attributes(handlers, mapper, path, attributes) {
-  return fold(
+  return fold2(
     attributes,
     handlers,
     (events, attribute3) => {
@@ -4427,7 +4483,7 @@ function new$6(options) {
     option_none,
     option_none
   );
-  return fold(
+  return fold2(
     options,
     init2,
     (config, option) => {
@@ -4547,7 +4603,7 @@ var ShowingReward = class extends CustomType {
 var InMarketplace = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled) {
     super();
     this.health = health;
     this.points = points;
@@ -4559,6 +4615,7 @@ var Model = class extends CustomType {
     this.bombs_pulled_this_level = bombs_pulled_this_level;
     this.current_multiplier = current_multiplier;
     this.credits = credits;
+    this.shuffle_enabled = shuffle_enabled;
   }
 };
 var PullOrb = class extends CustomType {
@@ -4576,6 +4633,8 @@ var BuyOrb = class extends CustomType {
     super();
     this[0] = $0;
   }
+};
+var ToggleShuffle = class extends CustomType {
 };
 var MarketItem = class extends CustomType {
   constructor(orb, price, description) {
@@ -4760,7 +4819,7 @@ function get_orb_result_message(orb, model) {
       value
     ) + " SYS";
   } else if (orb instanceof Collector) {
-    let base_points = length(model.bag);
+    let base_points = length2(model.bag);
     let multiplied_points = base_points * model.current_multiplier;
     let $ = model.current_multiplier > 1;
     if ($) {
@@ -4814,7 +4873,8 @@ function apply_orb_effect(orb, model) {
       _record.last_orb,
       model.bombs_pulled_this_level + 1,
       _record.current_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
@@ -4830,7 +4890,8 @@ function apply_orb_effect(orb, model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
@@ -4846,10 +4907,11 @@ function apply_orb_effect(orb, model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   } else if (orb instanceof Collector) {
-    let remaining_orbs = length(model.bag) - 1;
+    let remaining_orbs = length2(model.bag) - 1;
     let collector_points = remaining_orbs * model.current_multiplier;
     let _record = model;
     return new Model(
@@ -4862,7 +4924,8 @@ function apply_orb_effect(orb, model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   } else if (orb instanceof Survivor) {
     let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
@@ -4877,7 +4940,8 @@ function apply_orb_effect(orb, model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   } else {
     let new_multiplier = model.current_multiplier * 2;
@@ -4892,7 +4956,8 @@ function apply_orb_effect(orb, model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       new_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   }
 }
@@ -4966,7 +5031,8 @@ function purchase_orb(model, orb) {
         _record.last_orb,
         _record.bombs_pulled_this_level,
         _record.current_multiplier,
-        new_credits
+        new_credits,
+        _record.shuffle_enabled
       );
     } else {
       return model;
@@ -5268,7 +5334,7 @@ function view_last_orb_result(model) {
   }
 }
 function view_bag_info(model) {
-  let orbs_left = length(model.bag);
+  let orbs_left = length2(model.bag);
   return div(
     toList([
       class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
@@ -5289,6 +5355,43 @@ function view_bag_info(model) {
             concat2(toList([to_string(orbs_left), " specimens"]))
           )
         ])
+      )
+    ])
+  );
+}
+function view_shuffle_toggle(model) {
+  let _block;
+  let $ = model.shuffle_enabled;
+  if ($) {
+    _block = "SHUFFLE: ENABLED";
+  } else {
+    _block = "SHUFFLE: DISABLED";
+  }
+  let toggle_text = _block;
+  let _block$1;
+  let $1 = model.shuffle_enabled;
+  if ($1) {
+    _block$1 = "bg-yellow-100 border-yellow-300 text-yellow-700";
+  } else {
+    _block$1 = "bg-gray-100 border-gray-300 text-gray-700";
+  }
+  let toggle_color = _block$1;
+  return div(
+    toList([class$("mb-4")]),
+    toList([
+      button(
+        toList([
+          class$(
+            concat2(
+              toList([
+                "w-full py-2 px-4 rounded border font-light text-xs tracking-wider transition ",
+                toggle_color
+              ])
+            )
+          ),
+          on_click(new ToggleShuffle())
+        ]),
+        toList([text3(toggle_text)])
       )
     ])
   );
@@ -5323,6 +5426,7 @@ function view_playing_state(model) {
     toList([
       view_last_orb_result(model),
       view_bag_info(model),
+      view_shuffle_toggle(model),
       view_pull_orb_button(model)
     ])
   );
@@ -5526,7 +5630,8 @@ function init(_) {
     new None(),
     0,
     1,
-    0
+    0,
+    false
   );
 }
 function handle_next_level(model) {
@@ -5541,7 +5646,8 @@ function handle_next_level(model) {
     new None(),
     0,
     1,
-    model.credits
+    model.credits,
+    model.shuffle_enabled
   );
 }
 function handle_accept_reward(model) {
@@ -5556,7 +5662,8 @@ function handle_accept_reward(model) {
     _record.last_orb,
     _record.bombs_pulled_this_level,
     _record.current_multiplier,
-    _record.credits
+    _record.credits,
+    _record.shuffle_enabled
   );
 }
 function handle_enter_marketplace(model) {
@@ -5571,7 +5678,8 @@ function handle_enter_marketplace(model) {
     _record.last_orb,
     _record.bombs_pulled_this_level,
     _record.current_multiplier,
-    _record.credits
+    _record.credits,
+    _record.shuffle_enabled
   );
 }
 function check_game_status(model) {
@@ -5589,7 +5697,8 @@ function check_game_status(model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      _record.credits
+      _record.credits,
+      _record.shuffle_enabled
     );
   } else if ($1) {
     let _record = model;
@@ -5603,7 +5712,8 @@ function check_game_status(model) {
       _record.last_orb,
       _record.bombs_pulled_this_level,
       _record.current_multiplier,
-      model.credits + model.points
+      model.credits + model.points,
+      _record.shuffle_enabled
     );
   } else {
     return model;
@@ -5616,25 +5726,38 @@ function handle_pull_orb(model) {
     if ($1 instanceof Empty) {
       return model;
     } else {
-      let first_orb = $1.head;
-      let rest = $1.tail;
-      let new_model = apply_orb_effect(first_orb, model);
       let _block;
-      let _record = new_model;
-      _block = new Model(
-        _record.health,
-        _record.points,
-        _record.level,
-        _record.milestone,
-        rest,
-        _record.status,
-        new Some(first_orb),
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits
-      );
-      let updated_model = _block;
-      return check_game_status(updated_model);
+      let $2 = model.shuffle_enabled;
+      if ($2) {
+        _block = shuffle(model.bag);
+      } else {
+        _block = model.bag;
+      }
+      let bag_to_use = _block;
+      if (bag_to_use instanceof Empty) {
+        return model;
+      } else {
+        let first_orb = bag_to_use.head;
+        let rest = bag_to_use.tail;
+        let new_model = apply_orb_effect(first_orb, model);
+        let _block$1;
+        let _record = new_model;
+        _block$1 = new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          rest,
+          _record.status,
+          new Some(first_orb),
+          _record.bombs_pulled_this_level,
+          _record.current_multiplier,
+          _record.credits,
+          _record.shuffle_enabled
+        );
+        let updated_model = _block$1;
+        return check_game_status(updated_model);
+      }
     }
   } else {
     return model;
@@ -5651,9 +5774,24 @@ function update2(model, msg) {
     return handle_accept_reward(model);
   } else if (msg instanceof EnterMarketplace) {
     return handle_enter_marketplace(model);
-  } else {
+  } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
     return purchase_orb(model, orb);
+  } else {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      !model.shuffle_enabled
+    );
   }
 }
 function main() {
@@ -5666,10 +5804,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      10,
+      11,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 270, end: 360, pattern_start: 281, pattern_end: 286 }
+      { value: $, start: 303, end: 393, pattern_start: 314, pattern_end: 319 }
     );
   }
   return void 0;
