@@ -39,6 +39,7 @@ fn init(_) -> Model {
     pending_gamble: option.None,
     gamble_orbs: [],
     gamble_current_index: 0,
+    in_gamble_choice: False,
   )
 }
 
@@ -154,6 +155,7 @@ fn handle_next_level(model: Model) -> Model {
     pending_gamble: option.None,
     gamble_orbs: [],
     gamble_current_index: 0,
+    in_gamble_choice: False,
   )
 }
 
@@ -292,6 +294,7 @@ fn start_new_game() -> Model {
     pending_gamble: option.None,
     gamble_orbs: [],
     gamble_current_index: 0,
+    in_gamble_choice: False,
   )
 }
 
@@ -323,6 +326,7 @@ fn restart_current_level(model: Model) -> Model {
     pending_gamble: option.None,
     gamble_orbs: [],
     gamble_current_index: 0,
+    in_gamble_choice: False,
   )
 }
 
@@ -349,44 +353,84 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
         False -> #(second_orb, first_orb)
       }
       
-      // Apply the chosen orb's effect
-      let after_effect = orb.apply_orb_effect(chosen_orb, model)
-      
-      // Create log entry for the chosen orb
-      let new_sequence = model.log_sequence + 1
-      let log_message = orb.get_orb_result_message(chosen_orb, after_effect)
-      let new_log_entry = types.LogEntry(
-        sequence: new_sequence,
-        orb: chosen_orb,
-        message: log_message,
-      )
-      
-      // Return unchosen orb to end of bag (unless it's a duplicate from single orb case)
-      let new_bag = case first_orb == second_orb {
-        True -> after_effect.bag  // Don't return duplicate orb
-        False -> list.append(after_effect.bag, [unchosen_orb])
+      case model.in_gamble_choice {
+        True -> {
+          // We're in a gamble-choice scenario
+          // Apply chosen orb with gamble effects and return to gamble state
+          let after_effect = apply_gamble_orb_effect(chosen_orb, model)
+          
+          // Create log entry for the chosen orb
+          let new_sequence = model.log_sequence + 1
+          let log_message = orb.get_orb_result_message(chosen_orb, after_effect)
+          let new_log_entry = types.LogEntry(
+            sequence: new_sequence,
+            orb: chosen_orb,
+            message: log_message,
+          )
+          
+          // Remove chosen orb from bag (it was from position 5+) and return unchosen orb to end
+          // We need to carefully manage the bag since we pulled from positions 5+
+          let orbs_after_gamble = list.drop(model.bag, 5)
+          let remaining_after_gamble = case first_orb == second_orb {
+            True -> list.drop(orbs_after_gamble, 1) // Remove one copy of the duplicated orb
+            False -> list.drop(orbs_after_gamble, 2) |> list.append([unchosen_orb]) // Remove both, add unchosen back
+          }
+          let new_bag = list.append(list.take(model.bag, 5), remaining_after_gamble)
+          
+          let updated_model = types.Model(
+            ..after_effect,
+            status: types.ApplyingGambleOrbs,
+            pending_choice: option.None,
+            bag: new_bag,
+            last_orb: option.Some(chosen_orb),
+            log_entries: [new_log_entry, ..model.log_entries],
+            log_sequence: new_sequence,
+            in_gamble_choice: False,
+          )
+          
+          check_game_status(updated_model)
+        }
+        False -> {
+          // Normal choice selection (not during gamble)
+          // Apply the chosen orb's effect
+          let after_effect = orb.apply_orb_effect(chosen_orb, model)
+          
+          // Create log entry for the chosen orb
+          let new_sequence = model.log_sequence + 1
+          let log_message = orb.get_orb_result_message(chosen_orb, after_effect)
+          let new_log_entry = types.LogEntry(
+            sequence: new_sequence,
+            orb: chosen_orb,
+            message: log_message,
+          )
+          
+          // Return unchosen orb to end of bag (unless it's a duplicate from single orb case)
+          let new_bag = case first_orb == second_orb {
+            True -> after_effect.bag  // Don't return duplicate orb
+            False -> list.append(after_effect.bag, [unchosen_orb])
+          }
+          
+          let updated_model = types.Model(
+            ..after_effect,
+            status: Playing,
+            pending_choice: option.None,
+            bag: new_bag,
+            last_orb: option.Some(chosen_orb),
+            log_entries: [new_log_entry, ..model.log_entries],
+            log_sequence: new_sequence,
+          )
+          
+          check_game_status(updated_model)
+        }
       }
-      
-      let updated_model = types.Model(
-        ..after_effect,
-        status: Playing,
-        pending_choice: option.None,
-        bag: new_bag,
-        last_orb: option.Some(chosen_orb),
-        log_entries: [new_log_entry, ..model.log_entries],
-        log_sequence: new_sequence,
-      )
-      
-      check_game_status(updated_model)
     }
     option.None -> model  // No pending choice, do nothing
   }
 }
 
 fn handle_accept_gamble(model: Model) -> Model {
-  // Pull 5 orbs from bag
+  // Preview 5 orbs from bag but don't consume them yet
   let gamble_orbs = list.take(model.bag, 5)
-  let remaining_bag = list.drop(model.bag, 5)
   
   types.Model(
     ..model,
@@ -394,7 +438,8 @@ fn handle_accept_gamble(model: Model) -> Model {
     pending_gamble: option.None,
     gamble_orbs: gamble_orbs,
     gamble_current_index: 0,
-    bag: remaining_bag,
+    in_gamble_choice: False,
+    // Keep original bag until orbs are actually applied
   )
 }
 
@@ -417,6 +462,7 @@ fn handle_next_gamble_orb(model: Model) -> Model {
             ..model,
             status: types.ApplyingGambleOrbs,
             gamble_current_index: 0,
+    in_gamble_choice: False,
           )
           apply_current_gamble_orb(updated_model)
         }
@@ -433,6 +479,7 @@ fn handle_next_gamble_orb(model: Model) -> Model {
             status: Playing,
             gamble_orbs: [],
             gamble_current_index: 0,
+    in_gamble_choice: False,
           )
         }
         False -> {
@@ -451,7 +498,11 @@ fn handle_next_gamble_orb(model: Model) -> Model {
 fn apply_current_gamble_orb(model: Model) -> Model {
   case list.first(list.drop(model.gamble_orbs, model.gamble_current_index)) {
     Ok(orb) -> {
-      let modified_model = apply_gamble_orb_effect(orb, model)
+      // Consume one orb from the bag (the one we're currently applying)
+      let remaining_bag = list.drop(model.bag, 1)
+      let model_with_consumed_orb = types.Model(..model, bag: remaining_bag)
+      
+      let modified_model = apply_gamble_orb_effect(orb, model_with_consumed_orb)
       let new_sequence = model.log_sequence + 1
       let log_message = orb.get_orb_result_message(orb, modified_model)
       let new_log_entry = types.LogEntry(
@@ -504,9 +555,34 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       types.Model(..model, current_multiplier: new_multiplier)
     }
     types.Choice -> {
-      // During gamble, Choice orb becomes a basic Point(5) orb to avoid complexity
-      let gamble_points = 5 * 2 * model.current_multiplier
-      types.Model(..model, points: model.points + gamble_points)
+      // During gamble, Choice orb transitions to choice view
+      // Pull orbs from positions 5+ in bag (after the 5 gamble orbs)
+      let orbs_after_gamble = list.drop(model.bag, 5)
+      case orbs_after_gamble {
+        [] -> {
+          // No orbs available after gamble orbs, treat as Point(5) with gamble bonus
+          let gamble_points = 5 * 2 * model.current_multiplier
+          types.Model(..model, points: model.points + gamble_points)
+        }
+        [single_orb] -> {
+          // Only one orb available, duplicate it for choice UI
+          types.Model(
+            ..model,
+            status: types.ChoosingOrb,
+            pending_choice: option.Some(#(single_orb, single_orb)),
+            in_gamble_choice: True,
+          )
+        }
+        [first_orb, second_orb, ..] -> {
+          // Two or more orbs available, present choice
+          types.Model(
+            ..model,
+            status: types.ChoosingOrb,
+            pending_choice: option.Some(#(first_orb, second_orb)),
+            in_gamble_choice: True,
+          )
+        }
+      }
     }
     types.Gamble -> {
       // Gamble within gamble - treat as no-op to avoid recursion

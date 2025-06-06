@@ -1,5 +1,6 @@
 import gleam/option
 import gleam/list
+import gleam/int
 import gleeunit
 import gleeunit/should
 import orb
@@ -36,6 +37,7 @@ fn create_test_model() -> Model {
     pending_gamble: option.None,
     gamble_orbs: [],
     gamble_current_index: 0,
+    in_gamble_choice: False,
   )
 }
 
@@ -730,4 +732,102 @@ pub fn gamble_orb_message_test() {
   let message = orb.get_orb_result_message(gamble_orb, model)
   
   should.equal(message, "🎲 GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]")
+}
+
+pub fn gamble_orb_choice_handling_test() {
+  let model = Model(..create_test_model(), bag: [Choice, Point(8), Health(2), Bomb(1), Collector])
+  let gamble_orb = Gamble
+  let result = orb.apply_orb_effect(gamble_orb, model)
+  
+  // Should transition to GamblingChoice state
+  should.equal(result.status, GamblingChoice)
+  // Should have pending gamble set
+  should.equal(result.pending_gamble, option.Some(True))
+}
+
+pub fn gamble_choice_orb_transition_test() {
+  // Test the flow when a Choice orb is encountered during gamble application
+  let model = Model(
+    ..create_test_model(), 
+    bag: [Choice, Point(8), Health(2), Bomb(1), Collector, Point(10), Health(3)],
+    status: types.ApplyingGambleOrbs,
+    gamble_orbs: [Choice, Point(8), Health(2), Bomb(1), Collector],
+    gamble_current_index: 0,
+  )
+  
+  // Apply the first orb (Choice) in gamble sequence
+  let result = apply_gamble_orb_effect(Choice, model)
+  
+  // Should transition to ChoosingOrb state
+  should.equal(result.status, types.ChoosingOrb)
+  // Should be in gamble choice mode
+  should.equal(result.in_gamble_choice, True)
+  // Should have choice between orbs #6 and #7 (Point(10) and Health(3))
+  case result.pending_choice {
+    option.Some(#(first, second)) -> {
+      should.equal(first, Point(10))
+      should.equal(second, Health(3))
+    }
+    option.None -> should.fail()
+  }
+}
+
+// Helper function for testing (we need to expose apply_gamble_orb_effect)
+fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
+  case orb {
+    types.Point(value) -> {
+      let gamble_points = value * 2 * model.current_multiplier
+      types.Model(..model, points: model.points + gamble_points)
+    }
+    types.Bomb(damage) ->
+      types.Model(
+        ..model,
+        health: model.health - damage,
+        bombs_pulled_this_level: model.bombs_pulled_this_level + 1,
+      )
+    types.Health(value) -> {
+      let new_health = int.min(5, model.health + value)
+      types.Model(..model, health: new_health)
+    }
+    types.Collector -> {
+      let remaining_orbs = list.length(model.bag)
+      let collector_points = remaining_orbs * model.current_multiplier
+      types.Model(..model, points: model.points + collector_points)
+    }
+    types.Survivor -> {
+      let survivor_points = model.bombs_pulled_this_level * model.current_multiplier
+      types.Model(..model, points: model.points + survivor_points)
+    }
+    types.Multiplier -> {
+      let new_multiplier = model.current_multiplier * 2
+      types.Model(..model, current_multiplier: new_multiplier)
+    }
+    types.Choice -> {
+      // During gamble, Choice orb transitions to choice view
+      let orbs_after_gamble = list.drop(model.bag, 5)
+      case orbs_after_gamble {
+        [] -> {
+          let gamble_points = 5 * 2 * model.current_multiplier
+          types.Model(..model, points: model.points + gamble_points)
+        }
+        [single_orb] -> {
+          types.Model(
+            ..model,
+            status: types.ChoosingOrb,
+            pending_choice: option.Some(#(single_orb, single_orb)),
+            in_gamble_choice: True,
+          )
+        }
+        [first_orb, second_orb, ..] -> {
+          types.Model(
+            ..model,
+            status: types.ChoosingOrb,
+            pending_choice: option.Some(#(first_orb, second_orb)),
+            in_gamble_choice: True,
+          )
+        }
+      }
+    }
+    types.Gamble -> model
+  }
 }

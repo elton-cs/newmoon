@@ -48,6 +48,7 @@ pub type Model {
     pending_gamble: Option(Bool),
     gamble_orbs: List(Orb),
     gamble_current_index: Int,
+    in_gamble_choice: Bool,
   )
 }
 

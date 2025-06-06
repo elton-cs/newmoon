@@ -405,16 +405,33 @@ fn view_dev_mode_toggle_button(model: Model) -> Element(Msg) {
 }
 
 fn view_choosing_orb_state(model: Model) -> Element(Msg) {
+  let header_text = case model.in_gamble_choice {
+    True -> "GAMBLE CHOICE PROTOCOL"
+    False -> "CHOICE PROTOCOL ACTIVATED"
+  }
+  let description_text = case model.in_gamble_choice {
+    True -> "Choice orb during gamble! Select one sample from beyond the gamble sequence."
+    False -> "Select one sample to extract. The other will return to your container."
+  }
+  let color_classes = case model.in_gamble_choice {
+    True -> "bg-red-50 border border-red-200"
+    False -> "bg-orange-50 border border-orange-200"
+  }
+  let text_color_class = case model.in_gamble_choice {
+    True -> "text-red-700"
+    False -> "text-orange-700"
+  }
+  
   html.div([attribute.class("text-center")], [
     html.div(
-      [attribute.class("mb-6 p-6 bg-orange-50 border border-orange-200 rounded")],
+      [attribute.class("mb-6 p-6 " <> color_classes <> " rounded")],
       [
         html.h2(
           [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-          [html.text("CHOICE PROTOCOL ACTIVATED")],
+          [html.text(header_text)],
         ),
-        html.p([attribute.class("text-orange-700 text-sm font-light mb-4")], [
-          html.text("Select one sample to extract. The other will return to your container."),
+        html.p([attribute.class(text_color_class <> " text-sm font-light mb-4")], [
+          html.text(description_text),
         ]),
       ],
     ),
