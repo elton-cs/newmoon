@@ -9,7 +9,7 @@ import lustre/element/html
 import lustre/event
 import marketplace
 import orb
-import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, ToggleShuffle, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, RunningSimulations, ViewingResults}
+import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest, RunningSimulations, ViewingResults}
 
 pub fn view(model: Model) -> Element(Msg) {
   html.div(
@@ -159,11 +159,16 @@ fn view_game_content(model: Model) -> Element(Msg) {
 
 fn view_playing_state(model: Model) -> Element(Msg) {
   html.div([], [
+    case model.dev_mode {
+      True -> view_dev_mode_panel(model)
+      False -> html.div([], [])
+    },
     view_pause_button(),
     view_last_orb_result(model),
     view_bag_info(model),
     view_shuffle_toggle(model),
     view_pull_orb_button(model),
+    view_dev_mode_toggle(model),
   ])
 }
 
@@ -835,5 +840,75 @@ fn view_test_actions(config: types.TestingConfiguration) -> Element(Msg) {
       [html.text("RESET CONFIGURATION")],
     ),
   ])
+}
+
+fn view_dev_mode_panel(model: Model) -> Element(Msg) {
+  html.div([attribute.class("mb-4 p-3 bg-red-50 border border-red-300 rounded")], [
+    html.div([attribute.class("flex items-center justify-between mb-2")], [
+      html.h3([attribute.class("text-sm font-medium text-red-800")], [
+        html.text("🔧 DEV MODE ACTIVE"),
+      ]),
+      html.button(
+        [
+          attribute.class("text-xs text-red-600 hover:text-red-800 underline"),
+          event.on_click(ToggleDevMode),
+        ],
+        [html.text("Turn Off")],
+      ),
+    ]),
+    view_next_orb_preview(model),
+    view_bag_order_display(model),
+  ])
+}
+
+fn view_next_orb_preview(model: Model) -> Element(Msg) {
+  case model.bag {
+    [] -> 
+      html.p([attribute.class("text-xs text-red-700 mb-1")], [
+        html.text("Next: No orbs remaining"),
+      ])
+    [next_orb, ..] ->
+      html.p([attribute.class("text-xs text-red-700 mb-1")], [
+        html.text("Next: " <> orb.get_orb_name(next_orb)),
+      ])
+  }
+}
+
+fn view_bag_order_display(model: Model) -> Element(Msg) {
+  case model.bag {
+    [] ->
+      html.p([attribute.class("text-xs text-red-600")], [
+        html.text("Bag: Empty"),
+      ])
+    orbs -> {
+      let orb_names = list.map(orbs, orb.get_orb_name)
+      let orb_list = string.join(orb_names, ", ")
+      let display_text = case string.length(orb_list) > 60 {
+        True -> string.slice(orb_list, 0, 57) <> "..."
+        False -> orb_list
+      }
+      html.p([attribute.class("text-xs text-red-600")], [
+        html.text("Order: " <> display_text),
+      ])
+    }
+  }
+}
+
+fn view_dev_mode_toggle(model: Model) -> Element(Msg) {
+  case model.dev_mode {
+    True -> html.div([], []) // Toggle is shown in dev panel when active
+    False ->
+      html.div([attribute.class("mt-4")], [
+        html.button(
+          [
+            attribute.class(
+              "w-full py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 rounded text-xs font-light tracking-wider transition",
+            ),
+            event.on_click(ToggleDevMode),
+          ],
+          [html.text("🔧 ENABLE DEV MODE")],
+        ),
+      ])
+  }
 }
 

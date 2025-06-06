@@ -1147,6 +1147,25 @@ function add(a, b) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function slice(string5, idx, len) {
+  let $ = len < 0;
+  if ($) {
+    return "";
+  } else {
+    let $1 = idx < 0;
+    if ($1) {
+      let translated_idx = string_length(string5) + idx;
+      let $2 = translated_idx < 0;
+      if ($2) {
+        return "";
+      } else {
+        return string_slice(string5, translated_idx, len);
+      }
+    } else {
+      return string_slice(string5, idx, len);
+    }
+  }
+}
 function concat_loop(loop$strings, loop$accumulator) {
   while (true) {
     let strings = loop$strings;
@@ -1163,6 +1182,31 @@ function concat_loop(loop$strings, loop$accumulator) {
 }
 function concat2(strings) {
   return concat_loop(strings, "");
+}
+function join_loop(loop$strings, loop$separator, loop$accumulator) {
+  while (true) {
+    let strings = loop$strings;
+    let separator = loop$separator;
+    let accumulator = loop$accumulator;
+    if (strings instanceof Empty) {
+      return accumulator;
+    } else {
+      let string5 = strings.head;
+      let strings$1 = strings.tail;
+      loop$strings = strings$1;
+      loop$separator = separator;
+      loop$accumulator = accumulator + separator + string5;
+    }
+  }
+}
+function join(strings, separator) {
+  if (strings instanceof Empty) {
+    return "";
+  } else {
+    let first$1 = strings.head;
+    let rest = strings.tail;
+    return join_loop(rest, separator, first$1);
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
@@ -1206,6 +1250,50 @@ function identity(x) {
 }
 function to_string(term) {
   return term.toString();
+}
+function string_length(string5) {
+  if (string5 === "") {
+    return 0;
+  }
+  const iterator = graphemes_iterator(string5);
+  if (iterator) {
+    let i = 0;
+    for (const _ of iterator) {
+      i++;
+    }
+    return i;
+  } else {
+    return string5.match(/./gsu).length;
+  }
+}
+var segmenter = void 0;
+function graphemes_iterator(string5) {
+  if (globalThis.Intl && Intl.Segmenter) {
+    segmenter ||= new Intl.Segmenter();
+    return segmenter.segment(string5)[Symbol.iterator]();
+  }
+}
+function string_slice(string5, idx, len) {
+  if (len <= 0 || idx >= string5.length) {
+    return "";
+  }
+  const iterator = graphemes_iterator(string5);
+  if (iterator) {
+    while (idx-- > 0) {
+      iterator.next();
+    }
+    let result = "";
+    while (len-- > 0) {
+      const v = iterator.next().value;
+      if (v === void 0) {
+        break;
+      }
+      result += v.segment;
+    }
+    return result;
+  } else {
+    return string5.match(/./gsu).slice(idx, idx + len).join("");
+  }
 }
 function starts_with(haystack, needle) {
   return haystack.startsWith(needle);
@@ -4768,7 +4856,7 @@ var InMarketplace = class extends CustomType {
 var InTestingGrounds = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, testing_config, testing_mode, testing_stats) {
+  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats) {
     super();
     this.health = health;
     this.points = points;
@@ -4781,6 +4869,7 @@ var Model = class extends CustomType {
     this.current_multiplier = current_multiplier;
     this.credits = credits;
     this.shuffle_enabled = shuffle_enabled;
+    this.dev_mode = dev_mode;
     this.testing_config = testing_config;
     this.testing_mode = testing_mode;
     this.testing_stats = testing_stats;
@@ -4817,6 +4906,8 @@ var BuyOrb = class extends CustomType {
   }
 };
 var ToggleShuffle = class extends CustomType {
+};
+var ToggleDevMode = class extends CustomType {
 };
 var ExitTestingGrounds = class extends CustomType {
 };
@@ -5133,6 +5224,7 @@ function apply_orb_effect(orb, model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -5153,6 +5245,7 @@ function apply_orb_effect(orb, model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -5173,6 +5266,7 @@ function apply_orb_effect(orb, model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -5193,6 +5287,7 @@ function apply_orb_effect(orb, model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -5212,6 +5307,7 @@ function apply_orb_effect(orb, model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -5231,6 +5327,7 @@ function apply_orb_effect(orb, model) {
       new_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -5309,6 +5406,7 @@ function purchase_orb(model, orb) {
         _record.current_multiplier,
         new_credits,
         _record.shuffle_enabled,
+        _record.dev_mode,
         _record.testing_config,
         _record.testing_mode,
         _record.testing_stats
@@ -6273,18 +6371,6 @@ function view_pause_button() {
     ])
   );
 }
-function view_playing_state(model) {
-  return div(
-    toList([]),
-    toList([
-      view_pause_button(),
-      view_last_orb_result(model),
-      view_bag_info(model),
-      view_shuffle_toggle(model),
-      view_pull_orb_button(model)
-    ])
-  );
-}
 function view_field_testing_header() {
   return div(
     toList([
@@ -6791,6 +6877,117 @@ function view_testing_grounds(model) {
     ])
   );
 }
+function view_next_orb_preview(model) {
+  let $ = model.bag;
+  if ($ instanceof Empty) {
+    return p(
+      toList([class$("text-xs text-red-700 mb-1")]),
+      toList([text3("Next: No orbs remaining")])
+    );
+  } else {
+    let next_orb = $.head;
+    return p(
+      toList([class$("text-xs text-red-700 mb-1")]),
+      toList([text3("Next: " + get_orb_name(next_orb))])
+    );
+  }
+}
+function view_bag_order_display(model) {
+  let $ = model.bag;
+  if ($ instanceof Empty) {
+    return p(
+      toList([class$("text-xs text-red-600")]),
+      toList([text3("Bag: Empty")])
+    );
+  } else {
+    let orbs = $;
+    let orb_names = map(orbs, get_orb_name);
+    let orb_list = join(orb_names, ", ");
+    let _block;
+    let $1 = string_length(orb_list) > 60;
+    if ($1) {
+      _block = slice(orb_list, 0, 57) + "...";
+    } else {
+      _block = orb_list;
+    }
+    let display_text = _block;
+    return p(
+      toList([class$("text-xs text-red-600")]),
+      toList([text3("Order: " + display_text)])
+    );
+  }
+}
+function view_dev_mode_panel(model) {
+  return div(
+    toList([
+      class$("mb-4 p-3 bg-red-50 border border-red-300 rounded")
+    ]),
+    toList([
+      div(
+        toList([class$("flex items-center justify-between mb-2")]),
+        toList([
+          h3(
+            toList([class$("text-sm font-medium text-red-800")]),
+            toList([text3("\u{1F527} DEV MODE ACTIVE")])
+          ),
+          button(
+            toList([
+              class$(
+                "text-xs text-red-600 hover:text-red-800 underline"
+              ),
+              on_click(new ToggleDevMode())
+            ]),
+            toList([text3("Turn Off")])
+          )
+        ])
+      ),
+      view_next_orb_preview(model),
+      view_bag_order_display(model)
+    ])
+  );
+}
+function view_dev_mode_toggle(model) {
+  let $ = model.dev_mode;
+  if ($) {
+    return div(toList([]), toList([]));
+  } else {
+    return div(
+      toList([class$("mt-4")]),
+      toList([
+        button(
+          toList([
+            class$(
+              "w-full py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 rounded text-xs font-light tracking-wider transition"
+            ),
+            on_click(new ToggleDevMode())
+          ]),
+          toList([text3("\u{1F527} ENABLE DEV MODE")])
+        )
+      ])
+    );
+  }
+}
+function view_playing_state(model) {
+  return div(
+    toList([]),
+    toList([
+      (() => {
+        let $ = model.dev_mode;
+        if ($) {
+          return view_dev_mode_panel(model);
+        } else {
+          return div(toList([]), toList([]));
+        }
+      })(),
+      view_pause_button(),
+      view_last_orb_result(model),
+      view_bag_info(model),
+      view_shuffle_toggle(model),
+      view_pull_orb_button(model),
+      view_dev_mode_toggle(model)
+    ])
+  );
+}
 function view_game_content(model) {
   let $ = model.status;
   if ($ instanceof MainMenu) {
@@ -6862,6 +7059,7 @@ function init(_) {
     1,
     0,
     false,
+    false,
     new None(),
     new ConfiguringTest(),
     new None()
@@ -6881,6 +7079,7 @@ function handle_next_level(model) {
     1,
     model.credits,
     model.shuffle_enabled,
+    model.dev_mode,
     model.testing_config,
     model.testing_mode,
     model.testing_stats
@@ -6900,6 +7099,7 @@ function handle_enter_testing_grounds(model) {
     _record.current_multiplier,
     _record.credits,
     _record.shuffle_enabled,
+    _record.dev_mode,
     new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
     new ConfiguringTest(),
     new None()
@@ -6931,6 +7131,7 @@ function handle_add_test_orb(model, orb) {
       _record$1.current_multiplier,
       _record$1.credits,
       _record$1.shuffle_enabled,
+      _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
       _record$1.testing_stats
@@ -6968,6 +7169,7 @@ function handle_remove_test_orb(model, index3) {
       _record$1.current_multiplier,
       _record$1.credits,
       _record$1.shuffle_enabled,
+      _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
       _record$1.testing_stats
@@ -7002,6 +7204,7 @@ function handle_set_test_milestone(model, milestone) {
       _record$1.current_multiplier,
       _record$1.credits,
       _record$1.shuffle_enabled,
+      _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
       _record$1.testing_stats
@@ -7036,6 +7239,7 @@ function handle_set_test_health(model, health) {
       _record$1.current_multiplier,
       _record$1.credits,
       _record$1.shuffle_enabled,
+      _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
       _record$1.testing_stats
@@ -7070,6 +7274,7 @@ function handle_set_simulation_count(model, count2) {
       _record$1.current_multiplier,
       _record$1.credits,
       _record$1.shuffle_enabled,
+      _record$1.dev_mode,
       new Some(new_config),
       _record$1.testing_mode,
       _record$1.testing_stats
@@ -7096,6 +7301,7 @@ function handle_start_simulations(model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       new ViewingResults(),
       new Some(stats)
@@ -7118,6 +7324,7 @@ function handle_view_test_results(model) {
     _record.current_multiplier,
     _record.credits,
     _record.shuffle_enabled,
+    _record.dev_mode,
     _record.testing_config,
     new ViewingResults(),
     _record.testing_stats
@@ -7137,6 +7344,7 @@ function handle_reset_test_config(model) {
     _record.current_multiplier,
     _record.credits,
     _record.shuffle_enabled,
+    _record.dev_mode,
     new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
     new ConfiguringTest(),
     new None()
@@ -7154,6 +7362,7 @@ function start_new_game() {
     0,
     1,
     0,
+    false,
     false,
     new None(),
     new ConfiguringTest(),
@@ -7173,6 +7382,7 @@ function restart_current_level(model) {
     1,
     model.credits,
     model.shuffle_enabled,
+    model.dev_mode,
     model.testing_config,
     model.testing_mode,
     model.testing_stats
@@ -7195,6 +7405,7 @@ function check_game_status(model) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7213,6 +7424,7 @@ function check_game_status(model) {
       _record.current_multiplier,
       model.credits + model.points,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7256,6 +7468,7 @@ function handle_pull_orb(model) {
           _record.current_multiplier,
           _record.credits,
           _record.shuffle_enabled,
+          _record.dev_mode,
           _record.testing_config,
           _record.testing_mode,
           _record.testing_stats
@@ -7285,6 +7498,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7307,6 +7521,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7325,6 +7540,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7347,6 +7563,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7365,6 +7582,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7385,6 +7603,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7406,6 +7625,26 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       !model.shuffle_enabled,
+      _record.dev_mode,
+      _record.testing_config,
+      _record.testing_mode,
+      _record.testing_stats
+    );
+  } else if (msg instanceof ToggleDevMode) {
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.status,
+      _record.last_orb,
+      _record.bombs_pulled_this_level,
+      _record.current_multiplier,
+      _record.credits,
+      _record.shuffle_enabled,
+      !model.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7424,6 +7663,7 @@ function update2(model, msg) {
       _record.current_multiplier,
       _record.credits,
       _record.shuffle_enabled,
+      _record.dev_mode,
       _record.testing_config,
       _record.testing_mode,
       _record.testing_stats
@@ -7464,7 +7704,7 @@ function main() {
       12,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 641, end: 731, pattern_start: 652, pattern_end: 657 }
+      { value: $, start: 649, end: 739, pattern_start: 660, pattern_end: 665 }
     );
   }
   return void 0;

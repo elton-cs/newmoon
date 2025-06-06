@@ -1,11 +1,11 @@
 import gleam/list
-import gleam/option.{None}
+import gleam/option
 import lustre
 import level
 import marketplace
 import orb
 import simulation
-import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest}
+import types.{type Model, type Msg, StartNewGame, ContinueGame, ShowHowToPlay, PullOrb, PauseGame, ResumeGame, NextLevel, RestartLevel, GoToMainMenu, GoToMarketplace, GoToTestingGrounds, AcceptLevelReward, BuyOrb, ToggleShuffle, ToggleDevMode, ExitTestingGrounds, AddTestOrb, RemoveTestOrb, SetTestMilestone, SetTestHealth, SetSimulationCount, StartSimulations, ViewTestResults, ResetTestConfig, MainMenu, Playing, Paused, LevelComplete, GameOver, InMarketplace, InTestingGrounds, ConfiguringTest}
 import view
 
 pub fn main() -> Nil {
@@ -28,6 +28,7 @@ fn init(_) -> Model {
     current_multiplier: 1,
     credits: 0,
     shuffle_enabled: False,
+    dev_mode: False,
     testing_config: option.None,
     testing_mode: ConfiguringTest,
     testing_stats: option.None,
@@ -62,6 +63,7 @@ fn update(model: Model, msg: Msg) -> Model {
     
     // Game Settings
     ToggleShuffle -> types.Model(..model, shuffle_enabled: !model.shuffle_enabled)
+    ToggleDevMode -> types.Model(..model, dev_mode: !model.dev_mode)
     
     // Testing Grounds Actions
     ExitTestingGrounds -> types.Model(..model, status: MainMenu)
@@ -112,11 +114,12 @@ fn handle_next_level(model: Model) -> Model {
     milestone: level.get_milestone_for_level(new_level),
     bag: level.create_level_bag(new_level),
     status: Playing,
-    last_orb: None,
+    last_orb: option.None,
     bombs_pulled_this_level: 0,
     current_multiplier: 1,
     credits: model.credits,
     shuffle_enabled: model.shuffle_enabled,
+    dev_mode: model.dev_mode,
     testing_config: model.testing_config,
     testing_mode: model.testing_mode,
     testing_stats: model.testing_stats,
@@ -246,6 +249,7 @@ fn start_new_game() -> Model {
     current_multiplier: 1,
     credits: 0,
     shuffle_enabled: False,
+    dev_mode: False,
     testing_config: option.None,
     testing_mode: ConfiguringTest,
     testing_stats: option.None,
@@ -265,6 +269,7 @@ fn restart_current_level(model: Model) -> Model {
     current_multiplier: 1,
     credits: model.credits,
     shuffle_enabled: model.shuffle_enabled,
+    dev_mode: model.dev_mode,
     testing_config: model.testing_config,
     testing_mode: model.testing_mode,
     testing_stats: model.testing_stats,

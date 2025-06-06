@@ -32,6 +32,7 @@ pub type Model {
     current_multiplier: Int,
     credits: Int,
     shuffle_enabled: Bool,
+    dev_mode: Bool,
     testing_config: Option(TestingConfiguration),
     testing_mode: TestingMode,
     testing_stats: Option(TestingStats),
@@ -64,6 +65,7 @@ pub type Msg {
   
   // Game Settings
   ToggleShuffle
+  ToggleDevMode
   
   // Testing Grounds Actions
   ExitTestingGrounds
