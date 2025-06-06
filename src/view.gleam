@@ -505,9 +505,7 @@ fn view_gamble_results_state(model: Model) -> Element(Msg) {
         ]),
       ],
     ),
-    html.div([attribute.class("grid grid-cols-5 gap-2 mb-6")], 
-      list.map(model.gamble_orbs, fn(orb) { view_orb_box(option.Some(orb)) })
-    ),
+    view_gamble_orbs_dice_pattern(model.gamble_orbs),
     html.button(
       [
         attribute.class(
@@ -534,15 +532,7 @@ fn view_applying_gamble_orbs_state(model: Model) -> Element(Msg) {
         ]),
       ],
     ),
-    html.div([attribute.class("grid grid-cols-5 gap-2 mb-6")], 
-      list.index_map(model.gamble_orbs, fn(orb, index) {
-        let style = case index <= model.gamble_current_index {
-          True -> [attribute.class("opacity-50")]
-          False -> []
-        }
-        html.div(style, [view_orb_box(option.Some(orb))])
-      })
-    ),
+    view_gamble_orbs_dice_pattern_with_progress(model.gamble_orbs, model.gamble_current_index),
     html.button(
       [
         attribute.class(
@@ -553,6 +543,139 @@ fn view_applying_gamble_orbs_state(model: Model) -> Element(Msg) {
       [html.text("NEXT ORB")],
     ),
   ])
+}
+
+fn view_gamble_orbs_dice_pattern(orbs: List(types.Orb)) -> Element(Msg) {
+  html.div([attribute.class("mb-6")], [
+    // Row 1: 2 orbs
+    html.div([attribute.class("flex justify-center gap-4 mb-3")], [
+      view_large_orb_box(list_at(orbs, 0)),
+      view_large_orb_box(list_at(orbs, 1)),
+    ]),
+    // Row 2: 3 orbs
+    html.div([attribute.class("flex justify-center gap-4")], [
+      view_large_orb_box(list_at(orbs, 2)),
+      view_large_orb_box(list_at(orbs, 3)),
+      view_large_orb_box(list_at(orbs, 4)),
+    ]),
+  ])
+}
+
+fn view_gamble_orbs_dice_pattern_with_progress(orbs: List(types.Orb), current_index: Int) -> Element(Msg) {
+  html.div([attribute.class("mb-6")], [
+    // Row 1: 2 orbs
+    html.div([attribute.class("flex justify-center gap-4 mb-3")], [
+      view_large_orb_box_with_progress(list_at(orbs, 0), 0, current_index),
+      view_large_orb_box_with_progress(list_at(orbs, 1), 1, current_index),
+    ]),
+    // Row 2: 3 orbs
+    html.div([attribute.class("flex justify-center gap-4")], [
+      view_large_orb_box_with_progress(list_at(orbs, 2), 2, current_index),
+      view_large_orb_box_with_progress(list_at(orbs, 3), 3, current_index),
+      view_large_orb_box_with_progress(list_at(orbs, 4), 4, current_index),
+    ]),
+  ])
+}
+
+fn view_large_orb_box(orb_option: option.Option(types.Orb)) -> Element(Msg) {
+  case orb_option {
+    option.None ->
+      html.div(
+        [
+          attribute.class(
+            "w-24 h-24 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center",
+          ),
+        ],
+        [
+          html.p([attribute.class("text-xs text-gray-400 font-light")], [
+            html.text("Empty"),
+          ]),
+        ],
+      )
+    option.Some(orb) -> {
+      let orb_style = get_orb_box_style(orb)
+      html.div(
+        [
+          attribute.class(
+            "w-24 h-24 rounded flex flex-col items-center justify-center border-2 bg-white transition-colors duration-700 "
+            <> orb_style.border,
+          ),
+        ],
+        [
+          html.div([attribute.class("text-xl mb-1 " <> orb_style.icon)], [
+            html.text(orb_style.symbol),
+          ]),
+          html.p([attribute.class("text-xs font-light text-center leading-tight " <> orb_style.text)], [
+            html.text(get_short_orb_name(orb)),
+          ]),
+        ],
+      )
+    }
+  }
+}
+
+fn view_large_orb_box_with_progress(orb_option: option.Option(types.Orb), index: Int, current_index: Int) -> Element(Msg) {
+  let opacity_class = case index <= current_index {
+    True -> " opacity-50"
+    False -> ""
+  }
+  
+  case orb_option {
+    option.None ->
+      html.div(
+        [
+          attribute.class(
+            "w-24 h-24 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center" <> opacity_class,
+          ),
+        ],
+        [
+          html.p([attribute.class("text-xs text-gray-400 font-light")], [
+            html.text("Empty"),
+          ]),
+        ],
+      )
+    option.Some(orb) -> {
+      let orb_style = get_orb_box_style(orb)
+      html.div(
+        [
+          attribute.class(
+            "w-24 h-24 rounded flex flex-col items-center justify-center border-2 bg-white transition-colors duration-700 "
+            <> orb_style.border <> opacity_class,
+          ),
+        ],
+        [
+          html.div([attribute.class("text-xl mb-1 " <> orb_style.icon)], [
+            html.text(orb_style.symbol),
+          ]),
+          html.p([attribute.class("text-xs font-light text-center leading-tight " <> orb_style.text)], [
+            html.text(get_short_orb_name(orb)),
+          ]),
+        ],
+      )
+    }
+  }
+}
+
+fn get_short_orb_name(orb: types.Orb) -> String {
+  case orb {
+    types.Point(value) -> "Data\n(+" <> int.to_string(value) <> ")"
+    types.Bomb(damage) -> "Hazard\n(-" <> int.to_string(damage) <> ")"
+    types.Health(value) -> "Medical\n(+" <> int.to_string(value) <> ")"
+    types.Collector -> "Scanner"
+    types.Survivor -> "Analyzer"
+    types.Multiplier -> "Amplifier"
+    types.Choice -> "Choice"
+    types.Gamble -> "Gamble"
+  }
+}
+
+// Helper function to safely get list element (since we don't have list.at)
+fn list_at(list: List(a), index: Int) -> option.Option(a) {
+  case index, list {
+    0, [first, ..] -> option.Some(first)
+    n, [_, ..rest] if n > 0 -> list_at(rest, n - 1)
+    _, _ -> option.None
+  }
 }
 
 fn view_choice_option(orb: types.Orb, select_msg: types.Msg, is_single: Bool) -> Element(Msg) {

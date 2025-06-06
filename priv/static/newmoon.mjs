@@ -6554,6 +6554,161 @@ function view_gambling_choice_state(_) {
     ])
   );
 }
+function get_short_orb_name(orb) {
+  if (orb instanceof Bomb) {
+    let damage = orb[0];
+    return "Hazard\n(-" + to_string(damage) + ")";
+  } else if (orb instanceof Point) {
+    let value = orb[0];
+    return "Data\n(+" + to_string(value) + ")";
+  } else if (orb instanceof Health) {
+    let value = orb[0];
+    return "Medical\n(+" + to_string(value) + ")";
+  } else if (orb instanceof Collector) {
+    return "Scanner";
+  } else if (orb instanceof Survivor) {
+    return "Analyzer";
+  } else if (orb instanceof Multiplier) {
+    return "Amplifier";
+  } else if (orb instanceof Choice) {
+    return "Choice";
+  } else {
+    return "Gamble";
+  }
+}
+function view_large_orb_box(orb_option) {
+  if (orb_option instanceof Some) {
+    let orb = orb_option[0];
+    let orb_style = get_orb_box_style(orb);
+    return div(
+      toList([
+        class$(
+          "w-24 h-24 rounded flex flex-col items-center justify-center border-2 bg-white transition-colors duration-700 " + orb_style.border
+        )
+      ]),
+      toList([
+        div(
+          toList([class$("text-xl mb-1 " + orb_style.icon)]),
+          toList([text3(orb_style.symbol)])
+        ),
+        p(
+          toList([
+            class$(
+              "text-xs font-light text-center leading-tight " + orb_style.text
+            )
+          ]),
+          toList([text3(get_short_orb_name(orb))])
+        )
+      ])
+    );
+  } else {
+    return div(
+      toList([
+        class$(
+          "w-24 h-24 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center"
+        )
+      ]),
+      toList([
+        p(
+          toList([class$("text-xs text-gray-400 font-light")]),
+          toList([text3("Empty")])
+        )
+      ])
+    );
+  }
+}
+function view_large_orb_box_with_progress(orb_option, index3, current_index) {
+  let _block;
+  let $ = index3 <= current_index;
+  if ($) {
+    _block = " opacity-50";
+  } else {
+    _block = "";
+  }
+  let opacity_class = _block;
+  if (orb_option instanceof Some) {
+    let orb = orb_option[0];
+    let orb_style = get_orb_box_style(orb);
+    return div(
+      toList([
+        class$(
+          "w-24 h-24 rounded flex flex-col items-center justify-center border-2 bg-white transition-colors duration-700 " + orb_style.border + opacity_class
+        )
+      ]),
+      toList([
+        div(
+          toList([class$("text-xl mb-1 " + orb_style.icon)]),
+          toList([text3(orb_style.symbol)])
+        ),
+        p(
+          toList([
+            class$(
+              "text-xs font-light text-center leading-tight " + orb_style.text
+            )
+          ]),
+          toList([text3(get_short_orb_name(orb))])
+        )
+      ])
+    );
+  } else {
+    return div(
+      toList([
+        class$(
+          "w-24 h-24 bg-gray-200 border-2 border-dashed border-gray-300 rounded flex items-center justify-center" + opacity_class
+        )
+      ]),
+      toList([
+        p(
+          toList([class$("text-xs text-gray-400 font-light")]),
+          toList([text3("Empty")])
+        )
+      ])
+    );
+  }
+}
+function list_at(loop$list, loop$index) {
+  while (true) {
+    let list4 = loop$list;
+    let index3 = loop$index;
+    if (list4 instanceof Empty) {
+      return new None();
+    } else if (index3 === 0) {
+      let first2 = list4.head;
+      return new Some(first2);
+    } else {
+      let n = index3;
+      if (n > 0) {
+        let rest = list4.tail;
+        loop$list = rest;
+        loop$index = n - 1;
+      } else {
+        return new None();
+      }
+    }
+  }
+}
+function view_gamble_orbs_dice_pattern(orbs) {
+  return div(
+    toList([class$("mb-6")]),
+    toList([
+      div(
+        toList([class$("flex justify-center gap-4 mb-3")]),
+        toList([
+          view_large_orb_box(list_at(orbs, 0)),
+          view_large_orb_box(list_at(orbs, 1))
+        ])
+      ),
+      div(
+        toList([class$("flex justify-center gap-4")]),
+        toList([
+          view_large_orb_box(list_at(orbs, 2)),
+          view_large_orb_box(list_at(orbs, 3)),
+          view_large_orb_box(list_at(orbs, 4))
+        ])
+      )
+    ])
+  );
+}
 function view_gamble_results_state(model) {
   return div(
     toList([class$("text-center")]),
@@ -6581,15 +6736,7 @@ function view_gamble_results_state(model) {
           )
         ])
       ),
-      div(
-        toList([class$("grid grid-cols-5 gap-2 mb-6")]),
-        map(
-          model.gamble_orbs,
-          (orb) => {
-            return view_orb_box(new Some(orb));
-          }
-        )
-      ),
+      view_gamble_orbs_dice_pattern(model.gamble_orbs),
       button(
         toList([
           class$(
@@ -6598,6 +6745,28 @@ function view_gamble_results_state(model) {
           on_click(new NextGambleOrb())
         ]),
         toList([text3("START APPLYING EFFECTS")])
+      )
+    ])
+  );
+}
+function view_gamble_orbs_dice_pattern_with_progress(orbs, current_index) {
+  return div(
+    toList([class$("mb-6")]),
+    toList([
+      div(
+        toList([class$("flex justify-center gap-4 mb-3")]),
+        toList([
+          view_large_orb_box_with_progress(list_at(orbs, 0), 0, current_index),
+          view_large_orb_box_with_progress(list_at(orbs, 1), 1, current_index)
+        ])
+      ),
+      div(
+        toList([class$("flex justify-center gap-4")]),
+        toList([
+          view_large_orb_box_with_progress(list_at(orbs, 2), 2, current_index),
+          view_large_orb_box_with_progress(list_at(orbs, 3), 3, current_index),
+          view_large_orb_box_with_progress(list_at(orbs, 4), 4, current_index)
+        ])
       )
     ])
   );
@@ -6631,25 +6800,9 @@ function view_applying_gamble_orbs_state(model) {
           )
         ])
       ),
-      div(
-        toList([class$("grid grid-cols-5 gap-2 mb-6")]),
-        index_map(
-          model.gamble_orbs,
-          (orb, index3) => {
-            let _block;
-            let $ = index3 <= model.gamble_current_index;
-            if ($) {
-              _block = toList([class$("opacity-50")]);
-            } else {
-              _block = toList([]);
-            }
-            let style2 = _block;
-            return div(
-              style2,
-              toList([view_orb_box(new Some(orb))])
-            );
-          }
-        )
+      view_gamble_orbs_dice_pattern_with_progress(
+        model.gamble_orbs,
+        model.gamble_current_index
       ),
       button(
         toList([

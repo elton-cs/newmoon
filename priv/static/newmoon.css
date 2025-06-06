@@ -643,6 +643,10 @@ video {
   height: 0.5rem;
 }
 
+.h-24 {
+  height: 6rem;
+}
+
 .max-h-20 {
   max-height: 5rem;
 }
@@ -657,6 +661,10 @@ video {
 
 .w-1\/2 {
   width: 50%;
+}
+
+.w-24 {
+  width: 6rem;
 }
 
 .w-full {
@@ -685,10 +693,6 @@ video {
 
 .grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.grid-cols-5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .flex-col {
@@ -1072,6 +1076,10 @@ video {
 
 .italic {
   font-style: italic;
+}
+
+.leading-tight {
+  line-height: 1.25;
 }
 
 .tracking-wide {
