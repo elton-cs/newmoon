@@ -185,9 +185,8 @@ fn view_playing_state(model: Model) -> Element(Msg) {
     },
     view_pause_button(),
     view_bag_info(model),
-    view_shuffle_toggle(model),
+    view_game_toggles(model),
     view_pull_orb_button(model),
-    view_dev_mode_toggle(model),
   ])
 }
 
@@ -247,11 +246,10 @@ fn view_orb_box(last_orb: option.Option(types.Orb)) -> Element(Msg) {
       html.div(
         [
           attribute.class(
-            "w-full h-16 rounded flex flex-col items-center justify-center border-2 "
-            <> orb_style.background
-            <> " "
+            "w-full h-16 rounded flex flex-col items-center justify-center border-2 bg-black transition-colors duration-700 "
             <> orb_style.border,
           ),
+          attribute.style("background-color", "white"),
         ],
         [
           html.div([attribute.class("text-lg " <> orb_style.icon)], [
@@ -270,7 +268,7 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
   case orb {
     types.Point(_) ->
       OrbBoxStyle(
-        background: "bg-blue-50",
+        background: "bg-white",
         border: "border-blue-200",
         icon: "text-blue-600",
         text: "text-blue-700",
@@ -278,7 +276,7 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
       )
     types.Health(_) ->
       OrbBoxStyle(
-        background: "bg-green-50",
+        background: "bg-white",
         border: "border-green-200",
         icon: "text-green-600",
         text: "text-green-700",
@@ -286,7 +284,7 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
       )
     types.Bomb(_) ->
       OrbBoxStyle(
-        background: "bg-red-50",
+        background: "bg-white",
         border: "border-red-200",
         icon: "text-red-600",
         text: "text-red-700",
@@ -294,7 +292,7 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
       )
     types.Collector ->
       OrbBoxStyle(
-        background: "bg-purple-50",
+        background: "bg-white",
         border: "border-purple-200",
         icon: "text-purple-600",
         text: "text-purple-700",
@@ -302,7 +300,7 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
       )
     types.Survivor ->
       OrbBoxStyle(
-        background: "bg-yellow-50",
+        background: "bg-white",
         border: "border-yellow-200",
         icon: "text-yellow-600",
         text: "text-yellow-700",
@@ -310,7 +308,7 @@ fn get_orb_box_style(orb: types.Orb) -> OrbBoxStyle {
       )
     types.Multiplier ->
       OrbBoxStyle(
-        background: "bg-indigo-50",
+        background: "bg-white",
         border: "border-indigo-200",
         icon: "text-indigo-600",
         text: "text-indigo-700",
@@ -329,30 +327,59 @@ type OrbBoxStyle {
   )
 }
 
-fn view_shuffle_toggle(model: Model) -> Element(Msg) {
+fn view_game_toggles(model: Model) -> Element(Msg) {
+  html.div([attribute.class("mb-4 grid grid-cols-2 gap-3")], [
+    view_shuffle_toggle_button(model),
+    view_dev_mode_toggle_button(model),
+  ])
+}
+
+fn view_shuffle_toggle_button(model: Model) -> Element(Msg) {
   let toggle_text = case model.shuffle_enabled {
-    True -> "SHUFFLE: ENABLED"
-    False -> "SHUFFLE: DISABLED"
+    True -> "SHUFFLE: ON"
+    False -> "SHUFFLE: OFF"
   }
   let toggle_color = case model.shuffle_enabled {
     True -> "bg-yellow-100 border-yellow-300 text-yellow-700"
     False -> "bg-gray-100 border-gray-300 text-gray-700"
   }
 
-  html.div([attribute.class("mb-4")], [
-    html.button(
-      [
-        attribute.class(
-          string.concat([
-            "w-full py-2 px-4 rounded border font-light text-xs tracking-wider transition ",
-            toggle_color,
-          ]),
-        ),
-        event.on_click(ToggleShuffle),
-      ],
-      [html.text(toggle_text)],
-    ),
-  ])
+  html.button(
+    [
+      attribute.class(
+        string.concat([
+          "py-2 px-3 rounded border font-light text-xs tracking-wider transition ",
+          toggle_color,
+        ]),
+      ),
+      event.on_click(ToggleShuffle),
+    ],
+    [html.text(toggle_text)],
+  )
+}
+
+fn view_dev_mode_toggle_button(model: Model) -> Element(Msg) {
+  let toggle_text = case model.dev_mode {
+    True -> "DEV: ON"
+    False -> "DEV: OFF"
+  }
+  let toggle_color = case model.dev_mode {
+    True -> "bg-orange-100 border-orange-300 text-orange-700"
+    False -> "bg-gray-100 border-gray-300 text-gray-700"
+  }
+
+  html.button(
+    [
+      attribute.class(
+        string.concat([
+          "py-2 px-3 rounded border font-light text-xs tracking-wider transition ",
+          toggle_color,
+        ]),
+      ),
+      event.on_click(ToggleDevMode),
+    ],
+    [html.text(toggle_text)],
+  )
 }
 
 fn view_pull_orb_button(model: Model) -> Element(Msg) {
@@ -360,14 +387,14 @@ fn view_pull_orb_button(model: Model) -> Element(Msg) {
   let button_classes = case is_disabled {
     True -> "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200"
     False ->
-      "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02]"
+      "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02] active:scale-95"
   }
 
   html.button(
     [
       attribute.class(
         string.concat([
-          "w-full py-4 px-6 rounded border font-light text-sm tracking-wider transition transform ",
+          "w-full py-4 px-6 rounded border font-light text-sm tracking-wider transition-all duration-150 transform ",
           button_classes,
         ]),
       ),
@@ -1033,17 +1060,8 @@ fn view_dev_mode_panel(model: Model) -> Element(Msg) {
   html.div(
     [attribute.class("mb-4 p-3 bg-red-50 border border-red-300 rounded")],
     [
-      html.div([attribute.class("flex items-center justify-between mb-2")], [
-        html.h3([attribute.class("text-sm font-medium text-red-800")], [
-          html.text("🔧 DEV MODE ACTIVE"),
-        ]),
-        html.button(
-          [
-            attribute.class("text-xs text-red-600 hover:text-red-800 underline"),
-            event.on_click(ToggleDevMode),
-          ],
-          [html.text("Turn Off")],
-        ),
+      html.h3([attribute.class("text-sm font-medium text-red-800 mb-2")], [
+        html.text("🔧 DEV MODE ACTIVE"),
       ]),
       view_next_orb_preview(model),
       view_bag_order_display(model),
@@ -1084,21 +1102,3 @@ fn view_bag_order_display(model: Model) -> Element(Msg) {
   }
 }
 
-fn view_dev_mode_toggle(model: Model) -> Element(Msg) {
-  case model.dev_mode {
-    True -> html.div([], [])
-    // Toggle is shown in dev panel when active
-    False ->
-      html.div([attribute.class("mt-4")], [
-        html.button(
-          [
-            attribute.class(
-              "w-full py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 rounded text-xs font-light tracking-wider transition",
-            ),
-            event.on_click(ToggleDevMode),
-          ],
-          [html.text("🔧 ENABLE DEV MODE")],
-        ),
-      ])
-  }
-}

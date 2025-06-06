@@ -2204,6 +2204,15 @@ function attribute2(name, value) {
 function class$(name) {
   return attribute2("class", name);
 }
+function style(property3, value) {
+  if (property3 === "") {
+    return class$("");
+  } else if (value === "") {
+    return class$("");
+  } else {
+    return attribute2("style", property3 + ":" + value + ";");
+  }
+}
 
 // build/dev/javascript/lustre/lustre/effect.mjs
 var Effect = class extends CustomType {
@@ -5851,7 +5860,7 @@ function view_specimens_panel(orbs_left) {
 function get_orb_box_style(orb) {
   if (orb instanceof Bomb) {
     return new OrbBoxStyle(
-      "bg-red-50",
+      "bg-white",
       "border-red-200",
       "text-red-600",
       "text-red-700",
@@ -5859,7 +5868,7 @@ function get_orb_box_style(orb) {
     );
   } else if (orb instanceof Point) {
     return new OrbBoxStyle(
-      "bg-blue-50",
+      "bg-white",
       "border-blue-200",
       "text-blue-600",
       "text-blue-700",
@@ -5867,7 +5876,7 @@ function get_orb_box_style(orb) {
     );
   } else if (orb instanceof Health) {
     return new OrbBoxStyle(
-      "bg-green-50",
+      "bg-white",
       "border-green-200",
       "text-green-600",
       "text-green-700",
@@ -5875,7 +5884,7 @@ function get_orb_box_style(orb) {
     );
   } else if (orb instanceof Collector) {
     return new OrbBoxStyle(
-      "bg-purple-50",
+      "bg-white",
       "border-purple-200",
       "text-purple-600",
       "text-purple-700",
@@ -5883,7 +5892,7 @@ function get_orb_box_style(orb) {
     );
   } else if (orb instanceof Survivor) {
     return new OrbBoxStyle(
-      "bg-yellow-50",
+      "bg-white",
       "border-yellow-200",
       "text-yellow-600",
       "text-yellow-700",
@@ -5891,7 +5900,7 @@ function get_orb_box_style(orb) {
     );
   } else {
     return new OrbBoxStyle(
-      "bg-indigo-50",
+      "bg-white",
       "border-indigo-200",
       "text-indigo-600",
       "text-indigo-700",
@@ -5906,8 +5915,9 @@ function view_orb_box(last_orb) {
     return div(
       toList([
         class$(
-          "w-full h-16 rounded flex flex-col items-center justify-center border-2 " + orb_style.background + " " + orb_style.border
-        )
+          "w-full h-16 rounded flex flex-col items-center justify-center border-2 bg-black transition-colors duration-700 " + orb_style.border
+        ),
+        style("background-color", "white")
       ]),
       toList([
         div(
@@ -5966,13 +5976,13 @@ function view_bag_info(model) {
     ])
   );
 }
-function view_shuffle_toggle(model) {
+function view_shuffle_toggle_button(model) {
   let _block;
   let $ = model.shuffle_enabled;
   if ($) {
-    _block = "SHUFFLE: ENABLED";
+    _block = "SHUFFLE: ON";
   } else {
-    _block = "SHUFFLE: DISABLED";
+    _block = "SHUFFLE: OFF";
   }
   let toggle_text = _block;
   let _block$1;
@@ -5983,23 +5993,59 @@ function view_shuffle_toggle(model) {
     _block$1 = "bg-gray-100 border-gray-300 text-gray-700";
   }
   let toggle_color = _block$1;
-  return div(
-    toList([class$("mb-4")]),
+  return button(
     toList([
-      button(
-        toList([
-          class$(
-            concat2(
-              toList([
-                "w-full py-2 px-4 rounded border font-light text-xs tracking-wider transition ",
-                toggle_color
-              ])
-            )
-          ),
-          on_click(new ToggleShuffle())
-        ]),
-        toList([text3(toggle_text)])
-      )
+      class$(
+        concat2(
+          toList([
+            "py-2 px-3 rounded border font-light text-xs tracking-wider transition ",
+            toggle_color
+          ])
+        )
+      ),
+      on_click(new ToggleShuffle())
+    ]),
+    toList([text3(toggle_text)])
+  );
+}
+function view_dev_mode_toggle_button(model) {
+  let _block;
+  let $ = model.dev_mode;
+  if ($) {
+    _block = "DEV: ON";
+  } else {
+    _block = "DEV: OFF";
+  }
+  let toggle_text = _block;
+  let _block$1;
+  let $1 = model.dev_mode;
+  if ($1) {
+    _block$1 = "bg-orange-100 border-orange-300 text-orange-700";
+  } else {
+    _block$1 = "bg-gray-100 border-gray-300 text-gray-700";
+  }
+  let toggle_color = _block$1;
+  return button(
+    toList([
+      class$(
+        concat2(
+          toList([
+            "py-2 px-3 rounded border font-light text-xs tracking-wider transition ",
+            toggle_color
+          ])
+        )
+      ),
+      on_click(new ToggleDevMode())
+    ]),
+    toList([text3(toggle_text)])
+  );
+}
+function view_game_toggles(model) {
+  return div(
+    toList([class$("mb-4 grid grid-cols-2 gap-3")]),
+    toList([
+      view_shuffle_toggle_button(model),
+      view_dev_mode_toggle_button(model)
     ])
   );
 }
@@ -6009,7 +6055,7 @@ function view_pull_orb_button(model) {
   if (is_disabled) {
     _block = "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200";
   } else {
-    _block = "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02]";
+    _block = "bg-black hover:bg-gray-800 text-white border-black hover:scale-[1.02] active:scale-95";
   }
   let button_classes = _block;
   return button(
@@ -6017,7 +6063,7 @@ function view_pull_orb_button(model) {
       class$(
         concat2(
           toList([
-            "w-full py-4 px-6 rounded border font-light text-sm tracking-wider transition transform ",
+            "w-full py-4 px-6 rounded border font-light text-sm tracking-wider transition-all duration-150 transform ",
             button_classes
           ])
         )
@@ -6972,49 +7018,14 @@ function view_dev_mode_panel(model) {
       class$("mb-4 p-3 bg-red-50 border border-red-300 rounded")
     ]),
     toList([
-      div(
-        toList([class$("flex items-center justify-between mb-2")]),
-        toList([
-          h3(
-            toList([class$("text-sm font-medium text-red-800")]),
-            toList([text3("\u{1F527} DEV MODE ACTIVE")])
-          ),
-          button(
-            toList([
-              class$(
-                "text-xs text-red-600 hover:text-red-800 underline"
-              ),
-              on_click(new ToggleDevMode())
-            ]),
-            toList([text3("Turn Off")])
-          )
-        ])
+      h3(
+        toList([class$("text-sm font-medium text-red-800 mb-2")]),
+        toList([text3("\u{1F527} DEV MODE ACTIVE")])
       ),
       view_next_orb_preview(model),
       view_bag_order_display(model)
     ])
   );
-}
-function view_dev_mode_toggle(model) {
-  let $ = model.dev_mode;
-  if ($) {
-    return div(toList([]), toList([]));
-  } else {
-    return div(
-      toList([class$("mt-4")]),
-      toList([
-        button(
-          toList([
-            class$(
-              "w-full py-2 px-4 bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-300 rounded text-xs font-light tracking-wider transition"
-            ),
-            on_click(new ToggleDevMode())
-          ]),
-          toList([text3("\u{1F527} ENABLE DEV MODE")])
-        )
-      ])
-    );
-  }
 }
 function view_playing_state(model) {
   return div(
@@ -7030,9 +7041,8 @@ function view_playing_state(model) {
       })(),
       view_pause_button(),
       view_bag_info(model),
-      view_shuffle_toggle(model),
-      view_pull_orb_button(model),
-      view_dev_mode_toggle(model)
+      view_game_toggles(model),
+      view_pull_orb_button(model)
     ])
   );
 }
