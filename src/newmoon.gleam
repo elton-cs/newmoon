@@ -5,16 +5,15 @@ import level
 import lustre
 import marketplace
 import orb
-import simulation
 import types.{
-  type Model, type Msg, AcceptGamble, AcceptLevelReward, AddTestOrb, BuyOrb,
-  ConfiguringTest, ContinueGame, DeclineGamble, ExitTestingGrounds, GameOver,
-  GoToMainMenu, GoToMarketplace, GoToTestingGrounds, InMarketplace,
-  InTestingGrounds, LevelComplete, MainMenu, NextGambleOrb, NextLevel, PauseGame,
-  Paused, Playing, PullOrb, RemoveTestOrb, ResetTestConfig, RestartLevel,
-  ResumeGame, SelectFirstChoice, SelectSecondChoice, SetSimulationCount,
-  SetTestHealth, SetTestMilestone, ShowHowToPlay, StartNewGame, StartSimulations,
-  ToggleDevMode, ToggleShuffle, ViewTestResults,
+  type Model, type Msg, AcceptGamble, AcceptLevelReward, BuyOrb,
+  ContinueGame, DeclineGamble, GameOver,
+  GoToMainMenu, GoToMarketplace, InMarketplace,
+  LevelComplete, MainMenu, NextGambleOrb, NextLevel, PauseGame,
+  Paused, Playing, PullOrb, RestartLevel,
+  ResumeGame, SelectFirstChoice, SelectSecondChoice,
+  ShowHowToPlay, StartNewGame,
+  ToggleDevMode, ToggleShuffle,
 }
 import view
 
@@ -42,9 +41,6 @@ fn init(_) -> Model {
     last_orb: option.None,
     shuffle_enabled: False,
     dev_mode: False,
-    testing_config: option.None,
-    testing_mode: ConfiguringTest,
-    testing_stats: option.None,
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
@@ -75,7 +71,6 @@ fn update(model: Model, msg: Msg) -> Model {
     // Screen Navigation
     GoToMainMenu -> types.Model(..model, status: MainMenu)
     GoToMarketplace -> types.Model(..model, status: InMarketplace)
-    GoToTestingGrounds -> handle_enter_testing_grounds(model)
     AcceptLevelReward -> types.Model(..model, status: LevelComplete)
 
     // Marketplace Actions
@@ -93,17 +88,6 @@ fn update(model: Model, msg: Msg) -> Model {
     AcceptGamble -> handle_accept_gamble(model)
     DeclineGamble -> handle_decline_gamble(model)
     NextGambleOrb -> handle_next_gamble_orb(model)
-
-    // Testing Grounds Actions
-    ExitTestingGrounds -> types.Model(..model, status: MainMenu)
-    AddTestOrb(orb) -> handle_add_test_orb(model, orb)
-    RemoveTestOrb(index) -> handle_remove_test_orb(model, index)
-    SetTestMilestone(milestone) -> handle_set_test_milestone(model, milestone)
-    SetTestHealth(health) -> handle_set_test_health(model, health)
-    SetSimulationCount(count) -> handle_set_simulation_count(model, count)
-    StartSimulations -> handle_start_simulations(model)
-    ViewTestResults -> handle_view_test_results(model)
-    ResetTestConfig -> handle_reset_test_config(model)
   }
 }
 
@@ -162,9 +146,6 @@ fn handle_next_level(model: Model) -> Model {
     last_orb: option.None,
     shuffle_enabled: model.shuffle_enabled,
     dev_mode: model.dev_mode,
-    testing_config: model.testing_config,
-    testing_mode: model.testing_mode,
-    testing_stats: model.testing_stats,
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
@@ -175,109 +156,6 @@ fn handle_next_level(model: Model) -> Model {
   )
 }
 
-fn handle_enter_testing_grounds(model: Model) -> Model {
-  types.Model(
-    ..model,
-    status: InTestingGrounds,
-    testing_mode: ConfiguringTest,
-    testing_config: option.Some(types.TestingConfiguration(
-      test_bag: [],
-      target_milestone: 50,
-      starting_health: 5,
-      simulation_count: 100,
-    )),
-    testing_stats: option.None,
-  )
-}
-
-fn handle_add_test_orb(model: Model, orb: types.Orb) -> Model {
-  case model.testing_config {
-    option.Some(config) -> {
-      let new_config =
-        types.TestingConfiguration(..config, test_bag: [orb, ..config.test_bag])
-      types.Model(..model, testing_config: option.Some(new_config))
-    }
-    option.None -> model
-  }
-}
-
-fn handle_remove_test_orb(model: Model, index: Int) -> Model {
-  case model.testing_config {
-    option.Some(config) -> {
-      let before = config.test_bag |> list.take(index)
-      let after = config.test_bag |> list.drop(index + 1)
-      let new_bag = before |> list.append(after)
-      let new_config = types.TestingConfiguration(..config, test_bag: new_bag)
-      types.Model(..model, testing_config: option.Some(new_config))
-    }
-    option.None -> model
-  }
-}
-
-fn handle_set_test_milestone(model: Model, milestone: Int) -> Model {
-  case model.testing_config {
-    option.Some(config) -> {
-      let new_config =
-        types.TestingConfiguration(..config, target_milestone: milestone)
-      types.Model(..model, testing_config: option.Some(new_config))
-    }
-    option.None -> model
-  }
-}
-
-fn handle_set_test_health(model: Model, health: Int) -> Model {
-  case model.testing_config {
-    option.Some(config) -> {
-      let new_config =
-        types.TestingConfiguration(..config, starting_health: health)
-      types.Model(..model, testing_config: option.Some(new_config))
-    }
-    option.None -> model
-  }
-}
-
-fn handle_set_simulation_count(model: Model, count: Int) -> Model {
-  case model.testing_config {
-    option.Some(config) -> {
-      let new_config =
-        types.TestingConfiguration(..config, simulation_count: count)
-      types.Model(..model, testing_config: option.Some(new_config))
-    }
-    option.None -> model
-  }
-}
-
-fn handle_start_simulations(model: Model) -> Model {
-  case model.testing_config {
-    option.Some(config) -> {
-      let stats = simulation.run_simulations(config)
-      types.Model(
-        ..model,
-        testing_mode: types.ViewingResults,
-        testing_stats: option.Some(stats),
-      )
-    }
-    option.None -> model
-  }
-}
-
-fn handle_view_test_results(model: Model) -> Model {
-  types.Model(..model, testing_mode: types.ViewingResults)
-}
-
-fn handle_reset_test_config(model: Model) -> Model {
-  types.Model(
-    ..model,
-    testing_config: option.Some(types.TestingConfiguration(
-      test_bag: [],
-      target_milestone: 50,
-      starting_health: 5,
-      simulation_count: 100,
-    )),
-    testing_stats: option.None,
-    testing_mode: ConfiguringTest,
-  )
-}
 
 fn start_new_game() -> Model {
   let base_bag = level.create_level_bag(1)
@@ -298,9 +176,6 @@ fn start_new_game() -> Model {
     last_orb: option.None,
     shuffle_enabled: False,
     dev_mode: False,
-    testing_config: option.None,
-    testing_mode: ConfiguringTest,
-    testing_stats: option.None,
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,
@@ -333,9 +208,6 @@ fn restart_current_level(model: Model) -> Model {
     last_orb: option.None,
     shuffle_enabled: model.shuffle_enabled,
     dev_mode: model.dev_mode,
-    testing_config: model.testing_config,
-    testing_mode: model.testing_mode,
-    testing_stats: model.testing_stats,
     log_entries: [],
     log_sequence: 0,
     pending_choice: option.None,

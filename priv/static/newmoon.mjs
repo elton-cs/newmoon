@@ -2,7 +2,7 @@
 var CustomType = class {
   withFields(fields) {
     let properties = Object.keys(this).map(
-      (label2) => label2 in fields ? fields[label2] : this[label2]
+      (label) => label in fields ? fields[label] : this[label]
     );
     return new this.constructor(...properties);
   }
@@ -352,13 +352,6 @@ function structurallyCompatibleObjects(a, b) {
   let nonstructural = [Promise, WeakSet, WeakMap, Function];
   if (nonstructural.some((c) => a instanceof c)) return false;
   return a.constructor === b.constructor;
-}
-function divideFloat(a, b) {
-  if (b === 0) {
-    return 0;
-  } else {
-    return a / b;
-  }
 }
 function makeError(variant, file, module, line, fn, message, extra) {
   let error = new globalThis.Error(message);
@@ -1193,28 +1186,6 @@ function map_loop(loop$list, loop$fun, loop$acc) {
 function map(list4, fun) {
   return map_loop(list4, fun, toList([]));
 }
-function index_map_loop(loop$list, loop$fun, loop$index, loop$acc) {
-  while (true) {
-    let list4 = loop$list;
-    let fun = loop$fun;
-    let index3 = loop$index;
-    let acc = loop$acc;
-    if (list4 instanceof Empty) {
-      return reverse(acc);
-    } else {
-      let first$1 = list4.head;
-      let rest$1 = list4.tail;
-      let acc$1 = prepend(fun(first$1, index3), acc);
-      loop$list = rest$1;
-      loop$fun = fun;
-      loop$index = index3 + 1;
-      loop$acc = acc$1;
-    }
-  }
-}
-function index_map(list4, fun) {
-  return index_map_loop(list4, fun, 0, toList([]));
-}
 function drop(loop$list, loop$n) {
   while (true) {
     let list4 = loop$list;
@@ -1643,28 +1614,6 @@ function sort(list4, compare4) {
     }
   }
 }
-function range_loop(loop$start, loop$stop, loop$acc) {
-  while (true) {
-    let start4 = loop$start;
-    let stop = loop$stop;
-    let acc = loop$acc;
-    let $ = compare2(start4, stop);
-    if ($ instanceof Lt) {
-      loop$start = start4;
-      loop$stop = stop - 1;
-      loop$acc = prepend(stop, acc);
-    } else if ($ instanceof Eq) {
-      return prepend(stop, acc);
-    } else {
-      loop$start = start4;
-      loop$stop = stop + 1;
-      loop$acc = prepend(stop, acc);
-    }
-  }
-}
-function range(start4, stop) {
-  return range_loop(start4, stop, toList([]));
-}
 function shuffle_pair_unwrap_loop(loop$list, loop$acc) {
   while (true) {
     let list4 = loop$list;
@@ -1802,9 +1751,6 @@ function map2(decoder, transformer) {
 // build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
 var Nil = void 0;
 var NOT_FOUND = {};
-function identity(x) {
-  return x;
-}
 function to_string(term) {
   return term.toString();
 }
@@ -1879,9 +1825,6 @@ var trim_start_regex = /* @__PURE__ */ new RegExp(
   `^[${unicode_whitespaces}]*`
 );
 var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
-function round2(float2) {
-  return Math.round(float2);
-}
 function random_uniform() {
   const random_uniform_result = Math.random();
   if (random_uniform_result === 1) {
@@ -1917,17 +1860,6 @@ function compare(a, b) {
     }
   }
 }
-function negate(x) {
-  return -1 * x;
-}
-function round(x) {
-  let $ = x >= 0;
-  if ($) {
-    return round2(x);
-  } else {
-    return 0 - round2(negate(x));
-  }
-}
 
 // build/dev/javascript/gleam_stdlib/gleam/int.mjs
 function compare2(a, b) {
@@ -1950,9 +1882,6 @@ function min(a, b) {
   } else {
     return b;
   }
-}
-function add2(a, b) {
-  return a + b;
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2301,7 +2230,7 @@ function do_matches(loop$path, loop$candidates) {
     }
   }
 }
-function add3(parent, index3, key) {
+function add2(parent, index3, key) {
   if (key === "") {
     return new Index(index3, parent);
   } else {
@@ -3355,7 +3284,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
                 mapper,
                 next$1.mapper
               );
-              let child_path = add3(path, node_index, next$1.key);
+              let child_path = add2(path, node_index, next$1.key);
               let controlled = is_controlled(
                 events,
                 next$1.namespace,
@@ -3609,7 +3538,7 @@ function do_diff(loop$old, loop$old_keyed, loop$new, loop$new_keyed, loop$moved,
             let prev$1 = $;
             let old$1 = old.tail;
             let composed_mapper = compose_mapper(mapper, next$1.mapper);
-            let child_path = add3(path, node_index, next$1.key);
+            let child_path = add2(path, node_index, next$1.key);
             let $2 = diff_attributes(
               false,
               child_path,
@@ -4517,7 +4446,7 @@ function do_remove_child(handlers, parent, child_index, child) {
   } else if (child instanceof Element) {
     let attributes = child.attributes;
     let children = child.children;
-    let path = add3(parent, child_index, child.key);
+    let path = add2(parent, child_index, child.key);
     let _pipe = handlers;
     let _pipe$1 = remove_attributes(_pipe, path, attributes);
     return do_remove_children(_pipe$1, path, 0, children);
@@ -4525,7 +4454,7 @@ function do_remove_child(handlers, parent, child_index, child) {
     return handlers;
   } else {
     let attributes = child.attributes;
-    let path = add3(parent, child_index, child.key);
+    let path = add2(parent, child_index, child.key);
     return remove_attributes(handlers, path, attributes);
   }
 }
@@ -4575,7 +4504,7 @@ function do_add_child(handlers, mapper, parent, child_index, child) {
   } else if (child instanceof Element) {
     let attributes = child.attributes;
     let children = child.children;
-    let path = add3(parent, child_index, child.key);
+    let path = add2(parent, child_index, child.key);
     let composed_mapper = compose_mapper(mapper, child.mapper);
     let _pipe = handlers;
     let _pipe$1 = add_attributes(_pipe, composed_mapper, path, attributes);
@@ -4584,7 +4513,7 @@ function do_add_child(handlers, mapper, parent, child_index, child) {
     return handlers;
   } else {
     let attributes = child.attributes;
-    let path = add3(parent, child_index, child.key);
+    let path = add2(parent, child_index, child.key);
     let composed_mapper = compose_mapper(mapper, child.mapper);
     return add_attributes(handlers, composed_mapper, path, attributes);
   }
@@ -4691,9 +4620,6 @@ function h2(attrs, children) {
 function h3(attrs, children) {
   return element2("h3", attrs, children);
 }
-function h4(attrs, children) {
-  return element2("h4", attrs, children);
-}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
@@ -4705,9 +4631,6 @@ function span(attrs, children) {
 }
 function button(attrs, children) {
   return element2("button", attrs, children);
-}
-function label(attrs, children) {
-  return element2("label", attrs, children);
 }
 
 // build/dev/javascript/lustre/lustre/runtime/server/runtime.mjs
@@ -4881,8 +4804,6 @@ var GameOver = class extends CustomType {
 };
 var InMarketplace = class extends CustomType {
 };
-var InTestingGrounds = class extends CustomType {
-};
 var ChoosingOrb = class extends CustomType {
 };
 var GamblingChoice = class extends CustomType {
@@ -4891,24 +4812,28 @@ var ViewingGambleResults = class extends CustomType {
 };
 var ApplyingGambleOrbs = class extends CustomType {
 };
-var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb, bombs_pulled_this_level, current_multiplier, credits, shuffle_enabled, dev_mode, testing_config, testing_mode, testing_stats, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index, in_gamble_choice, point_orbs_pulled_this_level) {
+var Player = class extends CustomType {
+  constructor(health, points, level, bombs_pulled_this_level, current_multiplier, credits, point_orbs_pulled_this_level) {
     super();
     this.health = health;
     this.points = points;
     this.level = level;
+    this.bombs_pulled_this_level = bombs_pulled_this_level;
+    this.current_multiplier = current_multiplier;
+    this.credits = credits;
+    this.point_orbs_pulled_this_level = point_orbs_pulled_this_level;
+  }
+};
+var Model = class extends CustomType {
+  constructor(player, milestone, bag, status, last_orb, shuffle_enabled, dev_mode, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index, in_gamble_choice) {
+    super();
+    this.player = player;
     this.milestone = milestone;
     this.bag = bag;
     this.status = status;
     this.last_orb = last_orb;
-    this.bombs_pulled_this_level = bombs_pulled_this_level;
-    this.current_multiplier = current_multiplier;
-    this.credits = credits;
     this.shuffle_enabled = shuffle_enabled;
     this.dev_mode = dev_mode;
-    this.testing_config = testing_config;
-    this.testing_mode = testing_mode;
-    this.testing_stats = testing_stats;
     this.log_entries = log_entries;
     this.log_sequence = log_sequence;
     this.pending_choice = pending_choice;
@@ -4916,7 +4841,6 @@ var Model = class extends CustomType {
     this.gamble_orbs = gamble_orbs;
     this.gamble_current_index = gamble_current_index;
     this.in_gamble_choice = in_gamble_choice;
-    this.point_orbs_pulled_this_level = point_orbs_pulled_this_level;
   }
 };
 var StartNewGame = class extends CustomType {
@@ -4938,8 +4862,6 @@ var RestartLevel = class extends CustomType {
 var GoToMainMenu = class extends CustomType {
 };
 var GoToMarketplace = class extends CustomType {
-};
-var GoToTestingGrounds = class extends CustomType {
 };
 var AcceptLevelReward = class extends CustomType {
 };
@@ -4963,44 +4885,6 @@ var DeclineGamble = class extends CustomType {
 };
 var NextGambleOrb = class extends CustomType {
 };
-var ExitTestingGrounds = class extends CustomType {
-};
-var AddTestOrb = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var RemoveTestOrb = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var SetTestMilestone = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var SetTestHealth = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var SetSimulationCount = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var StartSimulations = class extends CustomType {
-};
-var ViewTestResults = class extends CustomType {
-};
-var ResetTestConfig = class extends CustomType {
-};
 var MarketItem = class extends CustomType {
   constructor(orb, price, description) {
     super();
@@ -5008,44 +4892,6 @@ var MarketItem = class extends CustomType {
     this.price = price;
     this.description = description;
   }
-};
-var TestingConfiguration = class extends CustomType {
-  constructor(test_bag, target_milestone, starting_health, simulation_count) {
-    super();
-    this.test_bag = test_bag;
-    this.target_milestone = target_milestone;
-    this.starting_health = starting_health;
-    this.simulation_count = simulation_count;
-  }
-};
-var SimulationResult = class extends CustomType {
-  constructor(won, final_points, final_health, orbs_pulled, bombs_hit) {
-    super();
-    this.won = won;
-    this.final_points = final_points;
-    this.final_health = final_health;
-    this.orbs_pulled = orbs_pulled;
-    this.bombs_hit = bombs_hit;
-  }
-};
-var TestingStats = class extends CustomType {
-  constructor(total_runs, wins, losses, win_rate, average_points, best_score, worst_score, results) {
-    super();
-    this.total_runs = total_runs;
-    this.wins = wins;
-    this.losses = losses;
-    this.win_rate = win_rate;
-    this.average_points = average_points;
-    this.best_score = best_score;
-    this.worst_score = worst_score;
-    this.results = results;
-  }
-};
-var ConfiguringTest = class extends CustomType {
-};
-var RunningSimulations = class extends CustomType {
-};
-var ViewingResults = class extends CustomType {
 };
 var LogEntry = class extends CustomType {
   constructor(sequence, orb, message) {
@@ -5217,11 +5063,11 @@ function get_orb_result_message(orb, model) {
     ) + " SYS";
   } else if (orb instanceof Point) {
     let value = orb[0];
-    let multiplied_value = value * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
+    let multiplied_value = value * model.player.current_multiplier;
+    let $ = model.player.current_multiplier > 1;
     if ($) {
       return "\u25CF DATA PACKET [" + to_string(value) + "\xD7" + to_string(
-        model.current_multiplier
+        model.player.current_multiplier
       ) + "] +" + to_string(multiplied_value);
     } else {
       return "\u25CF DATA PACKET ACQUIRED +" + to_string(value);
@@ -5236,28 +5082,28 @@ function get_orb_result_message(orb, model) {
     let _pipe = model.bag;
     _block = length(_pipe);
     let base_points = _block;
-    let multiplied_points = base_points * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
+    let multiplied_points = base_points * model.player.current_multiplier;
+    let $ = model.player.current_multiplier > 1;
     if ($) {
       return "\u25EF DEEP SCAN [" + to_string(base_points) + "\xD7" + to_string(
-        model.current_multiplier
+        model.player.current_multiplier
       ) + "] +" + to_string(multiplied_points);
     } else {
       return "\u25EF DEEP SCAN COMPLETE +" + to_string(base_points);
     }
   } else if (orb instanceof Survivor) {
-    let base_points = model.bombs_pulled_this_level;
-    let multiplied_points = base_points * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
+    let base_points = model.player.bombs_pulled_this_level;
+    let multiplied_points = base_points * model.player.current_multiplier;
+    let $ = model.player.current_multiplier > 1;
     if ($) {
       return "\u25C8 DAMAGE ANALYSIS [" + to_string(base_points) + "\xD7" + to_string(
-        model.current_multiplier
+        model.player.current_multiplier
       ) + "] +" + to_string(multiplied_points);
     } else {
       return "\u25C8 DAMAGE ANALYSIS +" + to_string(base_points);
     }
   } else if (orb instanceof Multiplier) {
-    return "\u2731 SIGNAL BOOST [" + to_string(model.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
+    return "\u2731 SIGNAL BOOST [" + to_string(model.player.current_multiplier) + "\xD7 AMPLIFICATION ACTIVE]";
   } else if (orb instanceof Choice) {
     return "\u25C6 CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]";
   } else if (orb instanceof Gamble) {
@@ -5276,11 +5122,11 @@ function get_orb_result_message(orb, model) {
       }
     );
     let point_orbs_count = _block;
-    let multiplied_points = point_orbs_count * model.current_multiplier;
-    let $ = model.current_multiplier > 1;
+    let multiplied_points = point_orbs_count * model.player.current_multiplier;
+    let $ = model.player.current_multiplier > 1;
     if ($) {
       return "\u25C9 DATA SCANNER [" + to_string(point_orbs_count) + "\xD7" + to_string(
-        model.current_multiplier
+        model.player.current_multiplier
       ) + "] +" + to_string(multiplied_points);
     } else {
       return "\u25C9 DATA SCANNER [" + to_string(point_orbs_count) + " SAMPLES] +" + to_string(
@@ -5288,7 +5134,7 @@ function get_orb_result_message(orb, model) {
       );
     }
   } else {
-    let $ = model.point_orbs_pulled_this_level;
+    let $ = model.player.point_orbs_pulled_this_level;
     if ($ instanceof Empty) {
       return "\u21BA DATA RECOVERY [NO DATA SAMPLES TO RECOVER]";
     } else {
@@ -5333,29 +5179,20 @@ function get_orb_result_color(orb) {
 function handle_gamble_orb(model) {
   let _record = model;
   return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
+    _record.player,
     _record.milestone,
     _record.bag,
     new GamblingChoice(),
     _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
     _record.shuffle_enabled,
     _record.dev_mode,
-    _record.testing_config,
-    _record.testing_mode,
-    _record.testing_stats,
     _record.log_entries,
     _record.log_sequence,
     _record.pending_choice,
     new Some(true),
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice,
-    _record.point_orbs_pulled_this_level
+    _record.in_gamble_choice
   );
 }
 function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_choice_orbs, loop$first_orb, loop$original_choice_orbs) {
@@ -5368,9 +5205,7 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
     if (remaining_bag instanceof Empty) {
       let _record = model;
       return new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         (() => {
           let _pipe = original_choice_orbs;
@@ -5378,22 +5213,15 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         })(),
         new ChoosingOrb(),
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         new Some([first_orb, first_orb]),
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
     } else {
       let $ = remaining_bag.head;
@@ -5412,9 +5240,7 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
         let rest = remaining_bag.tail;
         let _record = model;
         return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
+          _record.player,
           _record.milestone,
           (() => {
             let _pipe = rest;
@@ -5423,22 +5249,15 @@ function draw_second_non_choice_orb(loop$model, loop$remaining_bag, loop$more_ch
           })(),
           new ChoosingOrb(),
           _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
           _record.shuffle_enabled,
           _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
           _record.log_entries,
           _record.log_sequence,
           new Some([first_orb, second_orb]),
           _record.pending_gamble,
           _record.gamble_orbs,
           _record.gamble_current_index,
-          _record.in_gamble_choice,
-          _record.point_orbs_pulled_this_level
+          _record.in_gamble_choice
         );
       }
     }
@@ -5452,29 +5271,20 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
     if (remaining_bag instanceof Empty) {
       let _record = model;
       return new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         choice_orbs_found,
         _record.status,
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
     } else {
       let $ = remaining_bag.head;
@@ -5492,29 +5302,20 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
           let single_orb = $;
           let _record = model;
           return new Model(
-            _record.health,
-            _record.points,
-            _record.level,
+            _record.player,
             _record.milestone,
             choice_orbs_found,
             new ChoosingOrb(),
             _record.last_orb,
-            _record.bombs_pulled_this_level,
-            _record.current_multiplier,
-            _record.credits,
             _record.shuffle_enabled,
             _record.dev_mode,
-            _record.testing_config,
-            _record.testing_mode,
-            _record.testing_stats,
             _record.log_entries,
             _record.log_sequence,
             new Some([single_orb, single_orb]),
             _record.pending_gamble,
             _record.gamble_orbs,
             _record.gamble_current_index,
-            _record.in_gamble_choice,
-            _record.point_orbs_pulled_this_level
+            _record.in_gamble_choice
           );
         } else {
           let $2 = $1.head;
@@ -5534,9 +5335,7 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
             let rest = $1.tail;
             let _record = model;
             return new Model(
-              _record.health,
-              _record.points,
-              _record.level,
+              _record.player,
               _record.milestone,
               (() => {
                 let _pipe = rest;
@@ -5544,22 +5343,15 @@ function draw_two_non_choice_orbs(loop$model, loop$remaining_bag, loop$choice_or
               })(),
               new ChoosingOrb(),
               _record.last_orb,
-              _record.bombs_pulled_this_level,
-              _record.current_multiplier,
-              _record.credits,
               _record.shuffle_enabled,
               _record.dev_mode,
-              _record.testing_config,
-              _record.testing_mode,
-              _record.testing_stats,
               _record.log_entries,
               _record.log_sequence,
               new Some([first_orb, second_orb]),
               _record.pending_gamble,
               _record.gamble_orbs,
               _record.gamble_current_index,
-              _record.in_gamble_choice,
-              _record.point_orbs_pulled_this_level
+              _record.in_gamble_choice
             );
           }
         }
@@ -5577,29 +5369,20 @@ function handle_choice_orb(model) {
       let single_orb = $.head;
       let _record = model;
       return new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         toList([]),
         new ChoosingOrb(),
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         new Some([single_orb, single_orb]),
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
     } else {
       return draw_two_non_choice_orbs(model, model.bag, toList([]));
@@ -5651,175 +5434,187 @@ function apply_orb_effect(orb, model) {
     let damage = orb[0];
     let _record = model;
     return new Model(
-      model.health - damage,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          model.player.health - damage,
+          _record$1.points,
+          _record$1.level,
+          model.player.bombs_pulled_this_level + 1,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      model.bombs_pulled_this_level + 1,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
-    let multiplied_points = value * model.current_multiplier;
+    let multiplied_points = value * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + multiplied_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + multiplied_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          prepend(value, model.player.point_orbs_pulled_this_level)
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      prepend(value, model.point_orbs_pulled_this_level)
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
-    let new_health = min(5, model.health + value);
+    let new_health = min(5, model.player.health + value);
     let _record = model;
     return new Model(
-      new_health,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          new_health,
+          _record$1.points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Collector) {
     let remaining_orbs = (() => {
       let _pipe = model.bag;
       return length(_pipe);
     })() - 1;
-    let collector_points = remaining_orbs * model.current_multiplier;
+    let collector_points = remaining_orbs * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + collector_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + collector_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Survivor) {
-    let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
+    let survivor_points = model.player.bombs_pulled_this_level * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + survivor_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + survivor_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Multiplier) {
-    let new_multiplier = model.current_multiplier * 2;
+    let new_multiplier = model.player.current_multiplier * 2;
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          _record$1.points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          new_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      new_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Choice) {
     return handle_choice_orb(model);
@@ -5839,35 +5634,37 @@ function apply_orb_effect(orb, model) {
       }
     );
     let point_orbs_count = _block;
-    let scanner_points = point_orbs_count * model.current_multiplier;
+    let scanner_points = point_orbs_count * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + scanner_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + scanner_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else {
-    let $ = model.point_orbs_pulled_this_level;
+    let $ = model.player.point_orbs_pulled_this_level;
     if ($ instanceof Empty) {
       return model;
     } else {
@@ -5886,29 +5683,31 @@ function apply_orb_effect(orb, model) {
         let updated_tracking = remove_first_occurrence(pulled_points, value);
         let _record = model;
         return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
+          (() => {
+            let _record$1 = model.player;
+            return new Player(
+              _record$1.health,
+              _record$1.points,
+              _record$1.level,
+              _record$1.bombs_pulled_this_level,
+              _record$1.current_multiplier,
+              _record$1.credits,
+              updated_tracking
+            );
+          })(),
           _record.milestone,
           updated_bag,
           _record.status,
           _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
           _record.shuffle_enabled,
           _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
           _record.log_entries,
           _record.log_sequence,
           _record.pending_choice,
           _record.pending_gamble,
           _record.gamble_orbs,
           _record.gamble_current_index,
-          _record.in_gamble_choice,
-          updated_tracking
+          _record.in_gamble_choice
         );
       } else {
         return model;
@@ -5964,7 +5763,7 @@ function get_market_items() {
   ]);
 }
 function can_afford(model, item) {
-  return model.credits >= item.price;
+  return model.player.credits >= item.price;
 }
 function purchase_orb(model, orb) {
   let market_items = get_market_items();
@@ -5978,33 +5777,35 @@ function purchase_orb(model, orb) {
     let item = $[0];
     let $1 = can_afford(model, item);
     if ($1) {
-      let new_credits = model.credits - item.price;
+      let new_credits = model.player.credits - item.price;
       let new_bag = prepend(orb, model.bag);
       let _record = model;
       return new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        (() => {
+          let _record$1 = model.player;
+          return new Player(
+            _record$1.health,
+            _record$1.points,
+            _record$1.level,
+            _record$1.bombs_pulled_this_level,
+            _record$1.current_multiplier,
+            new_credits,
+            _record$1.point_orbs_pulled_this_level
+          );
+        })(),
         _record.milestone,
         new_bag,
         _record.status,
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        new_credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
     } else {
       return model;
@@ -6107,7 +5908,9 @@ function view_marketplace(model) {
           p(
             toList([class$("text-purple-600 text-xs font-light")]),
             toList([
-              text3("Credits available: " + to_string(model.credits))
+              text3(
+                "Credits available: " + to_string(model.player.credits)
+              )
             ])
           )
         ])
@@ -6151,203 +5954,6 @@ function view_marketplace(model) {
   );
 }
 
-// build/dev/javascript/newmoon/simulation.mjs
-function apply_orb_simulation(orb, health, points, multiplier, bombs_hit) {
-  if (orb instanceof Bomb) {
-    let damage = orb[0];
-    let new_health = health - damage;
-    let new_bombs = bombs_hit + 1;
-    return [new_health, points, multiplier, new_bombs];
-  } else if (orb instanceof Point) {
-    let value = orb[0];
-    let modified_points = points + value * multiplier;
-    return [health, modified_points, multiplier, bombs_hit];
-  } else if (orb instanceof Health) {
-    let value = orb[0];
-    let new_health = health + value;
-    return [new_health, points, multiplier, bombs_hit];
-  } else if (orb instanceof Collector) {
-    let collector_points = 5 * multiplier;
-    return [health, points + collector_points, multiplier, bombs_hit];
-  } else if (orb instanceof Survivor) {
-    let survivor_points = bombs_hit * 2 * multiplier;
-    return [health, points + survivor_points, multiplier, bombs_hit];
-  } else if (orb instanceof Multiplier) {
-    let new_multiplier = multiplier * 2;
-    return [health, points, new_multiplier, bombs_hit];
-  } else if (orb instanceof Choice) {
-    return [health, points, multiplier, bombs_hit];
-  } else if (orb instanceof Gamble) {
-    return [health, points, multiplier, bombs_hit];
-  } else if (orb instanceof PointScanner) {
-    let scanner_points = 3 * multiplier;
-    return [health, points + scanner_points, multiplier, bombs_hit];
-  } else {
-    return [health, points, multiplier, bombs_hit];
-  }
-}
-function simulate_game(loop$bag, loop$health, loop$points, loop$target, loop$orbs_pulled, loop$bombs_hit, loop$multiplier) {
-  while (true) {
-    let bag = loop$bag;
-    let health = loop$health;
-    let points = loop$points;
-    let target = loop$target;
-    let orbs_pulled = loop$orbs_pulled;
-    let bombs_hit = loop$bombs_hit;
-    let multiplier = loop$multiplier;
-    let $ = health <= 0;
-    if ($) {
-      return new SimulationResult(false, points, health, orbs_pulled, bombs_hit);
-    } else {
-      let $1 = points >= target;
-      if ($1) {
-        return new SimulationResult(
-          true,
-          points,
-          health,
-          orbs_pulled,
-          bombs_hit
-        );
-      } else {
-        if (bag instanceof Empty) {
-          return new SimulationResult(
-            false,
-            points,
-            health,
-            orbs_pulled,
-            bombs_hit
-          );
-        } else {
-          let orb = bag.head;
-          let rest = bag.tail;
-          let $2 = apply_orb_simulation(
-            orb,
-            health,
-            points,
-            multiplier,
-            bombs_hit
-          );
-          let new_health = $2[0];
-          let new_points = $2[1];
-          let new_multiplier = $2[2];
-          let new_bombs = $2[3];
-          loop$bag = rest;
-          loop$health = new_health;
-          loop$points = new_points;
-          loop$target = target;
-          loop$orbs_pulled = orbs_pulled + 1;
-          loop$bombs_hit = new_bombs;
-          loop$multiplier = new_multiplier;
-        }
-      }
-    }
-  }
-}
-function run_single_simulation(config) {
-  let _block;
-  let _pipe = config.test_bag;
-  _block = shuffle(_pipe);
-  let shuffled_bag = _block;
-  return simulate_game(
-    shuffled_bag,
-    config.starting_health,
-    0,
-    config.target_milestone,
-    0,
-    0,
-    1
-  );
-}
-function calculate_stats(results) {
-  let _block;
-  let _pipe = results;
-  _block = length(_pipe);
-  let total_runs = _block;
-  let _block$1;
-  let _pipe$1 = results;
-  _block$1 = count(_pipe$1, (result) => {
-    return result.won;
-  });
-  let wins = _block$1;
-  let losses = total_runs - wins;
-  let _block$2;
-  let $ = total_runs > 0;
-  if ($) {
-    _block$2 = divideFloat(identity(wins), identity(total_runs));
-  } else {
-    _block$2 = 0;
-  }
-  let win_rate = _block$2;
-  let _block$3;
-  let _pipe$2 = results;
-  _block$3 = map(_pipe$2, (result) => {
-    return result.final_points;
-  });
-  let point_values = _block$3;
-  let _block$4;
-  let $1 = total_runs > 0;
-  if ($1) {
-    let _block$52;
-    let _pipe$3 = point_values;
-    _block$52 = fold(_pipe$3, 0, add2);
-    let total_points = _block$52;
-    _block$4 = divideFloat(
-      identity(total_points),
-      identity(total_runs)
-    );
-  } else {
-    _block$4 = 0;
-  }
-  let average_points = _block$4;
-  let _block$5;
-  let $2 = (() => {
-    let _pipe$3 = point_values;
-    let _pipe$4 = sort(_pipe$3, compare2);
-    return reverse(_pipe$4);
-  })();
-  if ($2 instanceof Empty) {
-    _block$5 = 0;
-  } else {
-    let best = $2.head;
-    _block$5 = best;
-  }
-  let best_score = _block$5;
-  let _block$6;
-  let $3 = (() => {
-    let _pipe$3 = point_values;
-    return sort(_pipe$3, compare2);
-  })();
-  if ($3 instanceof Empty) {
-    _block$6 = 0;
-  } else {
-    let worst = $3.head;
-    _block$6 = worst;
-  }
-  let worst_score = _block$6;
-  return new TestingStats(
-    total_runs,
-    wins,
-    losses,
-    win_rate,
-    average_points,
-    best_score,
-    worst_score,
-    results
-  );
-}
-function run_simulations(config) {
-  let _block;
-  let _pipe = config.simulation_count;
-  let _pipe$1 = ((_capture) => {
-    return range(1, _capture);
-  })(_pipe);
-  _block = map(_pipe$1, (_) => {
-    return run_single_simulation(config);
-  });
-  let results = _block;
-  return calculate_stats(results);
-}
-
 // build/dev/javascript/newmoon/view.mjs
 var OrbBoxStyle = class extends CustomType {
   constructor(background, border, icon, text4, symbol) {
@@ -6380,7 +5986,7 @@ function view_header() {
     ])
   );
 }
-function view_stat_card(symbol, label2, value, color_class) {
+function view_stat_card(symbol, label, value, color_class) {
   return div(
     toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
     toList([
@@ -6394,7 +6000,7 @@ function view_stat_card(symbol, label2, value, color_class) {
             "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light"
           )
         ]),
-        toList([text3(label2)])
+        toList([text3(label)])
       ),
       div(
         toList([
@@ -6457,11 +6063,11 @@ function view_result_card(message, color, centered) {
   );
 }
 function view_multiplier_status(model) {
-  let $ = model.current_multiplier > 1;
+  let $ = model.player.current_multiplier > 1;
   if ($) {
     return view_result_card(
       "\u2731 SIGNAL AMPLIFICATION ACTIVE: " + to_string(
-        model.current_multiplier
+        model.player.current_multiplier
       ) + "\xD7 DATA BOOST",
       "yellow",
       true
@@ -6480,13 +6086,13 @@ function view_game_stats(model) {
           view_stat_card(
             "\u25CB",
             "SYSTEMS",
-            to_string(model.health),
+            to_string(model.player.health),
             "text-black"
           ),
           view_stat_card(
             "\u25CF",
             "DATA",
-            to_string(model.points),
+            to_string(model.player.points),
             "text-gray-700"
           )
         ])
@@ -6503,13 +6109,13 @@ function view_game_stats(model) {
           view_stat_card(
             "\u25C9",
             "SECTOR",
-            to_string(model.level),
+            to_string(model.player.level),
             "text-gray-500"
           ),
           view_stat_card(
             "\u25C8",
             "CREDITS",
-            to_string(model.credits),
+            to_string(model.player.credits),
             "text-purple-600"
           )
         ])
@@ -7343,7 +6949,7 @@ function view_pull_orb_button(model) {
   );
 }
 function view_main_menu(model) {
-  let has_progress = model.level > 1 || model.credits > 0;
+  let has_progress = model.player.level > 1 || model.player.credits > 0;
   return div(
     toList([class$("text-center")]),
     toList([
@@ -7408,15 +7014,6 @@ function view_main_menu(model) {
           button(
             toList([
               class$(
-                "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
-              ),
-              on_click(new GoToTestingGrounds())
-            ]),
-            toList([text3("FIELD TESTING")])
-          ),
-          button(
-            toList([
-              class$(
                 "w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-light py-3 px-6 rounded transition text-sm tracking-wider"
               ),
               on_click(new ShowHowToPlay())
@@ -7434,8 +7031,8 @@ function view_main_menu(model) {
                 toList([class$("text-xs text-gray-600")]),
                 toList([
                   text3(
-                    "Progress: Sector " + to_string(model.level) + " \u2022 Credits: " + to_string(
-                      model.credits
+                    "Progress: Sector " + to_string(model.player.level) + " \u2022 Credits: " + to_string(
+                      model.player.credits
                     )
                   )
                 ])
@@ -7530,7 +7127,7 @@ function view_level_complete_state(model) {
             ]),
             toList([
               text3(
-                "SECTOR " + to_string(model.level) + " COMPLETE"
+                "SECTOR " + to_string(model.player.level) + " COMPLETE"
               )
             ])
           ),
@@ -7555,7 +7152,7 @@ function view_level_complete_state(model) {
                 toList([class$("text-gray-600 text-sm")]),
                 toList([
                   text3(
-                    "Final score: " + to_string(model.points) + " points"
+                    "Final score: " + to_string(model.player.points) + " points"
                   )
                 ])
               )
@@ -7566,13 +7163,17 @@ function view_level_complete_state(model) {
               class$("text-green-600 text-lg font-medium mb-2")
             ]),
             toList([
-              text3("Credits earned: +" + to_string(model.points))
+              text3(
+                "Credits earned: +" + to_string(model.player.points)
+              )
             ])
           ),
           p(
             toList([class$("text-purple-600 text-sm font-light")]),
             toList([
-              text3("Total credits: " + to_string(model.credits))
+              text3(
+                "Total credits: " + to_string(model.player.credits)
+              )
             ])
           )
         ])
@@ -7588,7 +7189,9 @@ function view_level_complete_state(model) {
               on_click(new NextLevel())
             ]),
             toList([
-              text3("ADVANCE TO SECTOR " + to_string(model.level + 1))
+              text3(
+                "ADVANCE TO SECTOR " + to_string(model.player.level + 1)
+              )
             ])
           ),
           button(
@@ -7605,9 +7208,9 @@ function view_level_complete_state(model) {
               class$(
                 "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
               ),
-              on_click(new GoToTestingGrounds())
+              on_click(new GoToMainMenu())
             ]),
-            toList([text3("FIELD TESTING")])
+            toList([text3("MAIN MENU")])
           ),
           button(
             toList([
@@ -7649,13 +7252,15 @@ function view_game_over_state(model) {
             toList([
               p(
                 toList([class$("mb-1")]),
-                toList([text3("Sector: " + to_string(model.level))])
+                toList([
+                  text3("Sector: " + to_string(model.player.level))
+                ])
               ),
               p(
                 toList([class$("mb-1")]),
                 toList([
                   text3(
-                    "Final score: " + to_string(model.points) + " / " + to_string(
+                    "Final score: " + to_string(model.player.points) + " / " + to_string(
                       model.milestone
                     )
                   )
@@ -7665,7 +7270,7 @@ function view_game_over_state(model) {
                 toList([]),
                 toList([
                   text3(
-                    "Credits retained: " + to_string(model.credits)
+                    "Credits retained: " + to_string(model.player.credits)
                   )
                 ])
               )
@@ -7683,16 +7288,18 @@ function view_game_over_state(model) {
               ),
               on_click(new RestartLevel())
             ]),
-            toList([text3("RETRY SECTOR " + to_string(model.level))])
+            toList([
+              text3("RETRY SECTOR " + to_string(model.player.level))
+            ])
           ),
           button(
             toList([
               class$(
                 "w-full bg-blue-600 hover:bg-blue-700 text-white font-light py-3 px-6 rounded transition text-sm tracking-wider"
               ),
-              on_click(new GoToTestingGrounds())
+              on_click(new GoToMainMenu())
             ]),
-            toList([text3("ANALYZE IN FIELD TESTING")])
+            toList([text3("MAIN MENU")])
           ),
           button(
             toList([
@@ -7730,541 +7337,6 @@ function view_pause_button() {
         ]),
         toList([text3("\u23F8 PAUSE")])
       )
-    ])
-  );
-}
-function view_field_testing_header() {
-  return div(
-    toList([
-      class$("mb-6 p-4 bg-blue-50 border border-blue-200 rounded")
-    ]),
-    toList([
-      h2(
-        toList([
-          class$("text-xl font-light text-black mb-2 tracking-wide")
-        ]),
-        toList([text3("SAMPLE FIELD TESTING")])
-      ),
-      p(
-        toList([class$("text-blue-700 text-sm font-light")]),
-        toList([text3("Simulate strategies and optimize your approach")])
-      ),
-      button(
-        toList([
-          class$(
-            "mt-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-light tracking-wider transition"
-          ),
-          on_click(new ExitTestingGrounds())
-        ]),
-        toList([text3("\u2190 BACK TO GAME")])
-      )
-    ])
-  );
-}
-function view_simulation_progress(_) {
-  return div(
-    toList([class$("p-6")]),
-    toList([
-      div(
-        toList([class$("mb-4")]),
-        toList([
-          h3(
-            toList([class$("text-lg font-light mb-2")]),
-            toList([text3("Running Simulations...")])
-          ),
-          p(
-            toList([class$("text-gray-600 text-sm")]),
-            toList([text3("Please wait while we test your strategy")])
-          )
-        ])
-      ),
-      div(
-        toList([class$("bg-gray-200 rounded-full h-2 mb-4")]),
-        toList([
-          div(
-            toList([class$("bg-blue-600 h-2 rounded-full w-1/2")]),
-            toList([])
-          )
-        ])
-      ),
-      button(
-        toList([
-          class$(
-            "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-light tracking-wider transition"
-          ),
-          on_click(new ViewTestResults())
-        ]),
-        toList([text3("VIEW RESULTS (DEMO)")])
-      )
-    ])
-  );
-}
-function generate_insights(stats) {
-  let _block;
-  let $ = stats.win_rate;
-  let rate = $;
-  if (rate >= 0.8) {
-    _block = "Excellent strategy! Very high success rate.";
-  } else {
-    let rate$1 = $;
-    if (rate$1 >= 0.6) {
-      _block = "Good strategy with solid win rate.";
-    } else {
-      let rate$2 = $;
-      if (rate$2 >= 0.4) {
-        _block = "Moderate success. Consider more health samples.";
-      } else {
-        _block = "Low win rate. Strategy needs significant improvement.";
-      }
-    }
-  }
-  let win_rate_insight = _block;
-  let _block$1;
-  let $1 = stats.average_points >= identity(
-    round(identity(stats.best_score) * 0.7)
-  );
-  if ($1) {
-    _block$1 = "Consistent scoring with good point generation.";
-  } else {
-    _block$1 = "High variance in scores. Strategy may be risky.";
-  }
-  let score_insight = _block$1;
-  let _block$2;
-  let $2 = stats.total_runs;
-  let runs = $2;
-  if (runs >= 100) {
-    _block$2 = "Large sample size provides reliable results.";
-  } else {
-    let runs$1 = $2;
-    if (runs$1 >= 50) {
-      _block$2 = "Good sample size for meaningful insights.";
-    } else {
-      _block$2 = "Small sample size. Consider running more simulations.";
-    }
-  }
-  let sample_insight = _block$2;
-  return toList([win_rate_insight, score_insight, sample_insight]);
-}
-function view_performance_insights(stats) {
-  let insights = generate_insights(stats);
-  return div(
-    toList([class$("bg-gray-50 rounded border p-4")]),
-    toList([
-      h4(
-        toList([class$("text-sm font-medium text-gray-700 mb-2")]),
-        toList([text3("STRATEGY INSIGHTS")])
-      ),
-      div(
-        toList([class$("space-y-2")]),
-        (() => {
-          let _pipe = insights;
-          return map(
-            _pipe,
-            (insight) => {
-              return p(
-                toList([class$("text-xs text-gray-600")]),
-                toList([text3(insight)])
-              );
-            }
-          );
-        })()
-      )
-    ])
-  );
-}
-function view_comprehensive_stats(stats) {
-  let _block;
-  let _pipe = stats.win_rate * 100;
-  let _pipe$1 = round(_pipe);
-  let _pipe$2 = to_string(_pipe$1);
-  _block = append2(_pipe$2, "%");
-  let win_rate_percent = _block;
-  let _block$1;
-  let _pipe$3 = stats.average_points;
-  let _pipe$4 = round(_pipe$3);
-  _block$1 = to_string(_pipe$4);
-  let avg_points = _block$1;
-  return div(
-    toList([]),
-    toList([
-      div(
-        toList([class$("grid grid-cols-2 gap-4 mb-6")]),
-        toList([
-          view_stat_card(
-            "\u2713",
-            "WIN RATE",
-            win_rate_percent,
-            (() => {
-              let $ = stats.win_rate >= 0.7;
-              if ($) {
-                return "text-green-600";
-              } else {
-                let $1 = stats.win_rate >= 0.4;
-                if ($1) {
-                  return "text-yellow-600";
-                } else {
-                  return "text-red-600";
-                }
-              }
-            })()
-          ),
-          view_stat_card("\u25CE", "AVG SCORE", avg_points, "text-blue-600")
-        ])
-      ),
-      div(
-        toList([class$("grid grid-cols-3 gap-3 mb-6")]),
-        toList([
-          view_stat_card(
-            "\u25C8",
-            "WINS",
-            to_string(stats.wins),
-            "text-green-600"
-          ),
-          view_stat_card(
-            "\u25C7",
-            "LOSSES",
-            to_string(stats.losses),
-            "text-red-600"
-          ),
-          view_stat_card(
-            "\u26AC",
-            "TOTAL",
-            to_string(stats.total_runs),
-            "text-gray-600"
-          )
-        ])
-      ),
-      div(
-        toList([class$("grid grid-cols-2 gap-4 mb-6")]),
-        toList([
-          view_stat_card(
-            "\u2191",
-            "BEST",
-            to_string(stats.best_score),
-            "text-purple-600"
-          ),
-          view_stat_card(
-            "\u2193",
-            "WORST",
-            to_string(stats.worst_score),
-            "text-gray-500"
-          )
-        ])
-      ),
-      view_performance_insights(stats)
-    ])
-  );
-}
-function view_test_results(model) {
-  let $ = model.testing_stats;
-  if ($ instanceof Some) {
-    let stats = $[0];
-    return div(
-      toList([class$("p-6")]),
-      toList([
-        h3(
-          toList([class$("text-lg font-light mb-4")]),
-          toList([text3("Simulation Results")])
-        ),
-        view_comprehensive_stats(stats),
-        div(
-          toList([class$("space-y-3 mt-6")]),
-          toList([
-            button(
-              toList([
-                class$(
-                  "w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-light tracking-wider transition"
-                ),
-                on_click(new ResetTestConfig())
-              ]),
-              toList([text3("NEW TEST")])
-            ),
-            button(
-              toList([
-                class$(
-                  "w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-sm font-light tracking-wider transition"
-                ),
-                on_click(new ExitTestingGrounds())
-              ]),
-              toList([text3("BACK TO GAME")])
-            )
-          ])
-        )
-      ])
-    );
-  } else {
-    return div(
-      toList([class$("p-6")]),
-      toList([
-        p(
-          toList([class$("text-gray-600")]),
-          toList([text3("No simulation results available")])
-        )
-      ])
-    );
-  }
-}
-function view_test_bag_contents(bag) {
-  let $ = (() => {
-    let _pipe = bag;
-    return is_empty(_pipe);
-  })();
-  if ($) {
-    return p(
-      toList([class$("text-gray-400 text-sm italic")]),
-      toList([text3("No samples added yet")])
-    );
-  } else {
-    return div(
-      toList([class$("flex flex-wrap gap-2")]),
-      (() => {
-        let _pipe = bag;
-        return index_map(
-          _pipe,
-          (orb, index3) => {
-            return div(
-              toList([
-                class$(
-                  "flex items-center bg-white rounded border px-2 py-1"
-                )
-              ]),
-              toList([
-                span(
-                  toList([class$("text-xs mr-2")]),
-                  toList([text3(get_orb_name(orb))])
-                ),
-                button(
-                  toList([
-                    class$("text-red-500 hover:text-red-700 text-xs"),
-                    on_click(new RemoveTestOrb(index3))
-                  ]),
-                  toList([text3("\xD7")])
-                )
-              ])
-            );
-          }
-        );
-      })()
-    );
-  }
-}
-function view_orb_selector() {
-  let available_orbs = toList([
-    new Point(8),
-    new Point(12),
-    new Point(15),
-    new Health(2),
-    new Health(4),
-    new Bomb(2),
-    new Bomb(3),
-    new Collector(),
-    new PointScanner(),
-    new PointRecovery(),
-    new Survivor(),
-    new Multiplier(),
-    new Choice(),
-    new Gamble()
-  ]);
-  return div(
-    toList([]),
-    toList([
-      p(
-        toList([class$("text-sm font-light mb-2")]),
-        toList([text3("Add samples to your test container:")])
-      ),
-      div(
-        toList([class$("grid grid-cols-2 gap-2")]),
-        (() => {
-          let _pipe = available_orbs;
-          return map(
-            _pipe,
-            (orb) => {
-              return button(
-                toList([
-                  class$(
-                    "px-3 py-2 bg-white hover:bg-gray-100 border rounded text-xs font-light transition"
-                  ),
-                  on_click(new AddTestOrb(orb))
-                ]),
-                toList([text3(get_orb_name(orb))])
-              );
-            }
-          );
-        })()
-      )
-    ])
-  );
-}
-function view_test_bag_builder(config) {
-  return div(
-    toList([class$("mb-6")]),
-    toList([
-      h3(
-        toList([class$("text-lg font-light mb-3")]),
-        toList([text3("Test Sample Configuration")])
-      ),
-      div(
-        toList([class$("mb-4 p-4 bg-gray-50 rounded border")]),
-        toList([
-          p(
-            toList([class$("text-sm text-gray-600 mb-2")]),
-            toList([
-              text3(
-                "Samples in container: " + (() => {
-                  let _pipe = config.test_bag;
-                  let _pipe$1 = length(_pipe);
-                  return to_string(_pipe$1);
-                })()
-              )
-            ])
-          ),
-          view_test_bag_contents(config.test_bag)
-        ])
-      ),
-      view_orb_selector()
-    ])
-  );
-}
-function view_test_settings(config) {
-  return div(
-    toList([class$("mb-6 p-4 bg-gray-50 rounded border")]),
-    toList([
-      h3(
-        toList([class$("text-lg font-light mb-3")]),
-        toList([text3("Test Settings")])
-      ),
-      div(
-        toList([class$("grid grid-cols-2 gap-4")]),
-        toList([
-          div(
-            toList([]),
-            toList([
-              label(
-                toList([class$("block text-sm font-light mb-1")]),
-                toList([text3("Target Score:")])
-              ),
-              p(
-                toList([class$("text-lg")]),
-                toList([text3(to_string(config.target_milestone))])
-              )
-            ])
-          ),
-          div(
-            toList([]),
-            toList([
-              label(
-                toList([class$("block text-sm font-light mb-1")]),
-                toList([text3("Starting Health:")])
-              ),
-              p(
-                toList([class$("text-lg")]),
-                toList([text3(to_string(config.starting_health))])
-              )
-            ])
-          )
-        ])
-      ),
-      div(
-        toList([class$("mt-4")]),
-        toList([
-          label(
-            toList([class$("block text-sm font-light mb-1")]),
-            toList([text3("Simulation Count:")])
-          ),
-          p(
-            toList([class$("text-lg")]),
-            toList([text3(to_string(config.simulation_count))])
-          )
-        ])
-      )
-    ])
-  );
-}
-function view_test_actions(config) {
-  let _block;
-  let _pipe = config.test_bag;
-  let _pipe$1 = is_empty(_pipe);
-  _block = /* @__PURE__ */ ((x) => {
-    return !x;
-  })(_pipe$1);
-  let can_run = _block;
-  let _block$1;
-  if (can_run) {
-    _block$1 = "bg-green-600 hover:bg-green-700 text-white";
-  } else {
-    _block$1 = "bg-gray-300 cursor-not-allowed text-gray-500";
-  }
-  let button_classes = _block$1;
-  return div(
-    toList([class$("space-y-3")]),
-    toList([
-      button(
-        toList([
-          class$(
-            concat2(
-              toList([
-                "w-full py-4 px-6 rounded font-light text-sm tracking-wider transition transform hover:scale-[1.02] ",
-                button_classes
-              ])
-            )
-          ),
-          on_click(new StartSimulations())
-        ]),
-        toList([
-          text3(
-            (() => {
-              if (can_run) {
-                return "RUN SIMULATIONS";
-              } else {
-                return "ADD SAMPLES TO BEGIN";
-              }
-            })()
-          )
-        ])
-      ),
-      button(
-        toList([
-          class$(
-            "w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-light text-sm tracking-wider transition"
-          ),
-          on_click(new ResetTestConfig())
-        ]),
-        toList([text3("RESET CONFIGURATION")])
-      )
-    ])
-  );
-}
-function view_test_configuration(model) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    return div(
-      toList([]),
-      toList([
-        view_test_bag_builder(config),
-        view_test_settings(config),
-        view_test_actions(config)
-      ])
-    );
-  } else {
-    return div(toList([]), toList([text3("Configuration error")]));
-  }
-}
-function view_testing_grounds(model) {
-  return div(
-    toList([class$("text-center")]),
-    toList([
-      view_field_testing_header(),
-      (() => {
-        let $ = model.testing_mode;
-        if ($ instanceof ConfiguringTest) {
-          return view_test_configuration(model);
-        } else if ($ instanceof RunningSimulations) {
-          return view_simulation_progress(model);
-        } else {
-          return view_test_results(model);
-        }
-      })()
     ])
   );
 }
@@ -8368,8 +7440,6 @@ function view_game_content(model) {
     return view_game_over_state(model);
   } else if ($ instanceof InMarketplace) {
     return view_marketplace(model);
-  } else if ($ instanceof InTestingGrounds) {
-    return view_testing_grounds(model);
   } else if ($ instanceof ChoosingOrb) {
     return view_choosing_orb_state(model);
   } else if ($ instanceof GamblingChoice) {
@@ -8422,33 +7492,24 @@ function view(model) {
 var FILEPATH = "src/newmoon.gleam";
 function init(_) {
   return new Model(
-    5,
-    0,
-    1,
+    new Player(5, 0, 1, 0, 1, 0, toList([])),
     get_milestone_for_level(1),
     create_level_bag(1),
     new MainMenu(),
     new None(),
-    0,
-    1,
-    0,
     false,
     false,
-    new None(),
-    new ConfiguringTest(),
-    new None(),
     toList([]),
     0,
     new None(),
     new None(),
     toList([]),
     0,
-    false,
-    toList([])
+    false
   );
 }
 function handle_next_level(model) {
-  let new_level = model.level + 1;
+  let new_level = model.player.level + 1;
   let base_bag = create_level_bag(new_level);
   let _block;
   let $ = model.shuffle_enabled;
@@ -8460,407 +7521,43 @@ function handle_next_level(model) {
   }
   let final_bag = _block;
   return new Model(
-    5,
-    0,
-    new_level,
+    new Player(5, 0, new_level, 0, 1, model.player.credits, toList([])),
     get_milestone_for_level(new_level),
     final_bag,
     new Playing(),
     new None(),
-    0,
-    1,
-    model.credits,
     model.shuffle_enabled,
     model.dev_mode,
-    model.testing_config,
-    model.testing_mode,
-    model.testing_stats,
     toList([]),
     0,
     new None(),
     new None(),
     toList([]),
     0,
-    false,
-    toList([])
-  );
-}
-function handle_enter_testing_grounds(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    new InTestingGrounds(),
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
-    _record.shuffle_enabled,
-    _record.dev_mode,
-    new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
-    new ConfiguringTest(),
-    new None(),
-    _record.log_entries,
-    _record.log_sequence,
-    _record.pending_choice,
-    _record.pending_gamble,
-    _record.gamble_orbs,
-    _record.gamble_current_index,
-    _record.in_gamble_choice,
-    _record.point_orbs_pulled_this_level
-  );
-}
-function handle_add_test_orb(model, orb) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    let _block;
-    let _record = config;
-    _block = new TestingConfiguration(
-      prepend(orb, config.test_bag),
-      _record.target_milestone,
-      _record.starting_health,
-      _record.simulation_count
-    );
-    let new_config = _block;
-    let _record$1 = model;
-    return new Model(
-      _record$1.health,
-      _record$1.points,
-      _record$1.level,
-      _record$1.milestone,
-      _record$1.bag,
-      _record$1.status,
-      _record$1.last_orb,
-      _record$1.bombs_pulled_this_level,
-      _record$1.current_multiplier,
-      _record$1.credits,
-      _record$1.shuffle_enabled,
-      _record$1.dev_mode,
-      new Some(new_config),
-      _record$1.testing_mode,
-      _record$1.testing_stats,
-      _record$1.log_entries,
-      _record$1.log_sequence,
-      _record$1.pending_choice,
-      _record$1.pending_gamble,
-      _record$1.gamble_orbs,
-      _record$1.gamble_current_index,
-      _record$1.in_gamble_choice,
-      _record$1.point_orbs_pulled_this_level
-    );
-  } else {
-    return model;
-  }
-}
-function handle_remove_test_orb(model, index3) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    let _block;
-    let _pipe = config.test_bag;
-    _block = take(_pipe, index3);
-    let before = _block;
-    let _block$1;
-    let _pipe$1 = config.test_bag;
-    _block$1 = drop(_pipe$1, index3 + 1);
-    let after = _block$1;
-    let _block$2;
-    let _pipe$2 = before;
-    _block$2 = append(_pipe$2, after);
-    let new_bag = _block$2;
-    let _block$3;
-    let _record = config;
-    _block$3 = new TestingConfiguration(
-      new_bag,
-      _record.target_milestone,
-      _record.starting_health,
-      _record.simulation_count
-    );
-    let new_config = _block$3;
-    let _record$1 = model;
-    return new Model(
-      _record$1.health,
-      _record$1.points,
-      _record$1.level,
-      _record$1.milestone,
-      _record$1.bag,
-      _record$1.status,
-      _record$1.last_orb,
-      _record$1.bombs_pulled_this_level,
-      _record$1.current_multiplier,
-      _record$1.credits,
-      _record$1.shuffle_enabled,
-      _record$1.dev_mode,
-      new Some(new_config),
-      _record$1.testing_mode,
-      _record$1.testing_stats,
-      _record$1.log_entries,
-      _record$1.log_sequence,
-      _record$1.pending_choice,
-      _record$1.pending_gamble,
-      _record$1.gamble_orbs,
-      _record$1.gamble_current_index,
-      _record$1.in_gamble_choice,
-      _record$1.point_orbs_pulled_this_level
-    );
-  } else {
-    return model;
-  }
-}
-function handle_set_test_milestone(model, milestone) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    let _block;
-    let _record = config;
-    _block = new TestingConfiguration(
-      _record.test_bag,
-      milestone,
-      _record.starting_health,
-      _record.simulation_count
-    );
-    let new_config = _block;
-    let _record$1 = model;
-    return new Model(
-      _record$1.health,
-      _record$1.points,
-      _record$1.level,
-      _record$1.milestone,
-      _record$1.bag,
-      _record$1.status,
-      _record$1.last_orb,
-      _record$1.bombs_pulled_this_level,
-      _record$1.current_multiplier,
-      _record$1.credits,
-      _record$1.shuffle_enabled,
-      _record$1.dev_mode,
-      new Some(new_config),
-      _record$1.testing_mode,
-      _record$1.testing_stats,
-      _record$1.log_entries,
-      _record$1.log_sequence,
-      _record$1.pending_choice,
-      _record$1.pending_gamble,
-      _record$1.gamble_orbs,
-      _record$1.gamble_current_index,
-      _record$1.in_gamble_choice,
-      _record$1.point_orbs_pulled_this_level
-    );
-  } else {
-    return model;
-  }
-}
-function handle_set_test_health(model, health) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    let _block;
-    let _record = config;
-    _block = new TestingConfiguration(
-      _record.test_bag,
-      _record.target_milestone,
-      health,
-      _record.simulation_count
-    );
-    let new_config = _block;
-    let _record$1 = model;
-    return new Model(
-      _record$1.health,
-      _record$1.points,
-      _record$1.level,
-      _record$1.milestone,
-      _record$1.bag,
-      _record$1.status,
-      _record$1.last_orb,
-      _record$1.bombs_pulled_this_level,
-      _record$1.current_multiplier,
-      _record$1.credits,
-      _record$1.shuffle_enabled,
-      _record$1.dev_mode,
-      new Some(new_config),
-      _record$1.testing_mode,
-      _record$1.testing_stats,
-      _record$1.log_entries,
-      _record$1.log_sequence,
-      _record$1.pending_choice,
-      _record$1.pending_gamble,
-      _record$1.gamble_orbs,
-      _record$1.gamble_current_index,
-      _record$1.in_gamble_choice,
-      _record$1.point_orbs_pulled_this_level
-    );
-  } else {
-    return model;
-  }
-}
-function handle_set_simulation_count(model, count2) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    let _block;
-    let _record = config;
-    _block = new TestingConfiguration(
-      _record.test_bag,
-      _record.target_milestone,
-      _record.starting_health,
-      count2
-    );
-    let new_config = _block;
-    let _record$1 = model;
-    return new Model(
-      _record$1.health,
-      _record$1.points,
-      _record$1.level,
-      _record$1.milestone,
-      _record$1.bag,
-      _record$1.status,
-      _record$1.last_orb,
-      _record$1.bombs_pulled_this_level,
-      _record$1.current_multiplier,
-      _record$1.credits,
-      _record$1.shuffle_enabled,
-      _record$1.dev_mode,
-      new Some(new_config),
-      _record$1.testing_mode,
-      _record$1.testing_stats,
-      _record$1.log_entries,
-      _record$1.log_sequence,
-      _record$1.pending_choice,
-      _record$1.pending_gamble,
-      _record$1.gamble_orbs,
-      _record$1.gamble_current_index,
-      _record$1.in_gamble_choice,
-      _record$1.point_orbs_pulled_this_level
-    );
-  } else {
-    return model;
-  }
-}
-function handle_start_simulations(model) {
-  let $ = model.testing_config;
-  if ($ instanceof Some) {
-    let config = $[0];
-    let stats = run_simulations(config);
-    let _record = model;
-    return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      _record.status,
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      new ViewingResults(),
-      new Some(stats),
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
-    );
-  } else {
-    return model;
-  }
-}
-function handle_view_test_results(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    _record.status,
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
-    _record.shuffle_enabled,
-    _record.dev_mode,
-    _record.testing_config,
-    new ViewingResults(),
-    _record.testing_stats,
-    _record.log_entries,
-    _record.log_sequence,
-    _record.pending_choice,
-    _record.pending_gamble,
-    _record.gamble_orbs,
-    _record.gamble_current_index,
-    _record.in_gamble_choice,
-    _record.point_orbs_pulled_this_level
-  );
-}
-function handle_reset_test_config(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    _record.status,
-    _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
-    _record.shuffle_enabled,
-    _record.dev_mode,
-    new Some(new TestingConfiguration(toList([]), 50, 5, 100)),
-    new ConfiguringTest(),
-    new None(),
-    _record.log_entries,
-    _record.log_sequence,
-    _record.pending_choice,
-    _record.pending_gamble,
-    _record.gamble_orbs,
-    _record.gamble_current_index,
-    _record.in_gamble_choice,
-    _record.point_orbs_pulled_this_level
+    false
   );
 }
 function start_new_game() {
   let base_bag = create_level_bag(1);
   return new Model(
-    5,
-    0,
-    1,
+    new Player(5, 0, 1, 0, 1, 0, toList([])),
     get_milestone_for_level(1),
     base_bag,
     new Playing(),
     new None(),
-    0,
-    1,
-    0,
     false,
     false,
-    new None(),
-    new ConfiguringTest(),
-    new None(),
     toList([]),
     0,
     new None(),
     new None(),
     toList([]),
     0,
-    false,
-    toList([])
+    false
   );
 }
 function restart_current_level(model) {
-  let base_bag = create_level_bag(model.level);
+  let base_bag = create_level_bag(model.player.level);
   let _block;
   let $ = model.shuffle_enabled;
   if ($) {
@@ -8871,29 +7568,28 @@ function restart_current_level(model) {
   }
   let final_bag = _block;
   return new Model(
-    5,
-    0,
-    model.level,
+    new Player(
+      5,
+      0,
+      model.player.level,
+      0,
+      1,
+      model.player.credits,
+      toList([])
+    ),
     model.milestone,
     final_bag,
     new Playing(),
     new None(),
-    0,
-    1,
-    model.credits,
     model.shuffle_enabled,
     model.dev_mode,
-    model.testing_config,
-    model.testing_mode,
-    model.testing_stats,
     toList([]),
     0,
     new None(),
     new None(),
     toList([]),
     0,
-    false,
-    toList([])
+    false
   );
 }
 function handle_toggle_shuffle(model) {
@@ -8906,56 +7602,38 @@ function handle_toggle_shuffle(model) {
     let shuffled_bag = _block;
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       shuffled_bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       new_shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       new_shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   }
 }
@@ -8966,115 +7644,90 @@ function handle_accept_gamble(model) {
   let gamble_orbs = _block;
   let _record = model;
   return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
+    _record.player,
     _record.milestone,
     _record.bag,
     new ViewingGambleResults(),
     _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
     _record.shuffle_enabled,
     _record.dev_mode,
-    _record.testing_config,
-    _record.testing_mode,
-    _record.testing_stats,
     _record.log_entries,
     _record.log_sequence,
     _record.pending_choice,
     new None(),
     gamble_orbs,
     0,
-    false,
-    _record.point_orbs_pulled_this_level
+    false
   );
 }
 function handle_decline_gamble(model) {
   let _record = model;
   return new Model(
-    _record.health,
-    _record.points,
-    _record.level,
+    _record.player,
     _record.milestone,
     _record.bag,
     new Playing(),
     _record.last_orb,
-    _record.bombs_pulled_this_level,
-    _record.current_multiplier,
-    _record.credits,
     _record.shuffle_enabled,
     _record.dev_mode,
-    _record.testing_config,
-    _record.testing_mode,
-    _record.testing_stats,
     _record.log_entries,
     _record.log_sequence,
     _record.pending_choice,
     new None(),
     _record.gamble_orbs,
     _record.gamble_current_index,
-    _record.in_gamble_choice,
-    _record.point_orbs_pulled_this_level
+    _record.in_gamble_choice
   );
 }
 function check_game_status(model) {
-  let $ = model.health <= 0;
-  let $1 = model.points >= model.milestone;
+  let $ = model.player.health <= 0;
+  let $1 = model.player.points >= model.milestone;
   if ($) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new GameOver(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if ($1) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          _record$1.points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          model.player.credits + model.player.points,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       new LevelComplete(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      model.credits + model.points,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else {
     return model;
@@ -9100,29 +7753,20 @@ function handle_pull_orb(model) {
       let _block;
       let _record = new_model;
       _block = new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         rest,
         _record.status,
         new Some(first_orb),
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         prepend(new_log_entry, model.log_entries),
         new_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
       let updated_model = _block;
       return check_game_status(updated_model);
@@ -9150,175 +7794,187 @@ function apply_gamble_orb_effect(orb, model) {
     let damage = orb[0];
     let _record = model;
     return new Model(
-      model.health - damage,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          model.player.health - damage,
+          _record$1.points,
+          _record$1.level,
+          model.player.bombs_pulled_this_level + 1,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      model.bombs_pulled_this_level + 1,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Point) {
     let value = orb[0];
-    let gamble_points = value * 2 * model.current_multiplier;
+    let gamble_points = value * 2 * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + gamble_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + gamble_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Health) {
     let value = orb[0];
-    let new_health = min(5, model.health + value);
+    let new_health = min(5, model.player.health + value);
     let _record = model;
     return new Model(
-      new_health,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          new_health,
+          _record$1.points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Collector) {
     let _block;
     let _pipe = model.bag;
     _block = length(_pipe);
     let remaining_orbs = _block;
-    let collector_points = remaining_orbs * model.current_multiplier;
+    let collector_points = remaining_orbs * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + collector_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + collector_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Survivor) {
-    let survivor_points = model.bombs_pulled_this_level * model.current_multiplier;
+    let survivor_points = model.player.bombs_pulled_this_level * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + survivor_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + survivor_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Multiplier) {
-    let new_multiplier = model.current_multiplier * 2;
+    let new_multiplier = model.player.current_multiplier * 2;
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          _record$1.points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          new_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      new_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (orb instanceof Choice) {
     let _block;
@@ -9326,32 +7982,34 @@ function apply_gamble_orb_effect(orb, model) {
     _block = drop(_pipe, 5);
     let orbs_after_gamble = _block;
     if (orbs_after_gamble instanceof Empty) {
-      let gamble_points = 5 * 2 * model.current_multiplier;
+      let gamble_points = 5 * 2 * model.player.current_multiplier;
       let _record = model;
       return new Model(
-        _record.health,
-        model.points + gamble_points,
-        _record.level,
+        (() => {
+          let _record$1 = model.player;
+          return new Player(
+            _record$1.health,
+            model.player.points + gamble_points,
+            _record$1.level,
+            _record$1.bombs_pulled_this_level,
+            _record$1.current_multiplier,
+            _record$1.credits,
+            _record$1.point_orbs_pulled_this_level
+          );
+        })(),
         _record.milestone,
         _record.bag,
         _record.status,
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
     } else {
       let $ = orbs_after_gamble.tail;
@@ -9359,58 +8017,40 @@ function apply_gamble_orb_effect(orb, model) {
         let single_orb = orbs_after_gamble.head;
         let _record = model;
         return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
+          _record.player,
           _record.milestone,
           _record.bag,
           new ChoosingOrb(),
           _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
           _record.shuffle_enabled,
           _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
           _record.log_entries,
           _record.log_sequence,
           new Some([single_orb, single_orb]),
           _record.pending_gamble,
           _record.gamble_orbs,
           _record.gamble_current_index,
-          true,
-          _record.point_orbs_pulled_this_level
+          true
         );
       } else {
         let first_orb = orbs_after_gamble.head;
         let second_orb = $.head;
         let _record = model;
         return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
+          _record.player,
           _record.milestone,
           _record.bag,
           new ChoosingOrb(),
           _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
           _record.shuffle_enabled,
           _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
           _record.log_entries,
           _record.log_sequence,
           new Some([first_orb, second_orb]),
           _record.pending_gamble,
           _record.gamble_orbs,
           _record.gamble_current_index,
-          true,
-          _record.point_orbs_pulled_this_level
+          true
         );
       }
     }
@@ -9430,35 +8070,37 @@ function apply_gamble_orb_effect(orb, model) {
       }
     );
     let point_orbs_count = _block;
-    let scanner_points = point_orbs_count * model.current_multiplier;
+    let scanner_points = point_orbs_count * model.player.current_multiplier;
     let _record = model;
     return new Model(
-      _record.health,
-      model.points + scanner_points,
-      _record.level,
+      (() => {
+        let _record$1 = model.player;
+        return new Player(
+          _record$1.health,
+          model.player.points + scanner_points,
+          _record$1.level,
+          _record$1.bombs_pulled_this_level,
+          _record$1.current_multiplier,
+          _record$1.credits,
+          _record$1.point_orbs_pulled_this_level
+        );
+      })(),
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else {
-    let $ = model.point_orbs_pulled_this_level;
+    let $ = model.player.point_orbs_pulled_this_level;
     if ($ instanceof Empty) {
       return model;
     } else {
@@ -9477,29 +8119,31 @@ function apply_gamble_orb_effect(orb, model) {
         let updated_tracking = remove_first_occurrence2(pulled_points, value);
         let _record = model;
         return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
+          (() => {
+            let _record$1 = model.player;
+            return new Player(
+              _record$1.health,
+              _record$1.points,
+              _record$1.level,
+              _record$1.bombs_pulled_this_level,
+              _record$1.current_multiplier,
+              _record$1.credits,
+              updated_tracking
+            );
+          })(),
           _record.milestone,
           updated_bag,
           _record.status,
           _record.last_orb,
-          _record.bombs_pulled_this_level,
-          _record.current_multiplier,
-          _record.credits,
           _record.shuffle_enabled,
           _record.dev_mode,
-          _record.testing_config,
-          _record.testing_mode,
-          _record.testing_stats,
           _record.log_entries,
           _record.log_sequence,
           _record.pending_choice,
           _record.pending_gamble,
           _record.gamble_orbs,
           _record.gamble_current_index,
-          _record.in_gamble_choice,
-          updated_tracking
+          _record.in_gamble_choice
         );
       } else {
         return model;
@@ -9554,29 +8198,20 @@ function handle_choice_selection(model, select_first) {
       let _block$4;
       let _record = after_effect;
       _block$4 = new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         new_bag,
         new ApplyingGambleOrbs(),
         new Some(chosen_orb),
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         prepend(new_log_entry, model.log_entries),
         new_sequence,
         new None(),
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        false,
-        _record.point_orbs_pulled_this_level
+        false
       );
       let updated_model = _block$4;
       return check_game_status(updated_model);
@@ -9601,29 +8236,20 @@ function handle_choice_selection(model, select_first) {
       let _block$2;
       let _record = after_effect;
       _block$2 = new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         new_bag,
         new Playing(),
         new Some(chosen_orb),
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         prepend(new_log_entry, model.log_entries),
         new_sequence,
         new None(),
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
       let updated_model = _block$2;
       return check_game_status(updated_model);
@@ -9647,29 +8273,20 @@ function apply_current_gamble_orb(model) {
     let _block$1;
     let _record = model;
     _block$1 = new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       remaining_bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
     let model_with_consumed_orb = _block$1;
     let modified_model = apply_gamble_orb_effect(orb, model_with_consumed_orb);
@@ -9679,29 +8296,20 @@ function apply_current_gamble_orb(model) {
     let _block$2;
     let _record$1 = modified_model;
     _block$2 = new Model(
-      _record$1.health,
-      _record$1.points,
-      _record$1.level,
+      _record$1.player,
       _record$1.milestone,
       _record$1.bag,
       _record$1.status,
       _record$1.last_orb,
-      _record$1.bombs_pulled_this_level,
-      _record$1.current_multiplier,
-      _record$1.credits,
       _record$1.shuffle_enabled,
       _record$1.dev_mode,
-      _record$1.testing_config,
-      _record$1.testing_mode,
-      _record$1.testing_stats,
       prepend(new_log_entry, model.log_entries),
       new_sequence,
       _record$1.pending_choice,
       _record$1.pending_gamble,
       _record$1.gamble_orbs,
       _record$1.gamble_current_index,
-      _record$1.in_gamble_choice,
-      _record$1.point_orbs_pulled_this_level
+      _record$1.in_gamble_choice
     );
     let updated_model = _block$2;
     return check_game_status(updated_model);
@@ -9716,57 +8324,39 @@ function handle_next_gamble_orb(model) {
     if ($1 instanceof Empty) {
       let _record = model;
       return new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         _record.bag,
         new Playing(),
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         _record.gamble_current_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
     } else {
       let _block;
       let _record = model;
       _block = new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         _record.bag,
         new ApplyingGambleOrbs(),
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         0,
-        false,
-        _record.point_orbs_pulled_this_level
+        false
       );
       let updated_model = _block;
       return apply_current_gamble_orb(updated_model);
@@ -9780,57 +8370,39 @@ function handle_next_gamble_orb(model) {
     if ($1) {
       let _record = model;
       return new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         _record.bag,
         new Playing(),
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         toList([]),
         0,
-        false,
-        _record.point_orbs_pulled_this_level
+        false
       );
     } else {
       let _block;
       let _record = model;
       _block = new Model(
-        _record.health,
-        _record.points,
-        _record.level,
+        _record.player,
         _record.milestone,
         _record.bag,
         _record.status,
         _record.last_orb,
-        _record.bombs_pulled_this_level,
-        _record.current_multiplier,
-        _record.credits,
         _record.shuffle_enabled,
         _record.dev_mode,
-        _record.testing_config,
-        _record.testing_mode,
-        _record.testing_stats,
         _record.log_entries,
         _record.log_sequence,
         _record.pending_choice,
         _record.pending_gamble,
         _record.gamble_orbs,
         next_index,
-        _record.in_gamble_choice,
-        _record.point_orbs_pulled_this_level
+        _record.in_gamble_choice
       );
       let updated_model = _block;
       return apply_current_gamble_orb(updated_model);
@@ -9845,29 +8417,20 @@ function update2(model, msg) {
   } else if (msg instanceof ContinueGame) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new Playing(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (msg instanceof ShowHowToPlay) {
     return model;
@@ -9876,56 +8439,38 @@ function update2(model, msg) {
   } else if (msg instanceof PauseGame) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new Paused(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (msg instanceof ResumeGame) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new Playing(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
@@ -9934,85 +8479,56 @@ function update2(model, msg) {
   } else if (msg instanceof GoToMainMenu) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new MainMenu(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (msg instanceof GoToMarketplace) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new InMarketplace(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
-  } else if (msg instanceof GoToTestingGrounds) {
-    return handle_enter_testing_grounds(model);
   } else if (msg instanceof AcceptLevelReward) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       new LevelComplete(),
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (msg instanceof BuyOrb) {
     let orb = msg[0];
@@ -10022,29 +8538,20 @@ function update2(model, msg) {
   } else if (msg instanceof ToggleDevMode) {
     let _record = model;
     return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
+      _record.player,
       _record.milestone,
       _record.bag,
       _record.status,
       _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
       _record.shuffle_enabled,
       !model.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
       _record.log_entries,
       _record.log_sequence,
       _record.pending_choice,
       _record.pending_gamble,
       _record.gamble_orbs,
       _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
+      _record.in_gamble_choice
     );
   } else if (msg instanceof SelectFirstChoice) {
     return handle_choice_selection(model, true);
@@ -10054,56 +8561,8 @@ function update2(model, msg) {
     return handle_accept_gamble(model);
   } else if (msg instanceof DeclineGamble) {
     return handle_decline_gamble(model);
-  } else if (msg instanceof NextGambleOrb) {
-    return handle_next_gamble_orb(model);
-  } else if (msg instanceof ExitTestingGrounds) {
-    let _record = model;
-    return new Model(
-      _record.health,
-      _record.points,
-      _record.level,
-      _record.milestone,
-      _record.bag,
-      new MainMenu(),
-      _record.last_orb,
-      _record.bombs_pulled_this_level,
-      _record.current_multiplier,
-      _record.credits,
-      _record.shuffle_enabled,
-      _record.dev_mode,
-      _record.testing_config,
-      _record.testing_mode,
-      _record.testing_stats,
-      _record.log_entries,
-      _record.log_sequence,
-      _record.pending_choice,
-      _record.pending_gamble,
-      _record.gamble_orbs,
-      _record.gamble_current_index,
-      _record.in_gamble_choice,
-      _record.point_orbs_pulled_this_level
-    );
-  } else if (msg instanceof AddTestOrb) {
-    let orb = msg[0];
-    return handle_add_test_orb(model, orb);
-  } else if (msg instanceof RemoveTestOrb) {
-    let index3 = msg[0];
-    return handle_remove_test_orb(model, index3);
-  } else if (msg instanceof SetTestMilestone) {
-    let milestone = msg[0];
-    return handle_set_test_milestone(model, milestone);
-  } else if (msg instanceof SetTestHealth) {
-    let health = msg[0];
-    return handle_set_test_health(model, health);
-  } else if (msg instanceof SetSimulationCount) {
-    let count2 = msg[0];
-    return handle_set_simulation_count(model, count2);
-  } else if (msg instanceof StartSimulations) {
-    return handle_start_simulations(model);
-  } else if (msg instanceof ViewTestResults) {
-    return handle_view_test_results(model);
   } else {
-    return handle_reset_test_config(model);
+    return handle_next_gamble_orb(model);
   }
 }
 function main() {
@@ -10116,10 +8575,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      22,
+      21,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 768, end: 858, pattern_start: 779, pattern_end: 784 }
+      { value: $, start: 543, end: 633, pattern_start: 554, pattern_end: 559 }
     );
   }
   return void 0;

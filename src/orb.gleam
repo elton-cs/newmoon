@@ -3,7 +3,8 @@ import gleam/list
 import gleam/option
 import types.{
   type Model, type Orb, Bomb, Choice, ChoosingOrb, Collector, Gamble,
-  GamblingChoice, Health, Multiplier, Point, PointRecovery, PointScanner, Survivor,
+  GamblingChoice, Health, Multiplier, Point, PointRecovery, PointScanner,
+  Survivor,
 }
 
 pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
@@ -98,7 +99,10 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
         pulled_points -> {
           let min_value = pulled_points |> list.sort(int.compare) |> list.first
           case min_value {
-            Ok(value) -> "↺ DATA RECOVERY [POINT(" <> int.to_string(value) <> ") RESTORED TO CONTAINER]"
+            Ok(value) ->
+              "↺ DATA RECOVERY [POINT("
+              <> int.to_string(value)
+              <> ") RESTORED TO CONTAINER]"
             Error(_) -> "↺ DATA RECOVERY [NO DATA SAMPLES TO RECOVER]"
           }
         }
@@ -127,12 +131,15 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
     Point(value) -> {
       let multiplied_points = value * model.player.current_multiplier
       types.Model(
-        ..model, 
+        ..model,
         player: types.Player(
           ..model.player,
           points: model.player.points + multiplied_points,
-          point_orbs_pulled_this_level: [value, ..model.player.point_orbs_pulled_this_level]
-        )
+          point_orbs_pulled_this_level: [
+            value,
+            ..model.player.point_orbs_pulled_this_level
+          ],
+        ),
       )
     }
     Bomb(damage) ->
@@ -146,21 +153,39 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
       )
     Health(value) -> {
       let new_health = int.min(5, model.player.health + value)
-      types.Model(..model, player: types.Player(..model.player, health: new_health))
+      types.Model(
+        ..model,
+        player: types.Player(..model.player, health: new_health),
+      )
     }
     Collector -> {
       let remaining_orbs = { model.bag |> list.length } - 1
       let collector_points = remaining_orbs * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + collector_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + collector_points,
+        ),
+      )
     }
     Survivor -> {
       let survivor_points =
         model.player.bombs_pulled_this_level * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + survivor_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + survivor_points,
+        ),
+      )
     }
     Multiplier -> {
       let new_multiplier = model.player.current_multiplier * 2
-      types.Model(..model, player: types.Player(..model.player, current_multiplier: new_multiplier))
+      types.Model(
+        ..model,
+        player: types.Player(..model.player, current_multiplier: new_multiplier),
+      )
     }
     Choice -> handle_choice_orb(model)
     Gamble -> handle_gamble_orb(model)
@@ -174,11 +199,18 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
           }
         })
       let scanner_points = point_orbs_count * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + scanner_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + scanner_points,
+        ),
+      )
     }
     PointRecovery -> {
       case model.player.point_orbs_pulled_this_level {
-        [] -> model  // No point orbs to recover
+        [] -> model
+        // No point orbs to recover
         pulled_points -> {
           let min_value = pulled_points |> list.sort(int.compare) |> list.first
           case min_value {
@@ -186,11 +218,15 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
               // Add Point(value) back to bag
               let updated_bag = model.bag |> list.append([Point(value)])
               // Remove first occurrence of min_value from tracking list
-              let updated_tracking = remove_first_occurrence(pulled_points, value)
+              let updated_tracking =
+                remove_first_occurrence(pulled_points, value)
               types.Model(
-                ..model, 
-                bag: updated_bag, 
-                player: types.Player(..model.player, point_orbs_pulled_this_level: updated_tracking)
+                ..model,
+                bag: updated_bag,
+                player: types.Player(
+                  ..model.player,
+                  point_orbs_pulled_this_level: updated_tracking,
+                ),
               )
             }
             Error(_) -> model
@@ -341,7 +377,8 @@ fn remove_first_occurrence(list: List(Int), target: Int) -> List(Int) {
     [] -> []
     [first, ..rest] -> {
       case first == target {
-        True -> rest  // Found target, return rest without it
+        True -> rest
+        // Found target, return rest without it
         False -> [first, ..remove_first_occurrence(rest, target)]
       }
     }
