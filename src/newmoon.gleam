@@ -27,16 +27,19 @@ pub fn main() -> Nil {
 
 fn init(_) -> Model {
   types.Model(
-    health: 5,
-    points: 0,
-    level: 1,
+    player: types.Player(
+      health: 5,
+      points: 0,
+      level: 1,
+      bombs_pulled_this_level: 0,
+      current_multiplier: 1,
+      credits: 0,
+      point_orbs_pulled_this_level: [],
+    ),
     milestone: level.get_milestone_for_level(1),
     bag: level.create_level_bag(1),
     status: MainMenu,
     last_orb: option.None,
-    bombs_pulled_this_level: 0,
-    current_multiplier: 1,
-    credits: 0,
     shuffle_enabled: False,
     dev_mode: False,
     testing_config: option.None,
@@ -49,7 +52,6 @@ fn init(_) -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
-    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -137,7 +139,7 @@ fn handle_pull_orb(model: Model) -> Model {
 }
 
 fn handle_next_level(model: Model) -> Model {
-  let new_level = model.level + 1
+  let new_level = model.player.level + 1
   let base_bag = level.create_level_bag(new_level)
   let final_bag = case model.shuffle_enabled {
     True -> base_bag |> list.shuffle
@@ -145,16 +147,19 @@ fn handle_next_level(model: Model) -> Model {
   }
   // Credits are already awarded when level completes, no need to add again
   types.Model(
-    health: 5,
-    points: 0,
-    level: new_level,
+    player: types.Player(
+      health: 5,
+      points: 0,
+      level: new_level,
+      bombs_pulled_this_level: 0,
+      current_multiplier: 1,
+      credits: model.player.credits,
+      point_orbs_pulled_this_level: [],
+    ),
     milestone: level.get_milestone_for_level(new_level),
     bag: final_bag,
     status: Playing,
     last_orb: option.None,
-    bombs_pulled_this_level: 0,
-    current_multiplier: 1,
-    credits: model.credits,
     shuffle_enabled: model.shuffle_enabled,
     dev_mode: model.dev_mode,
     testing_config: model.testing_config,
@@ -167,7 +172,6 @@ fn handle_next_level(model: Model) -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
-    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -279,16 +283,19 @@ fn start_new_game() -> Model {
   let base_bag = level.create_level_bag(1)
   // Start with shuffle disabled for new games
   types.Model(
-    health: 5,
-    points: 0,
-    level: 1,
+    player: types.Player(
+      health: 5,
+      points: 0,
+      level: 1,
+      bombs_pulled_this_level: 0,
+      current_multiplier: 1,
+      credits: 0,
+      point_orbs_pulled_this_level: [],
+    ),
     milestone: level.get_milestone_for_level(1),
     bag: base_bag,
     status: Playing,
     last_orb: option.None,
-    bombs_pulled_this_level: 0,
-    current_multiplier: 1,
-    credits: 0,
     shuffle_enabled: False,
     dev_mode: False,
     testing_config: option.None,
@@ -301,27 +308,29 @@ fn start_new_game() -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
-    point_orbs_pulled_this_level: [],
   )
 }
 
 fn restart_current_level(model: Model) -> Model {
-  let base_bag = level.create_level_bag(model.level)
+  let base_bag = level.create_level_bag(model.player.level)
   let final_bag = case model.shuffle_enabled {
     True -> base_bag |> list.shuffle
     False -> base_bag
   }
   types.Model(
-    health: 5,
-    points: 0,
-    level: model.level,
+    player: types.Player(
+      health: 5,
+      points: 0,
+      level: model.player.level,
+      bombs_pulled_this_level: 0,
+      current_multiplier: 1,
+      credits: model.player.credits,
+      point_orbs_pulled_this_level: [],
+    ),
     milestone: model.milestone,
     bag: final_bag,
     status: Playing,
     last_orb: option.None,
-    bombs_pulled_this_level: 0,
-    current_multiplier: 1,
-    credits: model.credits,
     shuffle_enabled: model.shuffle_enabled,
     dev_mode: model.dev_mode,
     testing_config: model.testing_config,
@@ -334,7 +343,6 @@ fn restart_current_level(model: Model) -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
-    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -545,33 +553,36 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
   case orb {
     types.Point(value) -> {
       // Special gamble rule: Point orbs get 2X multiplier
-      let gamble_points = value * 2 * model.current_multiplier
-      types.Model(..model, points: model.points + gamble_points)
+      let gamble_points = value * 2 * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + gamble_points))
     }
     types.Bomb(damage) ->
       types.Model(
         ..model,
-        health: model.health - damage,
-        bombs_pulled_this_level: model.bombs_pulled_this_level + 1,
+        player: types.Player(
+          ..model.player,
+          health: model.player.health - damage,
+          bombs_pulled_this_level: model.player.bombs_pulled_this_level + 1,
+        ),
       )
     types.Health(value) -> {
-      let new_health = int.min(5, model.health + value)
-      types.Model(..model, health: new_health)
+      let new_health = int.min(5, model.player.health + value)
+      types.Model(..model, player: types.Player(..model.player, health: new_health))
     }
     types.Collector -> {
       // Count remaining orbs in bag AFTER gamble orbs were removed
       let remaining_orbs = model.bag |> list.length
-      let collector_points = remaining_orbs * model.current_multiplier
-      types.Model(..model, points: model.points + collector_points)
+      let collector_points = remaining_orbs * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + collector_points))
     }
     types.Survivor -> {
       let survivor_points =
-        model.bombs_pulled_this_level * model.current_multiplier
-      types.Model(..model, points: model.points + survivor_points)
+        model.player.bombs_pulled_this_level * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + survivor_points))
     }
     types.Multiplier -> {
-      let new_multiplier = model.current_multiplier * 2
-      types.Model(..model, current_multiplier: new_multiplier)
+      let new_multiplier = model.player.current_multiplier * 2
+      types.Model(..model, player: types.Player(..model.player, current_multiplier: new_multiplier))
     }
     types.Choice -> {
       // During gamble, Choice orb transitions to choice view
@@ -580,8 +591,8 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       case orbs_after_gamble {
         [] -> {
           // No orbs available after gamble orbs, treat as Point(5) with gamble bonus
-          let gamble_points = 5 * 2 * model.current_multiplier
-          types.Model(..model, points: model.points + gamble_points)
+          let gamble_points = 5 * 2 * model.player.current_multiplier
+          types.Model(..model, player: types.Player(..model.player, points: model.player.points + gamble_points))
         }
         [single_orb] -> {
           // Only one orb available, duplicate it for choice UI
@@ -617,12 +628,12 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
             _ -> False
           }
         })
-      let scanner_points = point_orbs_count * model.current_multiplier
-      types.Model(..model, points: model.points + scanner_points)
+      let scanner_points = point_orbs_count * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + scanner_points))
     }
     types.PointRecovery -> {
       // During gamble, PointRecovery functions normally
-      case model.point_orbs_pulled_this_level {
+      case model.player.point_orbs_pulled_this_level {
         [] -> model  // No point orbs to recover
         pulled_points -> {
           let min_value = pulled_points |> list.sort(int.compare) |> list.first
@@ -635,7 +646,7 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
               types.Model(
                 ..model, 
                 bag: updated_bag, 
-                point_orbs_pulled_this_level: updated_tracking
+                player: types.Player(..model.player, point_orbs_pulled_this_level: updated_tracking)
               )
             }
             Error(_) -> model
@@ -647,13 +658,13 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
 }
 
 fn check_game_status(model: Model) -> Model {
-  case model.health <= 0, model.points >= model.milestone {
+  case model.player.health <= 0, model.player.points >= model.milestone {
     True, _ -> types.Model(..model, status: GameOver)
     False, True ->
       types.Model(
         ..model,
         status: LevelComplete,
-        credits: model.credits + model.points,
+        player: types.Player(..model.player, credits: model.player.credits + model.player.points),
       )
     False, False -> model
   }

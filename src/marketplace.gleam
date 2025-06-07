@@ -34,7 +34,7 @@ pub fn get_market_items() -> List(MarketItem) {
 }
 
 pub fn can_afford(model: Model, item: MarketItem) -> Bool {
-  model.credits >= item.price
+  model.player.credits >= item.price
 }
 
 pub fn purchase_orb(model: Model, orb: Orb) -> Model {
@@ -43,9 +43,9 @@ pub fn purchase_orb(model: Model, orb: Orb) -> Model {
     Ok(item) -> {
       case can_afford(model, item) {
         True -> {
-          let new_credits = model.credits - item.price
+          let new_credits = model.player.credits - item.price
           let new_bag = [orb, ..model.bag]
-          types.Model(..model, credits: new_credits, bag: new_bag)
+          types.Model(..model, player: types.Player(..model.player, credits: new_credits), bag: new_bag)
         }
         False -> model
       }
@@ -73,7 +73,7 @@ pub fn view_marketplace(model: Model) -> Element(Msg) {
           html.text("Enhance your exploration capabilities"),
         ]),
         html.p([attribute.class("text-purple-600 text-xs font-light")], [
-          html.text("Credits available: " <> int.to_string(model.credits)),
+          html.text("Credits available: " <> int.to_string(model.player.credits)),
         ]),
       ],
     ),

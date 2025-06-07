@@ -6,7 +6,7 @@ import gleeunit/should
 import orb
 import types.{
   type Model, Bomb, Choice, ChoosingOrb, Collector, Gamble, GamblingChoice,
-  Health, Model, Multiplier, Playing, Point, SelectFirstChoice,
+  Health, Model, Multiplier, Player, Playing, Point, SelectFirstChoice,
   SelectSecondChoice, Survivor,
 }
 
@@ -17,16 +17,19 @@ pub fn main() -> Nil {
 // Helper function to create a test model
 fn create_test_model() -> Model {
   Model(
-    health: 5,
-    points: 0,
-    level: 1,
+    player: Player(
+      health: 5,
+      points: 0,
+      level: 1,
+      bombs_pulled_this_level: 0,
+      current_multiplier: 1,
+      credits: 0,
+      point_orbs_pulled_this_level: [],
+    ),
     milestone: 50,
     bag: [],
     status: Playing,
     last_orb: option.None,
-    bombs_pulled_this_level: 0,
-    current_multiplier: 1,
-    credits: 0,
     shuffle_enabled: False,
     dev_mode: False,
     testing_config: option.None,
@@ -39,7 +42,6 @@ fn create_test_model() -> Model {
     gamble_orbs: [],
     gamble_current_index: 0,
     in_gamble_choice: False,
-    point_orbs_pulled_this_level: [],
   )
 }
 
@@ -52,30 +54,30 @@ pub fn point_orb_basic_test() {
   let point_orb = Point(10)
   let result = orb.apply_orb_effect(point_orb, model)
 
-  should.equal(result.points, 10)
-  should.equal(result.health, 5)
+  should.equal(result.player.points, 10)
+  should.equal(result.player.health, 5)
   // Health unchanged
-  should.equal(result.current_multiplier, 1)
+  should.equal(result.player.current_multiplier, 1)
   // Multiplier unchanged
 }
 
 pub fn point_orb_with_multiplier_test() {
-  let model = Model(..create_test_model(), current_multiplier: 2, points: 5)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, current_multiplier: 2, points: 5))
   let point_orb = Point(8)
   let result = orb.apply_orb_effect(point_orb, model)
 
-  should.equal(result.points, 21)
+  should.equal(result.player.points, 21)
   // 5 + (8 * 2) = 21
-  should.equal(result.current_multiplier, 2)
+  should.equal(result.player.current_multiplier, 2)
   // Multiplier unchanged
 }
 
 pub fn point_orb_high_multiplier_test() {
-  let model = Model(..create_test_model(), current_multiplier: 4, points: 10)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, current_multiplier: 4, points: 10))
   let point_orb = Point(6)
   let result = orb.apply_orb_effect(point_orb, model)
 
-  should.equal(result.points, 34)
+  should.equal(result.player.points, 34)
   // 10 + (6 * 4) = 34
 }
 
@@ -88,33 +90,33 @@ pub fn bomb_orb_basic_test() {
   let bomb_orb = Bomb(2)
   let result = orb.apply_orb_effect(bomb_orb, model)
 
-  should.equal(result.health, 3)
+  should.equal(result.player.health, 3)
   // 5 - 2 = 3
-  should.equal(result.bombs_pulled_this_level, 1)
-  should.equal(result.points, 0)
+  should.equal(result.player.bombs_pulled_this_level, 1)
+  should.equal(result.player.points, 0)
   // Points unchanged
 }
 
 pub fn bomb_orb_multiple_bombs_test() {
   let model =
-    Model(..create_test_model(), health: 4, bombs_pulled_this_level: 1)
+    Model(..create_test_model(), player: Player(..create_test_model().player, health: 4, bombs_pulled_this_level: 1))
   let bomb_orb = Bomb(3)
   let result = orb.apply_orb_effect(bomb_orb, model)
 
-  should.equal(result.health, 1)
+  should.equal(result.player.health, 1)
   // 4 - 3 = 1
-  should.equal(result.bombs_pulled_this_level, 2)
+  should.equal(result.player.bombs_pulled_this_level, 2)
   // 1 + 1 = 2
 }
 
 pub fn bomb_orb_fatal_damage_test() {
-  let model = Model(..create_test_model(), health: 2)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, health: 2))
   let bomb_orb = Bomb(3)
   let result = orb.apply_orb_effect(bomb_orb, model)
 
-  should.equal(result.health, -1)
+  should.equal(result.player.health, -1)
   // 2 - 3 = -1 (game over scenario)
-  should.equal(result.bombs_pulled_this_level, 1)
+  should.equal(result.player.bombs_pulled_this_level, 1)
 }
 
 // ============================================================================
@@ -122,22 +124,22 @@ pub fn bomb_orb_fatal_damage_test() {
 // ============================================================================
 
 pub fn health_orb_basic_test() {
-  let model = Model(..create_test_model(), health: 3)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, health: 3))
   let health_orb = Health(2)
   let result = orb.apply_orb_effect(health_orb, model)
 
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // 3 + 2 = 5 (capped at 5)
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // Points unchanged
 }
 
 pub fn health_orb_no_overheal_test() {
-  let model = Model(..create_test_model(), health: 4)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, health: 4))
   let health_orb = Health(3)
   let result = orb.apply_orb_effect(health_orb, model)
 
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // 4 + 3 = 7, but capped at 5
 }
 
@@ -147,16 +149,16 @@ pub fn health_orb_full_health_test() {
   let health_orb = Health(1)
   let result = orb.apply_orb_effect(health_orb, model)
 
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // Already at max, stays at 5
 }
 
 pub fn health_orb_critical_heal_test() {
-  let model = Model(..create_test_model(), health: 1)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, health: 1))
   let health_orb = Health(2)
   let result = orb.apply_orb_effect(health_orb, model)
 
-  should.equal(result.health, 3)
+  should.equal(result.player.health, 3)
   // 1 + 2 = 3
 }
 
@@ -169,9 +171,9 @@ pub fn collector_orb_empty_bag_test() {
   let collector_orb = Collector
   let result = orb.apply_orb_effect(collector_orb, model)
 
-  should.equal(result.points, -1)
+  should.equal(result.player.points, -1)
   // 0 orbs - 1 (for collector itself) = -1 points
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // Health unchanged
 }
 
@@ -180,7 +182,7 @@ pub fn collector_orb_single_orb_test() {
   let collector_orb = Collector
   let result = orb.apply_orb_effect(collector_orb, model)
 
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // 1 orb remaining, but -1 for the collector itself = 0
 }
 
@@ -189,7 +191,7 @@ pub fn collector_orb_multiple_orbs_test() {
   let collector_orb = Collector
   let result = orb.apply_orb_effect(collector_orb, model)
 
-  should.equal(result.points, 2)
+  should.equal(result.player.points, 2)
   // 3 orbs - 1 (for collector itself) = 2 points
 }
 
@@ -198,12 +200,12 @@ pub fn collector_orb_with_multiplier_test() {
     Model(
       ..create_test_model(),
       bag: [Point(5), Point(8)],
-      current_multiplier: 3,
+      player: Player(..create_test_model().player, current_multiplier: 3),
     )
   let collector_orb = Collector
   let result = orb.apply_orb_effect(collector_orb, model)
 
-  should.equal(result.points, 3)
+  should.equal(result.player.points, 3)
   // (2 orbs - 1) * 3 = 3 points
 }
 
@@ -212,29 +214,29 @@ pub fn collector_orb_with_multiplier_test() {
 // ============================================================================
 
 pub fn survivor_orb_no_bombs_test() {
-  let model = Model(..create_test_model(), bombs_pulled_this_level: 0)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, bombs_pulled_this_level: 0))
   let survivor_orb = Survivor
   let result = orb.apply_orb_effect(survivor_orb, model)
 
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // No bombs pulled = 0 points
 }
 
 pub fn survivor_orb_single_bomb_test() {
-  let model = Model(..create_test_model(), bombs_pulled_this_level: 1)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, bombs_pulled_this_level: 1))
   let survivor_orb = Survivor
   let result = orb.apply_orb_effect(survivor_orb, model)
 
-  should.equal(result.points, 1)
+  should.equal(result.player.points, 1)
   // 1 bomb pulled = 1 point
 }
 
 pub fn survivor_orb_multiple_bombs_test() {
-  let model = Model(..create_test_model(), bombs_pulled_this_level: 4)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, bombs_pulled_this_level: 4))
   let survivor_orb = Survivor
   let result = orb.apply_orb_effect(survivor_orb, model)
 
-  should.equal(result.points, 4)
+  should.equal(result.player.points, 4)
   // 4 bombs pulled = 4 points
 }
 
@@ -242,13 +244,12 @@ pub fn survivor_orb_with_multiplier_test() {
   let model =
     Model(
       ..create_test_model(),
-      bombs_pulled_this_level: 2,
-      current_multiplier: 2,
+      player: Player(..create_test_model().player, bombs_pulled_this_level: 2, current_multiplier: 2),
     )
   let survivor_orb = Survivor
   let result = orb.apply_orb_effect(survivor_orb, model)
 
-  should.equal(result.points, 4)
+  should.equal(result.player.points, 4)
   // 2 bombs * 2 multiplier = 4 points
 }
 
@@ -262,29 +263,29 @@ pub fn multiplier_orb_basic_test() {
   let multiplier_orb = Multiplier
   let result = orb.apply_orb_effect(multiplier_orb, model)
 
-  should.equal(result.current_multiplier, 2)
+  should.equal(result.player.current_multiplier, 2)
   // 1 * 2 = 2
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // Points unchanged
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // Health unchanged
 }
 
 pub fn multiplier_orb_stacking_test() {
-  let model = Model(..create_test_model(), current_multiplier: 2)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, current_multiplier: 2))
   let multiplier_orb = Multiplier
   let result = orb.apply_orb_effect(multiplier_orb, model)
 
-  should.equal(result.current_multiplier, 4)
+  should.equal(result.player.current_multiplier, 4)
   // 2 * 2 = 4
 }
 
 pub fn multiplier_orb_high_stacking_test() {
-  let model = Model(..create_test_model(), current_multiplier: 4)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, current_multiplier: 4))
   let multiplier_orb = Multiplier
   let result = orb.apply_orb_effect(multiplier_orb, model)
 
-  should.equal(result.current_multiplier, 8)
+  should.equal(result.player.current_multiplier, 8)
   // 4 * 2 = 8
 }
 
@@ -297,14 +298,14 @@ pub fn multiplier_point_sequence_test() {
 
   // First apply multiplier
   let after_multiplier = orb.apply_orb_effect(Multiplier, model)
-  should.equal(after_multiplier.current_multiplier, 2)
-  should.equal(after_multiplier.points, 0)
+  should.equal(after_multiplier.player.current_multiplier, 2)
+  should.equal(after_multiplier.player.points, 0)
 
   // Then apply point orb
   let after_point = orb.apply_orb_effect(Point(10), after_multiplier)
-  should.equal(after_point.points, 20)
+  should.equal(after_point.player.points, 20)
   // 10 * 2 = 20
-  should.equal(after_point.current_multiplier, 2)
+  should.equal(after_point.player.current_multiplier, 2)
   // Unchanged
 }
 
@@ -313,14 +314,14 @@ pub fn bomb_survivor_sequence_test() {
 
   // Pull a bomb
   let after_bomb = orb.apply_orb_effect(Bomb(2), model)
-  should.equal(after_bomb.health, 3)
-  should.equal(after_bomb.bombs_pulled_this_level, 1)
+  should.equal(after_bomb.player.health, 3)
+  should.equal(after_bomb.player.bombs_pulled_this_level, 1)
 
   // Pull survivor orb
   let after_survivor = orb.apply_orb_effect(Survivor, after_bomb)
-  should.equal(after_survivor.points, 1)
+  should.equal(after_survivor.player.points, 1)
   // 1 bomb pulled = 1 point
-  should.equal(after_survivor.bombs_pulled_this_level, 1)
+  should.equal(after_survivor.player.bombs_pulled_this_level, 1)
   // Unchanged
 }
 
@@ -330,21 +331,21 @@ pub fn complex_multiplier_sequence_test() {
   // Apply double multiplier (1 -> 2 -> 4)
   let after_mult1 = orb.apply_orb_effect(Multiplier, model)
   let after_mult2 = orb.apply_orb_effect(Multiplier, after_mult1)
-  should.equal(after_mult2.current_multiplier, 4)
+  should.equal(after_mult2.player.current_multiplier, 4)
 
   // Pull bomb (affects survivor later)
   let after_bomb = orb.apply_orb_effect(Bomb(1), after_mult2)
-  should.equal(after_bomb.bombs_pulled_this_level, 1)
+  should.equal(after_bomb.player.bombs_pulled_this_level, 1)
 
   // Pull collector with 2 orbs in bag
   let model_with_bag = Model(..after_bomb, bag: [Point(5), Health(2)])
   let after_collector = orb.apply_orb_effect(Collector, model_with_bag)
-  should.equal(after_collector.points, 4)
+  should.equal(after_collector.player.points, 4)
   // (2-1) * 4 = 4
 
   // Pull survivor
   let after_survivor = orb.apply_orb_effect(Survivor, after_collector)
-  should.equal(after_survivor.points, 8)
+  should.equal(after_survivor.player.points, 8)
   // 4 + (1 bomb * 4) = 8
 }
 
@@ -361,7 +362,7 @@ pub fn point_orb_message_test() {
 }
 
 pub fn point_orb_message_with_multiplier_test() {
-  let model = Model(..create_test_model(), current_multiplier: 3)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, current_multiplier: 3))
   let point_orb = Point(5)
   let message = orb.get_orb_result_message(point_orb, model)
 
@@ -418,13 +419,13 @@ pub fn orb_names_test() {
 // ============================================================================
 
 pub fn negative_health_bomb_test() {
-  let model = Model(..create_test_model(), health: 1)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, health: 1))
   let bomb_orb = Bomb(5)
   let result = orb.apply_orb_effect(bomb_orb, model)
 
-  should.equal(result.health, -4)
+  should.equal(result.player.health, -4)
   // 1 - 5 = -4 (game over)
-  should.equal(result.bombs_pulled_this_level, 1)
+  should.equal(result.player.bombs_pulled_this_level, 1)
 }
 
 pub fn zero_value_orbs_test() {
@@ -432,20 +433,20 @@ pub fn zero_value_orbs_test() {
 
   // Point orb with 0 value (edge case)
   let zero_point_result = orb.apply_orb_effect(Point(0), model)
-  should.equal(zero_point_result.points, 0)
+  should.equal(zero_point_result.player.points, 0)
 
   // Health orb with 0 value (edge case)
   let zero_health_result = orb.apply_orb_effect(Health(0), model)
-  should.equal(zero_health_result.health, 5)
+  should.equal(zero_health_result.player.health, 5)
   // No change
 }
 
 pub fn extreme_multiplier_test() {
-  let model = Model(..create_test_model(), current_multiplier: 16)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, current_multiplier: 16))
   let point_orb = Point(5)
   let result = orb.apply_orb_effect(point_orb, model)
 
-  should.equal(result.points, 80)
+  should.equal(result.player.points, 80)
   // 5 * 16 = 80
 }
 
@@ -467,7 +468,7 @@ pub fn collector_with_large_bag_test() {
   let collector_orb = Collector
   let result = orb.apply_orb_effect(collector_orb, model)
 
-  should.equal(result.points, 9)
+  should.equal(result.player.points, 9)
   // 10 - 1 = 9 points
 }
 
@@ -480,30 +481,30 @@ pub fn typical_level_sequence_test() {
 
   // Realistic level progression: Multiplier -> Points -> Bomb -> Health -> Collector
   let step1 = orb.apply_orb_effect(Multiplier, model)
-  should.equal(step1.current_multiplier, 2)
-  should.equal(step1.points, 0)
+  should.equal(step1.player.current_multiplier, 2)
+  should.equal(step1.player.points, 0)
 
   let step2 = orb.apply_orb_effect(Point(8), step1)
-  should.equal(step2.points, 16)
+  should.equal(step2.player.points, 16)
   // 8 * 2
-  should.equal(step2.health, 5)
+  should.equal(step2.player.health, 5)
 
   let step3 = orb.apply_orb_effect(Bomb(2), step2)
-  should.equal(step3.health, 3)
-  should.equal(step3.bombs_pulled_this_level, 1)
-  should.equal(step3.points, 16)
+  should.equal(step3.player.health, 3)
+  should.equal(step3.player.bombs_pulled_this_level, 1)
+  should.equal(step3.player.points, 16)
   // Unchanged
 
   let step4 = orb.apply_orb_effect(Health(1), step3)
-  should.equal(step4.health, 4)
+  should.equal(step4.player.health, 4)
   // 3 + 1
-  should.equal(step4.points, 16)
+  should.equal(step4.player.points, 16)
   // Unchanged
 
   // Collector with remaining bag
   let model_with_remaining = Model(..step4, bag: [Point(5), Bomb(1)])
   let step5 = orb.apply_orb_effect(Collector, model_with_remaining)
-  should.equal(step5.points, 18)
+  should.equal(step5.player.points, 18)
   // 16 + ((2-1) * 2) = 18
 }
 
@@ -515,35 +516,35 @@ pub fn survival_strategy_test() {
   let after_bomb2 = orb.apply_orb_effect(Bomb(2), after_bomb1)
   let after_bomb3 = orb.apply_orb_effect(Bomb(1), after_bomb2)
 
-  should.equal(after_bomb3.health, 1)
+  should.equal(after_bomb3.player.health, 1)
   // 5 - 1 - 2 - 1 = 1
-  should.equal(after_bomb3.bombs_pulled_this_level, 3)
+  should.equal(after_bomb3.player.bombs_pulled_this_level, 3)
 
   // Pull multiplier
   let after_multiplier = orb.apply_orb_effect(Multiplier, after_bomb3)
-  should.equal(after_multiplier.current_multiplier, 2)
+  should.equal(after_multiplier.player.current_multiplier, 2)
 
   // Pull survivor for big payoff
   let after_survivor = orb.apply_orb_effect(Survivor, after_multiplier)
-  should.equal(after_survivor.points, 6)
+  should.equal(after_survivor.player.points, 6)
   // 3 bombs * 2 multiplier = 6
 }
 
 pub fn defensive_healing_test() {
-  let model = Model(..create_test_model(), health: 2)
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, health: 2))
   // Low health
 
   // Healing sequence to recover
   let after_heal1 = orb.apply_orb_effect(Health(2), model)
-  should.equal(after_heal1.health, 4)
+  should.equal(after_heal1.player.health, 4)
 
   let after_heal2 = orb.apply_orb_effect(Health(3), after_heal1)
-  should.equal(after_heal2.health, 5)
+  should.equal(after_heal2.player.health, 5)
   // Capped at 5
 
   // Now safe to take some risk
   let after_bomb = orb.apply_orb_effect(Bomb(2), after_heal2)
-  should.equal(after_bomb.health, 3)
+  should.equal(after_bomb.player.health, 3)
   // Still healthy
 }
 
@@ -630,8 +631,8 @@ pub fn select_first_choice_test() {
   let result = handle_choice_selection(model, SelectFirstChoice)
 
   // Should apply Point(10) effect
-  should.equal(result.points, 10)
-  should.equal(result.health, 5)
+  should.equal(result.player.points, 10)
+  should.equal(result.player.health, 5)
   // Unchanged
   // Should return to Playing state
   should.equal(result.status, Playing)
@@ -655,9 +656,9 @@ pub fn select_second_choice_test() {
   let result = handle_choice_selection(model, SelectSecondChoice)
 
   // Should apply Health(3) effect
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // Unchanged
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // Still max, but effect was applied
   // Should return to Playing state
   should.equal(result.status, Playing)
@@ -674,7 +675,7 @@ pub fn choice_orb_with_multiplier_test() {
       ..create_test_model(),
       status: ChoosingOrb,
       pending_choice: option.Some(#(Point(5), Collector)),
-      current_multiplier: 3,
+      player: Player(..create_test_model().player, current_multiplier: 3),
       bag: [Health(1)],
     )
 
@@ -682,9 +683,9 @@ pub fn choice_orb_with_multiplier_test() {
   let result = handle_choice_selection(model, SelectFirstChoice)
 
   // Should apply multiplier to chosen Point orb
-  should.equal(result.points, 15)
+  should.equal(result.player.points, 15)
   // 5 * 3 = 15
-  should.equal(result.current_multiplier, 3)
+  should.equal(result.player.current_multiplier, 3)
   // Unchanged
 }
 
@@ -808,40 +809,39 @@ pub fn gamble_choice_orb_transition_test() {
 fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
   case orb {
     types.Point(value) -> {
-      let gamble_points = value * 2 * model.current_multiplier
-      types.Model(..model, points: model.points + gamble_points)
+      let gamble_points = value * 2 * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + gamble_points))
     }
     types.Bomb(damage) ->
       types.Model(
         ..model,
-        health: model.health - damage,
-        bombs_pulled_this_level: model.bombs_pulled_this_level + 1,
+        player: types.Player(..model.player, health: model.player.health - damage, bombs_pulled_this_level: model.player.bombs_pulled_this_level + 1),
       )
     types.Health(value) -> {
-      let new_health = int.min(5, model.health + value)
-      types.Model(..model, health: new_health)
+      let new_health = int.min(5, model.player.health + value)
+      types.Model(..model, player: types.Player(..model.player, health: new_health))
     }
     types.Collector -> {
       let remaining_orbs = model.bag |> list.length
-      let collector_points = remaining_orbs * model.current_multiplier
-      types.Model(..model, points: model.points + collector_points)
+      let collector_points = remaining_orbs * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + collector_points))
     }
     types.Survivor -> {
       let survivor_points =
-        model.bombs_pulled_this_level * model.current_multiplier
-      types.Model(..model, points: model.points + survivor_points)
+        model.player.bombs_pulled_this_level * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + survivor_points))
     }
     types.Multiplier -> {
-      let new_multiplier = model.current_multiplier * 2
-      types.Model(..model, current_multiplier: new_multiplier)
+      let new_multiplier = model.player.current_multiplier * 2
+      types.Model(..model, player: types.Player(..model.player, current_multiplier: new_multiplier))
     }
     types.Choice -> {
       // During gamble, Choice orb transitions to choice view
       let orbs_after_gamble = model.bag |> list.drop(5)
       case orbs_after_gamble {
         [] -> {
-          let gamble_points = 5 * 2 * model.current_multiplier
-          types.Model(..model, points: model.points + gamble_points)
+          let gamble_points = 5 * 2 * model.player.current_multiplier
+          types.Model(..model, player: types.Player(..model.player, points: model.player.points + gamble_points))
         }
         [single_orb] -> {
           types.Model(
@@ -871,8 +871,8 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
             _ -> False
           }
         })
-      let scanner_points = point_orbs_count * model.current_multiplier
-      types.Model(..model, points: model.points + scanner_points)
+      let scanner_points = point_orbs_count * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + scanner_points))
     }
     types.PointRecovery -> {
       // Placeholder for gamble test helper - not implemented yet
@@ -890,9 +890,9 @@ pub fn point_scanner_orb_empty_bag_test() {
   let point_scanner_orb = types.PointScanner
   let result = orb.apply_orb_effect(point_scanner_orb, model)
 
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // No point orbs in bag = 0 points
-  should.equal(result.health, 5)
+  should.equal(result.player.health, 5)
   // Health unchanged
 }
 
@@ -901,7 +901,7 @@ pub fn point_scanner_orb_single_point_orb_test() {
   let point_scanner_orb = types.PointScanner
   let result = orb.apply_orb_effect(point_scanner_orb, model)
 
-  should.equal(result.points, 1)
+  should.equal(result.player.points, 1)
   // 1 point orb in bag = 1 point awarded
 }
 
@@ -911,7 +911,7 @@ pub fn point_scanner_orb_multiple_point_orbs_test() {
   let point_scanner_orb = types.PointScanner
   let result = orb.apply_orb_effect(point_scanner_orb, model)
 
-  should.equal(result.points, 3)
+  should.equal(result.player.points, 3)
   // 3 point orbs in bag = 3 points awarded (regardless of their values)
 }
 
@@ -927,7 +927,7 @@ pub fn point_scanner_orb_mixed_bag_test() {
   let point_scanner_orb = types.PointScanner
   let result = orb.apply_orb_effect(point_scanner_orb, model)
 
-  should.equal(result.points, 3)
+  should.equal(result.player.points, 3)
   // Only 3 point orbs counted, ignoring Bomb and Health
 }
 
@@ -942,7 +942,7 @@ pub fn point_scanner_orb_no_point_orbs_test() {
   let point_scanner_orb = types.PointScanner
   let result = orb.apply_orb_effect(point_scanner_orb, model)
 
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // No point orbs in bag = 0 points
 }
 
@@ -951,14 +951,14 @@ pub fn point_scanner_orb_with_multiplier_test() {
     Model(
       ..create_test_model(),
       bag: [Point(8), Point(12)],
-      current_multiplier: 3,
+      player: Player(..create_test_model().player, current_multiplier: 3),
     )
   let point_scanner_orb = types.PointScanner
   let result = orb.apply_orb_effect(point_scanner_orb, model)
 
-  should.equal(result.points, 6)
+  should.equal(result.player.points, 6)
   // 2 point orbs * 3 multiplier = 6 points
-  should.equal(result.current_multiplier, 3)
+  should.equal(result.player.current_multiplier, 3)
   // Multiplier unchanged
 }
 
@@ -972,7 +972,7 @@ pub fn point_scanner_orb_message_test() {
 
 pub fn point_scanner_orb_message_with_multiplier_test() {
   let model =
-    Model(..create_test_model(), bag: [Point(5)], current_multiplier: 4)
+    Model(..create_test_model(), bag: [Point(5)], player: Player(..create_test_model().player, current_multiplier: 4))
   let point_scanner_orb = types.PointScanner
   let message = orb.get_orb_result_message(point_scanner_orb, model)
 
@@ -990,15 +990,15 @@ pub fn point_scanner_orb_name_test() {
 pub fn point_scanner_integration_test() {
   // Real game scenario: PointScanner vs Collector comparison
   let game_bag = [Point(8), Point(12), Bomb(2), Health(3), Point(5), Multiplier]
-  let model = Model(..create_test_model(), bag: game_bag, current_multiplier: 2)
+  let model = Model(..create_test_model(), bag: game_bag, player: Player(..create_test_model().player, current_multiplier: 2))
 
   // Test PointScanner - should count 3 Point orbs * 2 multiplier = 6 points
   let scanner_result = orb.apply_orb_effect(types.PointScanner, model)
-  should.equal(scanner_result.points, 6)
+  should.equal(scanner_result.player.points, 6)
 
   // Test Collector for comparison - should count 5 remaining orbs (6-1) * 2 multiplier = 10 points  
   let collector_result = orb.apply_orb_effect(types.Collector, model)
-  should.equal(collector_result.points, 10)
+  should.equal(collector_result.player.points, 10)
   // PointScanner is more predictable but usually lower value than Collector
 }
 
@@ -1007,97 +1007,92 @@ pub fn point_scanner_integration_test() {
 // ============================================================================
 
 pub fn point_recovery_orb_no_points_pulled_test() {
-  let model = Model(..create_test_model(), point_orbs_pulled_this_level: [])
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, point_orbs_pulled_this_level: []))
   let point_recovery_orb = types.PointRecovery
   let result = orb.apply_orb_effect(point_recovery_orb, model)
 
-  should.equal(result.points, 0)
+  should.equal(result.player.points, 0)
   // No point orbs pulled = no effect
   should.equal(result.bag |> list.length, 0)
   // No orb added to bag
-  should.equal(result.point_orbs_pulled_this_level, [])
+  should.equal(result.player.point_orbs_pulled_this_level, [])
   // Tracking unchanged
 }
 
 pub fn point_recovery_orb_single_point_orb_test() {
   let model = Model(
     ..create_test_model(), 
-    points: 8,  // Already earned from Point(8)
-    point_orbs_pulled_this_level: [8],
+    player: Player(..create_test_model().player, points: 8, point_orbs_pulled_this_level: [8]),
     bag: [Bomb(2), Health(3)]
   )
   let point_recovery_orb = types.PointRecovery
   let result = orb.apply_orb_effect(point_recovery_orb, model)
 
-  should.equal(result.points, 8)
+  should.equal(result.player.points, 8)
   // Points unchanged - keep the original 8 points earned
   should.equal(result.bag |> list.length, 3)
   // Point(8) added back to bag
-  should.equal(result.point_orbs_pulled_this_level, [])
+  should.equal(result.player.point_orbs_pulled_this_level, [])
   // Tracking list cleared after recovery
 }
 
 pub fn point_recovery_orb_multiple_points_test() {
   let model = Model(
     ..create_test_model(), 
-    points: 25,  // Earned from Point(8) + Point(12) + Point(5)
-    point_orbs_pulled_this_level: [8, 12, 5],
+    player: Player(..create_test_model().player, points: 25, point_orbs_pulled_this_level: [8, 12, 5]),
     bag: [Bomb(2)]
   )
   let point_recovery_orb = types.PointRecovery
   let result = orb.apply_orb_effect(point_recovery_orb, model)
 
-  should.equal(result.points, 25)
+  should.equal(result.player.points, 25)
   // Points unchanged
   should.equal(result.bag |> list.length, 2)
   // Point(5) added back (lowest value)
-  should.equal(result.point_orbs_pulled_this_level, [8, 12])
+  should.equal(result.player.point_orbs_pulled_this_level, [8, 12])
   // Only the recovered orb (5) removed from tracking
 }
 
 pub fn point_recovery_orb_duplicate_lowest_test() {
   let model = Model(
     ..create_test_model(), 
-    points: 18,  // Point(5) + Point(8) + Point(5)
-    point_orbs_pulled_this_level: [5, 8, 5],
+    player: Player(..create_test_model().player, points: 18, point_orbs_pulled_this_level: [5, 8, 5]),
     bag: [Health(2)]
   )
   let point_recovery_orb = types.PointRecovery
   let result = orb.apply_orb_effect(point_recovery_orb, model)
 
-  should.equal(result.points, 18)
+  should.equal(result.player.points, 18)
   // Points unchanged
   should.equal(result.bag |> list.length, 2)
   // One Point(5) added back
-  should.equal(result.point_orbs_pulled_this_level, [8, 5])
+  should.equal(result.player.point_orbs_pulled_this_level, [8, 5])
   // First occurrence of 5 removed from tracking
 }
 
 pub fn point_recovery_orb_with_multiplier_test() {
   let model = Model(
     ..create_test_model(), 
-    points: 20,  // Point(8) with 2x multiplier = 16, + Point(4) = 20
-    point_orbs_pulled_this_level: [8, 4],
-    current_multiplier: 2,
+    player: Player(..create_test_model().player, points: 20, point_orbs_pulled_this_level: [8, 4], current_multiplier: 2),
     bag: [Collector]
   )
   let point_recovery_orb = types.PointRecovery
   let result = orb.apply_orb_effect(point_recovery_orb, model)
 
-  should.equal(result.points, 20)
+  should.equal(result.player.points, 20)
   // Points unchanged (no re-application of multiplier)
   should.equal(result.bag |> list.length, 2)
   // Point(4) added back to bag (lowest value)
-  should.equal(result.current_multiplier, 2)
+  should.equal(result.player.current_multiplier, 2)
   // Multiplier unchanged
-  should.equal(result.point_orbs_pulled_this_level, [8])
+  should.equal(result.player.point_orbs_pulled_this_level, [8])
   // Only Point(4) removed from tracking
 }
 
 pub fn point_recovery_orb_message_test() {
   let model = Model(
     ..create_test_model(), 
-    point_orbs_pulled_this_level: [8, 5, 12]
+    player: Player(..create_test_model().player, point_orbs_pulled_this_level: [8, 5, 12])
   )
   let point_recovery_orb = types.PointRecovery
   let message = orb.get_orb_result_message(point_recovery_orb, model)
@@ -1106,7 +1101,7 @@ pub fn point_recovery_orb_message_test() {
 }
 
 pub fn point_recovery_orb_message_no_points_test() {
-  let model = Model(..create_test_model(), point_orbs_pulled_this_level: [])
+  let model = Model(..create_test_model(), player: Player(..create_test_model().player, point_orbs_pulled_this_level: []))
   let point_recovery_orb = types.PointRecovery
   let message = orb.get_orb_result_message(point_recovery_orb, model)
 
@@ -1128,26 +1123,24 @@ pub fn point_recovery_integration_test() {
   // Simulate pulling Point(8)
   let after_first = Model(
     ..model, 
-    points: 8, 
-    point_orbs_pulled_this_level: [8],
+    player: Player(..model.player, points: 8, point_orbs_pulled_this_level: [8]),
     bag: [Point(5), Point(12), Bomb(2)]
   )
   
   // Simulate pulling Point(5) from bag
   let after_second = Model(
     ..after_first,
-    points: 13,  // 8 + 5
-    point_orbs_pulled_this_level: [8, 5],
+    player: Player(..after_first.player, points: 13, point_orbs_pulled_this_level: [8, 5]),
     bag: [Point(12), Bomb(2)]
   )
   
   // Now use PointRecovery
   let recovery_result = orb.apply_orb_effect(types.PointRecovery, after_second)
   
-  should.equal(recovery_result.points, 13)
+  should.equal(recovery_result.player.points, 13)
   // Keep all earned points
   should.equal(recovery_result.bag |> list.length, 3)
   // Point(5) restored to bag
-  should.equal(recovery_result.point_orbs_pulled_this_level, [8])
+  should.equal(recovery_result.player.point_orbs_pulled_this_level, [8])
   // Only Point(5) removed from tracking
 }

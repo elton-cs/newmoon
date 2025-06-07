@@ -9,13 +9,13 @@ import types.{
 pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
   case orb {
     Point(value) -> {
-      let multiplied_value = value * model.current_multiplier
-      case model.current_multiplier > 1 {
+      let multiplied_value = value * model.player.current_multiplier
+      case model.player.current_multiplier > 1 {
         True ->
           "● DATA PACKET ["
           <> int.to_string(value)
           <> "×"
-          <> int.to_string(model.current_multiplier)
+          <> int.to_string(model.player.current_multiplier)
           <> "] +"
           <> int.to_string(multiplied_value)
         False -> "● DATA PACKET ACQUIRED +" <> int.to_string(value)
@@ -35,27 +35,27 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
       <> " SYS"
     Collector -> {
       let base_points = model.bag |> list.length
-      let multiplied_points = base_points * model.current_multiplier
-      case model.current_multiplier > 1 {
+      let multiplied_points = base_points * model.player.current_multiplier
+      case model.player.current_multiplier > 1 {
         True ->
           "◯ DEEP SCAN ["
           <> int.to_string(base_points)
           <> "×"
-          <> int.to_string(model.current_multiplier)
+          <> int.to_string(model.player.current_multiplier)
           <> "] +"
           <> int.to_string(multiplied_points)
         False -> "◯ DEEP SCAN COMPLETE +" <> int.to_string(base_points)
       }
     }
     Survivor -> {
-      let base_points = model.bombs_pulled_this_level
-      let multiplied_points = base_points * model.current_multiplier
-      case model.current_multiplier > 1 {
+      let base_points = model.player.bombs_pulled_this_level
+      let multiplied_points = base_points * model.player.current_multiplier
+      case model.player.current_multiplier > 1 {
         True ->
           "◈ DAMAGE ANALYSIS ["
           <> int.to_string(base_points)
           <> "×"
-          <> int.to_string(model.current_multiplier)
+          <> int.to_string(model.player.current_multiplier)
           <> "] +"
           <> int.to_string(multiplied_points)
         False -> "◈ DAMAGE ANALYSIS +" <> int.to_string(base_points)
@@ -63,7 +63,7 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
     }
     Multiplier ->
       "✱ SIGNAL BOOST ["
-      <> int.to_string(model.current_multiplier)
+      <> int.to_string(model.player.current_multiplier)
       <> "× AMPLIFICATION ACTIVE]"
     Choice -> "◆ CHOICE PROTOCOL ACTIVATED [SELECT OPTIMAL SAMPLE]"
     Gamble -> "🎲 GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]"
@@ -76,13 +76,13 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
             _ -> False
           }
         })
-      let multiplied_points = point_orbs_count * model.current_multiplier
-      case model.current_multiplier > 1 {
+      let multiplied_points = point_orbs_count * model.player.current_multiplier
+      case model.player.current_multiplier > 1 {
         True ->
           "◉ DATA SCANNER ["
           <> int.to_string(point_orbs_count)
           <> "×"
-          <> int.to_string(model.current_multiplier)
+          <> int.to_string(model.player.current_multiplier)
           <> "] +"
           <> int.to_string(multiplied_points)
         False ->
@@ -93,7 +93,7 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
       }
     }
     PointRecovery -> {
-      case model.point_orbs_pulled_this_level {
+      case model.player.point_orbs_pulled_this_level {
         [] -> "↺ DATA RECOVERY [NO DATA SAMPLES TO RECOVER]"
         pulled_points -> {
           let min_value = pulled_points |> list.sort(int.compare) |> list.first
@@ -125,36 +125,42 @@ pub fn get_orb_result_color(orb: Orb) -> String {
 pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
   case orb {
     Point(value) -> {
-      let multiplied_points = value * model.current_multiplier
+      let multiplied_points = value * model.player.current_multiplier
       types.Model(
         ..model, 
-        points: model.points + multiplied_points,
-        point_orbs_pulled_this_level: [value, ..model.point_orbs_pulled_this_level]
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + multiplied_points,
+          point_orbs_pulled_this_level: [value, ..model.player.point_orbs_pulled_this_level]
+        )
       )
     }
     Bomb(damage) ->
       types.Model(
         ..model,
-        health: model.health - damage,
-        bombs_pulled_this_level: model.bombs_pulled_this_level + 1,
+        player: types.Player(
+          ..model.player,
+          health: model.player.health - damage,
+          bombs_pulled_this_level: model.player.bombs_pulled_this_level + 1,
+        ),
       )
     Health(value) -> {
-      let new_health = int.min(5, model.health + value)
-      types.Model(..model, health: new_health)
+      let new_health = int.min(5, model.player.health + value)
+      types.Model(..model, player: types.Player(..model.player, health: new_health))
     }
     Collector -> {
       let remaining_orbs = { model.bag |> list.length } - 1
-      let collector_points = remaining_orbs * model.current_multiplier
-      types.Model(..model, points: model.points + collector_points)
+      let collector_points = remaining_orbs * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + collector_points))
     }
     Survivor -> {
       let survivor_points =
-        model.bombs_pulled_this_level * model.current_multiplier
-      types.Model(..model, points: model.points + survivor_points)
+        model.player.bombs_pulled_this_level * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + survivor_points))
     }
     Multiplier -> {
-      let new_multiplier = model.current_multiplier * 2
-      types.Model(..model, current_multiplier: new_multiplier)
+      let new_multiplier = model.player.current_multiplier * 2
+      types.Model(..model, player: types.Player(..model.player, current_multiplier: new_multiplier))
     }
     Choice -> handle_choice_orb(model)
     Gamble -> handle_gamble_orb(model)
@@ -167,11 +173,11 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
             _ -> False
           }
         })
-      let scanner_points = point_orbs_count * model.current_multiplier
-      types.Model(..model, points: model.points + scanner_points)
+      let scanner_points = point_orbs_count * model.player.current_multiplier
+      types.Model(..model, player: types.Player(..model.player, points: model.player.points + scanner_points))
     }
     PointRecovery -> {
-      case model.point_orbs_pulled_this_level {
+      case model.player.point_orbs_pulled_this_level {
         [] -> model  // No point orbs to recover
         pulled_points -> {
           let min_value = pulled_points |> list.sort(int.compare) |> list.first
@@ -184,7 +190,7 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
               types.Model(
                 ..model, 
                 bag: updated_bag, 
-                point_orbs_pulled_this_level: updated_tracking
+                player: types.Player(..model.player, point_orbs_pulled_this_level: updated_tracking)
               )
             }
             Error(_) -> model

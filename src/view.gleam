@@ -72,8 +72,8 @@ fn view_game_stats(model: Model) -> Element(Msg) {
   html.div([], [
     // Primary stats - most important for gameplay
     html.div([attribute.class("grid grid-cols-2 gap-3 mb-3")], [
-      view_stat_card("○", "SYSTEMS", int.to_string(model.health), "text-black"),
-      view_stat_card("●", "DATA", int.to_string(model.points), "text-gray-700"),
+      view_stat_card("○", "SYSTEMS", int.to_string(model.player.health), "text-black"),
+      view_stat_card("●", "DATA", int.to_string(model.player.points), "text-gray-700"),
     ]),
     // Secondary stats - progression and resources
     html.div([attribute.class("grid grid-cols-3 gap-2 mb-4")], [
@@ -83,11 +83,11 @@ fn view_game_stats(model: Model) -> Element(Msg) {
         int.to_string(model.milestone),
         "text-gray-600",
       ),
-      view_stat_card("◉", "SECTOR", int.to_string(model.level), "text-gray-500"),
+      view_stat_card("◉", "SECTOR", int.to_string(model.player.level), "text-gray-500"),
       view_stat_card(
         "◈",
         "CREDITS",
-        int.to_string(model.credits),
+        int.to_string(model.player.credits),
         "text-purple-600",
       ),
     ]),
@@ -120,11 +120,11 @@ fn view_stat_card(
 }
 
 fn view_multiplier_status(model: Model) -> Element(Msg) {
-  case model.current_multiplier > 1 {
+  case model.player.current_multiplier > 1 {
     True ->
       view_result_card(
         "✱ SIGNAL AMPLIFICATION ACTIVE: "
-          <> int.to_string(model.current_multiplier)
+          <> int.to_string(model.player.current_multiplier)
           <> "× DATA BOOST",
         "yellow",
         True,
@@ -875,7 +875,7 @@ fn view_pull_orb_button(model: Model) -> Element(Msg) {
 }
 
 fn view_main_menu(model: Model) -> Element(Msg) {
-  let has_progress = model.level > 1 || model.credits > 0
+  let has_progress = model.player.level > 1 || model.player.credits > 0
 
   html.div([attribute.class("text-center")], [
     // Game branding
@@ -943,9 +943,9 @@ fn view_main_menu(model: Model) -> Element(Msg) {
           html.p([attribute.class("text-xs text-gray-600")], [
             html.text(
               "Progress: Sector "
-              <> int.to_string(model.level)
+              <> int.to_string(model.player.level)
               <> " • Credits: "
-              <> int.to_string(model.credits),
+              <> int.to_string(model.player.credits),
             ),
           ]),
         ])
@@ -1011,7 +1011,7 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
       [
         html.h2(
           [attribute.class("text-2xl font-light text-black mb-4 tracking-wide")],
-          [html.text("SECTOR " <> int.to_string(model.level) <> " COMPLETE")],
+          [html.text("SECTOR " <> int.to_string(model.player.level) <> " COMPLETE")],
         ),
         html.div([attribute.class("mb-4")], [
           html.p([attribute.class("text-green-700 text-lg font-medium mb-2")], [
@@ -1026,15 +1026,15 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
           ]),
           html.p([attribute.class("text-gray-600 text-sm")], [
             html.text(
-              "Final score: " <> int.to_string(model.points) <> " points",
+              "Final score: " <> int.to_string(model.player.points) <> " points",
             ),
           ]),
         ]),
         html.p([attribute.class("text-green-600 text-lg font-medium mb-2")], [
-          html.text("Credits earned: +" <> int.to_string(model.points)),
+          html.text("Credits earned: +" <> int.to_string(model.player.points)),
         ]),
         html.p([attribute.class("text-purple-600 text-sm font-light")], [
-          html.text("Total credits: " <> int.to_string(model.credits)),
+          html.text("Total credits: " <> int.to_string(model.player.credits)),
         ]),
       ],
     ),
@@ -1046,7 +1046,7 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
           ),
           event.on_click(NextLevel),
         ],
-        [html.text("ADVANCE TO SECTOR " <> int.to_string(model.level + 1))],
+        [html.text("ADVANCE TO SECTOR " <> int.to_string(model.player.level + 1))],
       ),
       html.button(
         [
@@ -1093,18 +1093,18 @@ fn view_game_over_state(model: Model) -> Element(Msg) {
         ]),
         html.div([attribute.class("text-sm text-gray-600")], [
           html.p([attribute.class("mb-1")], [
-            html.text("Sector: " <> int.to_string(model.level)),
+            html.text("Sector: " <> int.to_string(model.player.level)),
           ]),
           html.p([attribute.class("mb-1")], [
             html.text(
               "Final score: "
-              <> int.to_string(model.points)
+              <> int.to_string(model.player.points)
               <> " / "
               <> int.to_string(model.milestone),
             ),
           ]),
           html.p([], [
-            html.text("Credits retained: " <> int.to_string(model.credits)),
+            html.text("Credits retained: " <> int.to_string(model.player.credits)),
           ]),
         ]),
       ],
@@ -1117,7 +1117,7 @@ fn view_game_over_state(model: Model) -> Element(Msg) {
           ),
           event.on_click(RestartLevel),
         ],
-        [html.text("RETRY SECTOR " <> int.to_string(model.level))],
+        [html.text("RETRY SECTOR " <> int.to_string(model.player.level))],
       ),
       html.button(
         [

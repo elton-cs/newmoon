@@ -27,18 +27,25 @@ pub type GameStatus {
   ApplyingGambleOrbs
 }
 
-pub type Model {
-  Model(
+pub type Player {
+  Player(
     health: Int,
     points: Int,
     level: Int,
+    bombs_pulled_this_level: Int,
+    current_multiplier: Int,
+    credits: Int,
+    point_orbs_pulled_this_level: List(Int),
+  )
+}
+
+pub type Model {
+  Model(
+    player: Player,
     milestone: Int,
     bag: List(Orb),
     status: GameStatus,
     last_orb: Option(Orb),
-    bombs_pulled_this_level: Int,
-    current_multiplier: Int,
-    credits: Int,
     shuffle_enabled: Bool,
     dev_mode: Bool,
     testing_config: Option(TestingConfiguration),
@@ -51,7 +58,6 @@ pub type Model {
     gamble_orbs: List(Orb),
     gamble_current_index: Int,
     in_gamble_choice: Bool,
-    point_orbs_pulled_this_level: List(Int),
   )
 }
 
