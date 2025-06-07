@@ -25,7 +25,11 @@ pub fn get_market_items() -> List(MarketItem) {
     // Strategic orbs - high value, high cost
     MarketItem(Collector, 30, "Deep scanner - points for remaining samples"),
     MarketItem(PointScanner, 25, "Data scanner - points for each data sample"),
-    MarketItem(PointRecovery, 35, "Data recovery - restore lowest pulled data sample"),
+    MarketItem(
+      PointRecovery,
+      35,
+      "Data recovery - restore lowest pulled data sample",
+    ),
     MarketItem(Survivor, 35, "Damage analyzer - points for bombs survived"),
     MarketItem(Multiplier, 45, "Signal amplifier - doubles point multiplier"),
     MarketItem(Choice, 50, "Choice protocol - select optimal sample from two"),
@@ -45,7 +49,11 @@ pub fn purchase_orb(model: Model, orb: Orb) -> Model {
         True -> {
           let new_credits = model.player.credits - item.price
           let new_bag = [orb, ..model.bag]
-          types.Model(..model, player: types.Player(..model.player, credits: new_credits), bag: new_bag)
+          types.Model(
+            ..model,
+            player: types.Player(..model.player, credits: new_credits),
+            bag: new_bag,
+          )
         }
         False -> model
       }
@@ -73,7 +81,9 @@ pub fn view_marketplace(model: Model) -> Element(Msg) {
           html.text("Enhance your exploration capabilities"),
         ]),
         html.p([attribute.class("text-purple-600 text-xs font-light")], [
-          html.text("Credits available: " <> int.to_string(model.player.credits)),
+          html.text(
+            "Credits available: " <> int.to_string(model.player.credits),
+          ),
         ]),
       ],
     ),

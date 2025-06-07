@@ -1,43 +1,5 @@
 import gleam/option.{type Option}
 
-pub type Orb {
-  Bomb(Int)
-  Point(Int)
-  Health(Int)
-  Collector
-  Survivor
-  Multiplier
-  Choice
-  Gamble
-  PointScanner
-  PointRecovery
-}
-
-pub type GameStatus {
-  MainMenu
-  Playing
-  Paused
-  LevelComplete
-  GameOver
-  InMarketplace
-  ChoosingOrb
-  GamblingChoice
-  ViewingGambleResults
-  ApplyingGambleOrbs
-}
-
-pub type Player {
-  Player(
-    health: Int,
-    points: Int,
-    level: Int,
-    bombs_pulled_this_level: Int,
-    current_multiplier: Int,
-    credits: Int,
-    point_orbs_pulled_this_level: List(Int),
-  )
-}
-
 pub type Model {
   Model(
     player: Player,
@@ -92,13 +54,49 @@ pub type Msg {
   AcceptGamble
   DeclineGamble
   NextGambleOrb
+}
 
+pub type Orb {
+  Bomb(Int)
+  Point(Int)
+  Health(Int)
+  Collector
+  Survivor
+  Multiplier
+  Choice
+  Gamble
+  PointScanner
+  PointRecovery
+}
+
+pub type GameStatus {
+  MainMenu
+  Playing
+  Paused
+  LevelComplete
+  GameOver
+  InMarketplace
+  ChoosingOrb
+  GamblingChoice
+  ViewingGambleResults
+  ApplyingGambleOrbs
+}
+
+pub type Player {
+  Player(
+    health: Int,
+    points: Int,
+    level: Int,
+    bombs_pulled_this_level: Int,
+    current_multiplier: Int,
+    credits: Int,
+    point_orbs_pulled_this_level: List(Int),
+  )
 }
 
 pub type MarketItem {
   MarketItem(orb: Orb, price: Int, description: String)
 }
-
 
 pub type LogEntry {
   LogEntry(sequence: Int, orb: Orb, message: String)

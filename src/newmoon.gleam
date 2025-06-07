@@ -6,14 +6,11 @@ import lustre
 import marketplace
 import orb
 import types.{
-  type Model, type Msg, AcceptGamble, AcceptLevelReward, BuyOrb,
-  ContinueGame, DeclineGamble, GameOver,
-  GoToMainMenu, GoToMarketplace, InMarketplace,
-  LevelComplete, MainMenu, NextGambleOrb, NextLevel, PauseGame,
-  Paused, Playing, PullOrb, RestartLevel,
-  ResumeGame, SelectFirstChoice, SelectSecondChoice,
-  ShowHowToPlay, StartNewGame,
-  ToggleDevMode, ToggleShuffle,
+  type Model, type Msg, AcceptGamble, AcceptLevelReward, BuyOrb, ContinueGame,
+  DeclineGamble, GameOver, GoToMainMenu, GoToMarketplace, InMarketplace,
+  LevelComplete, MainMenu, NextGambleOrb, NextLevel, PauseGame, Paused, Playing,
+  PullOrb, RestartLevel, ResumeGame, SelectFirstChoice, SelectSecondChoice,
+  ShowHowToPlay, StartNewGame, ToggleDevMode, ToggleShuffle,
 }
 import view
 
@@ -155,7 +152,6 @@ fn handle_next_level(model: Model) -> Model {
     in_gamble_choice: False,
   )
 }
-
 
 fn start_new_game() -> Model {
   let base_bag = level.create_level_bag(1)
@@ -426,7 +422,13 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
     types.Point(value) -> {
       // Special gamble rule: Point orbs get 2X multiplier
       let gamble_points = value * 2 * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + gamble_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + gamble_points,
+        ),
+      )
     }
     types.Bomb(damage) ->
       types.Model(
@@ -439,22 +441,40 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
       )
     types.Health(value) -> {
       let new_health = int.min(5, model.player.health + value)
-      types.Model(..model, player: types.Player(..model.player, health: new_health))
+      types.Model(
+        ..model,
+        player: types.Player(..model.player, health: new_health),
+      )
     }
     types.Collector -> {
       // Count remaining orbs in bag AFTER gamble orbs were removed
       let remaining_orbs = model.bag |> list.length
       let collector_points = remaining_orbs * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + collector_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + collector_points,
+        ),
+      )
     }
     types.Survivor -> {
       let survivor_points =
         model.player.bombs_pulled_this_level * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + survivor_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + survivor_points,
+        ),
+      )
     }
     types.Multiplier -> {
       let new_multiplier = model.player.current_multiplier * 2
-      types.Model(..model, player: types.Player(..model.player, current_multiplier: new_multiplier))
+      types.Model(
+        ..model,
+        player: types.Player(..model.player, current_multiplier: new_multiplier),
+      )
     }
     types.Choice -> {
       // During gamble, Choice orb transitions to choice view
@@ -464,7 +484,13 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
         [] -> {
           // No orbs available after gamble orbs, treat as Point(5) with gamble bonus
           let gamble_points = 5 * 2 * model.player.current_multiplier
-          types.Model(..model, player: types.Player(..model.player, points: model.player.points + gamble_points))
+          types.Model(
+            ..model,
+            player: types.Player(
+              ..model.player,
+              points: model.player.points + gamble_points,
+            ),
+          )
         }
         [single_orb] -> {
           // Only one orb available, duplicate it for choice UI
@@ -501,12 +527,19 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
           }
         })
       let scanner_points = point_orbs_count * model.player.current_multiplier
-      types.Model(..model, player: types.Player(..model.player, points: model.player.points + scanner_points))
+      types.Model(
+        ..model,
+        player: types.Player(
+          ..model.player,
+          points: model.player.points + scanner_points,
+        ),
+      )
     }
     types.PointRecovery -> {
       // During gamble, PointRecovery functions normally
       case model.player.point_orbs_pulled_this_level {
-        [] -> model  // No point orbs to recover
+        [] -> model
+        // No point orbs to recover
         pulled_points -> {
           let min_value = pulled_points |> list.sort(int.compare) |> list.first
           case min_value {
@@ -514,11 +547,15 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
               // Add Point(value) back to bag
               let updated_bag = model.bag |> list.append([types.Point(value)])
               // Remove first occurrence of min_value from tracking list
-              let updated_tracking = remove_first_occurrence(pulled_points, value)
+              let updated_tracking =
+                remove_first_occurrence(pulled_points, value)
               types.Model(
-                ..model, 
-                bag: updated_bag, 
-                player: types.Player(..model.player, point_orbs_pulled_this_level: updated_tracking)
+                ..model,
+                bag: updated_bag,
+                player: types.Player(
+                  ..model.player,
+                  point_orbs_pulled_this_level: updated_tracking,
+                ),
               )
             }
             Error(_) -> model
@@ -536,7 +573,10 @@ fn check_game_status(model: Model) -> Model {
       types.Model(
         ..model,
         status: LevelComplete,
-        player: types.Player(..model.player, credits: model.player.credits + model.player.points),
+        player: types.Player(
+          ..model.player,
+          credits: model.player.credits + model.player.points,
+        ),
       )
     False, False -> model
   }
@@ -548,7 +588,8 @@ fn remove_first_occurrence(list: List(Int), target: Int) -> List(Int) {
     [] -> []
     [first, ..rest] -> {
       case first == target {
-        True -> rest  // Found target, return rest without it
+        True -> rest
+        // Found target, return rest without it
         False -> [first, ..remove_first_occurrence(rest, target)]
       }
     }

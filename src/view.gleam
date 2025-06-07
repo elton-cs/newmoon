@@ -9,15 +9,12 @@ import lustre/event
 import marketplace
 import orb
 import types.{
-  type LogEntry, type Model, type Msg, AcceptGamble,
-  ApplyingGambleOrbs, ChoosingOrb, ContinueGame, DeclineGamble,
-  GamblingChoice, GameOver, GoToMainMenu, GoToMarketplace,
-  InMarketplace, LevelComplete, MainMenu,
-  NextGambleOrb, NextLevel, PauseGame, Paused, Playing, PullOrb,
-  RestartLevel, ResumeGame,
-  SelectFirstChoice, SelectSecondChoice, ShowHowToPlay, StartNewGame,
-  ToggleDevMode, ToggleShuffle,
-  ViewingGambleResults,
+  type LogEntry, type Model, type Msg, AcceptGamble, ApplyingGambleOrbs,
+  ChoosingOrb, ContinueGame, DeclineGamble, GamblingChoice, GameOver,
+  GoToMainMenu, GoToMarketplace, InMarketplace, LevelComplete, MainMenu,
+  NextGambleOrb, NextLevel, PauseGame, Paused, Playing, PullOrb, RestartLevel,
+  ResumeGame, SelectFirstChoice, SelectSecondChoice, ShowHowToPlay, StartNewGame,
+  ToggleDevMode, ToggleShuffle, ViewingGambleResults,
 }
 
 pub fn view(model: Model) -> Element(Msg) {
@@ -71,8 +68,18 @@ fn view_game_stats(model: Model) -> Element(Msg) {
   html.div([], [
     // Primary stats - most important for gameplay
     html.div([attribute.class("grid grid-cols-2 gap-3 mb-3")], [
-      view_stat_card("○", "SYSTEMS", int.to_string(model.player.health), "text-black"),
-      view_stat_card("●", "DATA", int.to_string(model.player.points), "text-gray-700"),
+      view_stat_card(
+        "○",
+        "SYSTEMS",
+        int.to_string(model.player.health),
+        "text-black",
+      ),
+      view_stat_card(
+        "●",
+        "DATA",
+        int.to_string(model.player.points),
+        "text-gray-700",
+      ),
     ]),
     // Secondary stats - progression and resources
     html.div([attribute.class("grid grid-cols-3 gap-2 mb-4")], [
@@ -82,7 +89,12 @@ fn view_game_stats(model: Model) -> Element(Msg) {
         int.to_string(model.milestone),
         "text-gray-600",
       ),
-      view_stat_card("◉", "SECTOR", int.to_string(model.player.level), "text-gray-500"),
+      view_stat_card(
+        "◉",
+        "SECTOR",
+        int.to_string(model.player.level),
+        "text-gray-500",
+      ),
       view_stat_card(
         "◈",
         "CREDITS",
@@ -1000,7 +1012,11 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
       [
         html.h2(
           [attribute.class("text-2xl font-light text-black mb-4 tracking-wide")],
-          [html.text("SECTOR " <> int.to_string(model.player.level) <> " COMPLETE")],
+          [
+            html.text(
+              "SECTOR " <> int.to_string(model.player.level) <> " COMPLETE",
+            ),
+          ],
         ),
         html.div([attribute.class("mb-4")], [
           html.p([attribute.class("text-green-700 text-lg font-medium mb-2")], [
@@ -1035,7 +1051,11 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
           ),
           event.on_click(NextLevel),
         ],
-        [html.text("ADVANCE TO SECTOR " <> int.to_string(model.player.level + 1))],
+        [
+          html.text(
+            "ADVANCE TO SECTOR " <> int.to_string(model.player.level + 1),
+          ),
+        ],
       ),
       html.button(
         [
@@ -1093,7 +1113,9 @@ fn view_game_over_state(model: Model) -> Element(Msg) {
             ),
           ]),
           html.p([], [
-            html.text("Credits retained: " <> int.to_string(model.player.credits)),
+            html.text(
+              "Credits retained: " <> int.to_string(model.player.credits),
+            ),
           ]),
         ]),
       ],
@@ -1152,7 +1174,6 @@ fn view_pause_button() -> Element(Msg) {
     ),
   ])
 }
-
 
 fn view_dev_mode_panel(model: Model) -> Element(Msg) {
   html.div(

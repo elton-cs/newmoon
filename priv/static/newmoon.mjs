@@ -4760,6 +4760,67 @@ function start3(app, selector, start_args) {
 }
 
 // build/dev/javascript/newmoon/types.mjs
+var Model = class extends CustomType {
+  constructor(player, milestone, bag, status, last_orb, shuffle_enabled, dev_mode, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index, in_gamble_choice) {
+    super();
+    this.player = player;
+    this.milestone = milestone;
+    this.bag = bag;
+    this.status = status;
+    this.last_orb = last_orb;
+    this.shuffle_enabled = shuffle_enabled;
+    this.dev_mode = dev_mode;
+    this.log_entries = log_entries;
+    this.log_sequence = log_sequence;
+    this.pending_choice = pending_choice;
+    this.pending_gamble = pending_gamble;
+    this.gamble_orbs = gamble_orbs;
+    this.gamble_current_index = gamble_current_index;
+    this.in_gamble_choice = in_gamble_choice;
+  }
+};
+var StartNewGame = class extends CustomType {
+};
+var ContinueGame = class extends CustomType {
+};
+var ShowHowToPlay = class extends CustomType {
+};
+var PullOrb = class extends CustomType {
+};
+var PauseGame = class extends CustomType {
+};
+var ResumeGame = class extends CustomType {
+};
+var NextLevel = class extends CustomType {
+};
+var RestartLevel = class extends CustomType {
+};
+var GoToMainMenu = class extends CustomType {
+};
+var GoToMarketplace = class extends CustomType {
+};
+var AcceptLevelReward = class extends CustomType {
+};
+var BuyOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var ToggleShuffle = class extends CustomType {
+};
+var ToggleDevMode = class extends CustomType {
+};
+var SelectFirstChoice = class extends CustomType {
+};
+var SelectSecondChoice = class extends CustomType {
+};
+var AcceptGamble = class extends CustomType {
+};
+var DeclineGamble = class extends CustomType {
+};
+var NextGambleOrb = class extends CustomType {
+};
 var Bomb = class extends CustomType {
   constructor($0) {
     super();
@@ -4823,67 +4884,6 @@ var Player = class extends CustomType {
     this.credits = credits;
     this.point_orbs_pulled_this_level = point_orbs_pulled_this_level;
   }
-};
-var Model = class extends CustomType {
-  constructor(player, milestone, bag, status, last_orb, shuffle_enabled, dev_mode, log_entries, log_sequence, pending_choice, pending_gamble, gamble_orbs, gamble_current_index, in_gamble_choice) {
-    super();
-    this.player = player;
-    this.milestone = milestone;
-    this.bag = bag;
-    this.status = status;
-    this.last_orb = last_orb;
-    this.shuffle_enabled = shuffle_enabled;
-    this.dev_mode = dev_mode;
-    this.log_entries = log_entries;
-    this.log_sequence = log_sequence;
-    this.pending_choice = pending_choice;
-    this.pending_gamble = pending_gamble;
-    this.gamble_orbs = gamble_orbs;
-    this.gamble_current_index = gamble_current_index;
-    this.in_gamble_choice = in_gamble_choice;
-  }
-};
-var StartNewGame = class extends CustomType {
-};
-var ContinueGame = class extends CustomType {
-};
-var ShowHowToPlay = class extends CustomType {
-};
-var PullOrb = class extends CustomType {
-};
-var PauseGame = class extends CustomType {
-};
-var ResumeGame = class extends CustomType {
-};
-var NextLevel = class extends CustomType {
-};
-var RestartLevel = class extends CustomType {
-};
-var GoToMainMenu = class extends CustomType {
-};
-var GoToMarketplace = class extends CustomType {
-};
-var AcceptLevelReward = class extends CustomType {
-};
-var BuyOrb = class extends CustomType {
-  constructor($0) {
-    super();
-    this[0] = $0;
-  }
-};
-var ToggleShuffle = class extends CustomType {
-};
-var ToggleDevMode = class extends CustomType {
-};
-var SelectFirstChoice = class extends CustomType {
-};
-var SelectSecondChoice = class extends CustomType {
-};
-var AcceptGamble = class extends CustomType {
-};
-var DeclineGamble = class extends CustomType {
-};
-var NextGambleOrb = class extends CustomType {
 };
 var MarketItem = class extends CustomType {
   constructor(orb, price, description) {
@@ -8575,10 +8575,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      21,
+      18,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 543, end: 633, pattern_start: 554, pattern_end: 559 }
+      { value: $, start: 537, end: 627, pattern_start: 548, pattern_end: 553 }
     );
   }
   return void 0;
