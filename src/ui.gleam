@@ -5,7 +5,8 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import types.{type Msg, type Orb, BombOrb, PointOrb, PullOrb}
+import types.{type Msg, type Orb, PullOrb}
+import display
 
 // Layout Components
 
@@ -80,18 +81,23 @@ pub fn stat_card(
 pub fn orb_result_display(orb: Option(Orb)) -> Element(Msg) {
   case orb {
     None -> html.div([attribute.class("h-8 mb-4")], [])
-    Some(PointOrb) ->
-      info_panel(
-        "● DATA ACQUIRED +1",
-        "text-gray-700",
-        "bg-gray-50 border-gray-200",
-      )
-    Some(BombOrb) ->
-      info_panel(
-        "○ SYSTEM DAMAGE -1",
-        "text-gray-800",
-        "bg-gray-100 border-gray-300",
-      )
+    Some(orb_value) -> {
+      let message = display.orb_result_message(orb_value)
+      case orb_value {
+        types.PointOrb ->
+          info_panel(
+            message,
+            "text-gray-700",
+            "bg-gray-50 border-gray-200",
+          )
+        types.BombOrb ->
+          info_panel(
+            message,
+            "text-gray-800",
+            "bg-gray-100 border-gray-300",
+          )
+      }
+    }
   }
 }
 
@@ -115,10 +121,10 @@ pub fn container_display(orbs_left: Int) -> Element(Msg) {
     [
       html.p(
         [attribute.class("text-gray-500 mb-2 text-sm font-light tracking-wide")],
-        [html.text("SAMPLE CONTAINER")],
+        [html.text(display.container_label)],
       ),
       html.p([attribute.class("text-2xl font-light text-black")], [
-        html.text(string.concat([int.to_string(orbs_left), " specimens"])),
+        html.text(string.concat([int.to_string(orbs_left), display.specimens_suffix])),
       ]),
     ],
   )
@@ -143,7 +149,7 @@ pub fn extract_button(is_disabled: Bool) -> Element(Msg) {
       ),
       event.on_click(PullOrb),
     ],
-    [html.text("EXTRACT SAMPLE")],
+    [html.text(display.extract_button_text)],
   )
 }
 

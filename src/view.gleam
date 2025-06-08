@@ -1,9 +1,9 @@
 import gleam/int
 import gleam/list
-import gleam/string
 import lustre/element.{type Element}
 import types.{type Model, type Msg, Lost, NextLevel, Playing, RestartGame, Won}
 import ui
+import display
 
 pub fn view(model: Model) -> Element(Msg) {
   // Clear pattern matching on model fields to determine view
@@ -43,10 +43,10 @@ fn render_game_stats(
   level: Int,
 ) -> Element(Msg) {
   ui.stats_grid([
-    ui.stat_card("○", "SYSTEMS", int.to_string(health), "text-black"),
-    ui.stat_card("●", "DATA", int.to_string(points), "text-gray-700"),
-    ui.stat_card("◎", "TARGET", int.to_string(milestone), "text-gray-600"),
-    ui.stat_card("◉", "SECTOR", int.to_string(level), "text-gray-500"),
+    ui.stat_card("○", display.systems_label, int.to_string(health), "text-black"),
+    ui.stat_card("●", display.data_label, int.to_string(points), "text-gray-700"),
+    ui.stat_card("◎", display.target_label, int.to_string(milestone), "text-gray-600"),
+    ui.stat_card("◉", display.sector_label, int.to_string(level), "text-gray-500"),
   ])
 }
 
@@ -64,15 +64,11 @@ fn render_playing_view(last_orb, bag) -> Element(Msg) {
 
 // Won View - takes specific milestone value
 fn render_won_view(milestone: Int) -> Element(Msg) {
-  let message = string.concat([
-    "Data target achieved: ",
-    int.to_string(milestone),
-    " units",
-  ])
+  let message = display.data_target_message(milestone)
   
   element.fragment([
-    ui.status_panel("SECTOR COMPLETE", message, "bg-gray-50 border-gray-200"),
-    ui.primary_button("ADVANCE TO NEXT SECTOR", NextLevel),
+    ui.status_panel(display.sector_complete_title, message, "bg-gray-50 border-gray-200"),
+    ui.primary_button(display.advance_button_text, NextLevel),
   ])
 }
 
@@ -80,9 +76,9 @@ fn render_won_view(milestone: Int) -> Element(Msg) {
 fn render_lost_view() -> Element(Msg) {
   element.fragment([
     ui.failure_panel(
-      "MISSION FAILED",
-      "All systems compromised. Initiating reset protocol.",
+      display.mission_failed_title,
+      display.mission_failed_message,
     ),
-    ui.secondary_button("🔄 Play Again", RestartGame),
+    ui.secondary_button(display.play_again_text, RestartGame),
   ])
 }

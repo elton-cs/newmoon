@@ -4620,6 +4620,30 @@ function update2(model, msg) {
   }
 }
 
+// build/dev/javascript/newmoon/display.mjs
+function orb_result_message(orb) {
+  if (orb instanceof PointOrb) {
+    return "\u25CF DATA ACQUIRED +1";
+  } else {
+    return "\u25CB SYSTEM DAMAGE -1";
+  }
+}
+function data_target_message(milestone) {
+  return "Data target achieved: " + to_string(milestone) + " units";
+}
+var container_label = "SAMPLE CONTAINER";
+var extract_button_text = "EXTRACT SAMPLE";
+var specimens_suffix = " specimens";
+var sector_complete_title = "SECTOR COMPLETE";
+var mission_failed_title = "MISSION FAILED";
+var advance_button_text = "ADVANCE TO NEXT SECTOR";
+var play_again_text = "\u{1F504} Play Again";
+var systems_label = "SYSTEMS";
+var data_label = "DATA";
+var target_label = "TARGET";
+var sector_label = "SECTOR";
+var mission_failed_message = "All systems compromised. Initiating reset protocol.";
+
 // build/dev/javascript/lustre/lustre/event.mjs
 function is_immediate_event(name) {
   if (name === "input") {
@@ -4744,19 +4768,12 @@ function info_panel(message, text_class, bg_class) {
 }
 function orb_result_display(orb) {
   if (orb instanceof Some) {
-    let $ = orb[0];
-    if ($ instanceof PointOrb) {
-      return info_panel(
-        "\u25CF DATA ACQUIRED +1",
-        "text-gray-700",
-        "bg-gray-50 border-gray-200"
-      );
+    let orb_value = orb[0];
+    let message = orb_result_message(orb_value);
+    if (orb_value instanceof PointOrb) {
+      return info_panel(message, "text-gray-700", "bg-gray-50 border-gray-200");
     } else {
-      return info_panel(
-        "\u25CB SYSTEM DAMAGE -1",
-        "text-gray-800",
-        "bg-gray-100 border-gray-300"
-      );
+      return info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300");
     }
   } else {
     return div(toList([class$("h-8 mb-4")]), toList([]));
@@ -4774,13 +4791,15 @@ function container_display(orbs_left) {
             "text-gray-500 mb-2 text-sm font-light tracking-wide"
           )
         ]),
-        toList([text3("SAMPLE CONTAINER")])
+        toList([text3(container_label)])
       ),
       p(
         toList([class$("text-2xl font-light text-black")]),
         toList([
           text3(
-            concat2(toList([to_string(orbs_left), " specimens"]))
+            concat2(
+              toList([to_string(orbs_left), specimens_suffix])
+            )
           )
         ])
       )
@@ -4807,7 +4826,7 @@ function extract_button(is_disabled) {
       ),
       on_click(new PullOrb())
     ]),
-    toList([text3("EXTRACT SAMPLE")])
+    toList([text3(extract_button_text)])
   );
 }
 function primary_button(text4, msg) {
@@ -4873,10 +4892,30 @@ function failure_panel(title, message) {
 function render_game_stats(health, points, milestone, level) {
   return stats_grid(
     toList([
-      stat_card("\u25CB", "SYSTEMS", to_string(health), "text-black"),
-      stat_card("\u25CF", "DATA", to_string(points), "text-gray-700"),
-      stat_card("\u25CE", "TARGET", to_string(milestone), "text-gray-600"),
-      stat_card("\u25C9", "SECTOR", to_string(level), "text-gray-500")
+      stat_card(
+        "\u25CB",
+        systems_label,
+        to_string(health),
+        "text-black"
+      ),
+      stat_card(
+        "\u25CF",
+        data_label,
+        to_string(points),
+        "text-gray-700"
+      ),
+      stat_card(
+        "\u25CE",
+        target_label,
+        to_string(milestone),
+        "text-gray-600"
+      ),
+      stat_card(
+        "\u25C9",
+        sector_label,
+        to_string(level),
+        "text-gray-500"
+      )
     ])
   );
 }
@@ -4892,13 +4931,15 @@ function render_playing_view(last_orb, bag) {
   );
 }
 function render_won_view(milestone) {
-  let message = concat2(
-    toList(["Data target achieved: ", to_string(milestone), " units"])
-  );
+  let message = data_target_message(milestone);
   return fragment2(
     toList([
-      status_panel("SECTOR COMPLETE", message, "bg-gray-50 border-gray-200"),
-      primary_button("ADVANCE TO NEXT SECTOR", new NextLevel())
+      status_panel(
+        sector_complete_title,
+        message,
+        "bg-gray-50 border-gray-200"
+      ),
+      primary_button(advance_button_text, new NextLevel())
     ])
   );
 }
@@ -4906,10 +4947,10 @@ function render_lost_view() {
   return fragment2(
     toList([
       failure_panel(
-        "MISSION FAILED",
-        "All systems compromised. Initiating reset protocol."
+        mission_failed_title,
+        mission_failed_message
       ),
-      secondary_button("\u{1F504} Play Again", new RestartGame())
+      secondary_button(play_again_text, new RestartGame())
     ])
   );
 }
