@@ -4656,8 +4656,28 @@ function on_click(msg) {
   return on("click", success(msg));
 }
 
-// build/dev/javascript/newmoon/view.mjs
-function view_header() {
+// build/dev/javascript/newmoon/ui.mjs
+function app_container(content) {
+  return div(
+    toList([
+      class$(
+        "min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4"
+      )
+    ]),
+    toList([content])
+  );
+}
+function game_card(content) {
+  return div(
+    toList([
+      class$(
+        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200"
+      )
+    ]),
+    content
+  );
+}
+function game_header() {
   return div(
     toList([]),
     toList([
@@ -4678,7 +4698,13 @@ function view_header() {
     ])
   );
 }
-function view_stat_card(symbol, label, value, color_class) {
+function stats_grid(stats) {
+  return div(
+    toList([class$("grid grid-cols-2 gap-3 mb-8")]),
+    stats
+  );
+}
+function stat_card(symbol, label, value, color_class) {
   return div(
     toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
     toList([
@@ -4705,66 +4731,38 @@ function view_stat_card(symbol, label, value, color_class) {
     ])
   );
 }
-function view_game_stats(model) {
+function info_panel(message, text_class, bg_class) {
   return div(
-    toList([class$("grid grid-cols-2 gap-3 mb-8")]),
+    toList([class$("mb-4 p-3 " + bg_class + " rounded border")]),
     toList([
-      view_stat_card("\u25CB", "SYSTEMS", to_string(model.health), "text-black"),
-      view_stat_card("\u25CF", "DATA", to_string(model.points), "text-gray-700"),
-      view_stat_card(
-        "\u25CE",
-        "TARGET",
-        to_string(model.milestone),
-        "text-gray-600"
-      ),
-      view_stat_card(
-        "\u25C9",
-        "SECTOR",
-        to_string(model.level),
-        "text-gray-500"
+      p(
+        toList([class$(text_class + " font-light text-sm")]),
+        toList([text3(message)])
       )
     ])
   );
 }
-function view_last_orb_result(model) {
-  let $ = model.last_orb;
-  if ($ instanceof Some) {
-    let $1 = $[0];
-    if ($1 instanceof PointOrb) {
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-gray-50 border border-gray-200 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-gray-700 font-light text-sm")]),
-            toList([text3("\u25CF DATA ACQUIRED +1")])
-          )
-        ])
+function orb_result_display(orb) {
+  if (orb instanceof Some) {
+    let $ = orb[0];
+    if ($ instanceof PointOrb) {
+      return info_panel(
+        "\u25CF DATA ACQUIRED +1",
+        "text-gray-700",
+        "bg-gray-50 border-gray-200"
       );
     } else {
-      return div(
-        toList([
-          class$(
-            "mb-4 p-3 bg-gray-100 border border-gray-300 rounded"
-          )
-        ]),
-        toList([
-          p(
-            toList([class$("text-gray-800 font-light text-sm")]),
-            toList([text3("\u25CB SYSTEM DAMAGE -1")])
-          )
-        ])
+      return info_panel(
+        "\u25CB SYSTEM DAMAGE -1",
+        "text-gray-800",
+        "bg-gray-100 border-gray-300"
       );
     }
   } else {
     return div(toList([class$("h-8 mb-4")]), toList([]));
   }
 }
-function view_bag_info(model) {
-  let orbs_left = length(model.bag);
+function container_display(orbs_left) {
   return div(
     toList([
       class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
@@ -4789,8 +4787,7 @@ function view_bag_info(model) {
     ])
   );
 }
-function view_pull_orb_button(model) {
-  let is_disabled = is_empty(model.bag);
+function extract_button(is_disabled) {
   let _block;
   if (is_disabled) {
     _block = "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200";
@@ -4813,131 +4810,157 @@ function view_pull_orb_button(model) {
     toList([text3("EXTRACT SAMPLE")])
   );
 }
-function view_playing_state(model) {
-  return div(
-    toList([]),
-    toList([
-      view_last_orb_result(model),
-      view_bag_info(model),
-      view_pull_orb_button(model)
-    ])
-  );
-}
-function view_won_state(model) {
-  return div(
-    toList([class$("text-center")]),
-    toList([
-      div(
-        toList([
-          class$(
-            "mb-6 p-6 bg-gray-50 border border-gray-200 rounded"
-          )
-        ]),
-        toList([
-          h2(
-            toList([
-              class$(
-                "text-xl font-light text-black mb-2 tracking-wide"
-              )
-            ]),
-            toList([text3("SECTOR COMPLETE")])
-          ),
-          p(
-            toList([class$("text-gray-600 text-sm font-light")]),
-            toList([
-              text3(
-                concat2(
-                  toList([
-                    "Data target achieved: ",
-                    to_string(model.milestone),
-                    " units"
-                  ])
-                )
-              )
-            ])
-          )
-        ])
-      ),
-      button(
-        toList([
-          class$(
-            "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
-          ),
-          on_click(new NextLevel())
-        ]),
-        toList([text3("ADVANCE TO NEXT SECTOR")])
-      )
-    ])
-  );
-}
-function view_lost_state() {
-  return div(
-    toList([class$("text-center")]),
-    toList([
-      div(
-        toList([
-          class$(
-            "mb-6 p-6 bg-gray-100 border border-gray-300 rounded"
-          )
-        ]),
-        toList([
-          h2(
-            toList([
-              class$(
-                "text-xl font-light text-black mb-2 tracking-wide"
-              )
-            ]),
-            toList([text3("MISSION FAILED")])
-          ),
-          p(
-            toList([class$("text-gray-700 text-sm font-light")]),
-            toList([
-              text3("All systems compromised. Initiating reset protocol.")
-            ])
-          )
-        ])
-      ),
-      button(
-        toList([
-          class$(
-            "w-full bg-gray-800 hover:bg-black text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
-          ),
-          on_click(new RestartGame())
-        ]),
-        toList([text3("\u{1F504} Play Again")])
-      )
-    ])
-  );
-}
-function view_game_content(model) {
-  let $ = model.status;
-  if ($ instanceof Playing) {
-    return view_playing_state(model);
-  } else if ($ instanceof Won) {
-    return view_won_state(model);
-  } else {
-    return view_lost_state();
-  }
-}
-function view_game_card(model) {
-  return div(
+function primary_button(text4, msg) {
+  return button(
     toList([
       class$(
-        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200"
-      )
+        "w-full bg-black hover:bg-gray-800 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+      ),
+      on_click(msg)
     ]),
-    toList([view_header(), view_game_stats(model), view_game_content(model)])
+    toList([text3(text4)])
+  );
+}
+function secondary_button(text4, msg) {
+  return button(
+    toList([
+      class$(
+        "w-full bg-gray-800 hover:bg-black text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
+      ),
+      on_click(msg)
+    ]),
+    toList([text3(text4)])
+  );
+}
+function status_panel(title, message, bg_class) {
+  return div(
+    toList([class$("mb-6 p-6 " + bg_class + " rounded border")]),
+    toList([
+      h2(
+        toList([
+          class$("text-xl font-light text-black mb-2 tracking-wide")
+        ]),
+        toList([text3(title)])
+      ),
+      p(
+        toList([class$("text-gray-600 text-sm font-light")]),
+        toList([text3(message)])
+      )
+    ])
+  );
+}
+function failure_panel(title, message) {
+  return div(
+    toList([
+      class$("mb-6 p-6 bg-gray-100 border border-gray-300 rounded")
+    ]),
+    toList([
+      h2(
+        toList([
+          class$("text-xl font-light text-black mb-2 tracking-wide")
+        ]),
+        toList([text3(title)])
+      ),
+      p(
+        toList([class$("text-gray-700 text-sm font-light")]),
+        toList([text3(message)])
+      )
+    ])
+  );
+}
+
+// build/dev/javascript/newmoon/view.mjs
+function render_game_stats(health, points, milestone, level) {
+  return stats_grid(
+    toList([
+      stat_card("\u25CB", "SYSTEMS", to_string(health), "text-black"),
+      stat_card("\u25CF", "DATA", to_string(points), "text-gray-700"),
+      stat_card("\u25CE", "TARGET", to_string(milestone), "text-gray-600"),
+      stat_card("\u25C9", "SECTOR", to_string(level), "text-gray-500")
+    ])
+  );
+}
+function render_playing_view(last_orb, bag) {
+  let orbs_left = length(bag);
+  let is_disabled = is_empty(bag);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb),
+      container_display(orbs_left),
+      extract_button(is_disabled)
+    ])
+  );
+}
+function render_won_view(milestone) {
+  let message = concat2(
+    toList(["Data target achieved: ", to_string(milestone), " units"])
+  );
+  return fragment2(
+    toList([
+      status_panel("SECTOR COMPLETE", message, "bg-gray-50 border-gray-200"),
+      primary_button("ADVANCE TO NEXT SECTOR", new NextLevel())
+    ])
+  );
+}
+function render_lost_view() {
+  return fragment2(
+    toList([
+      failure_panel(
+        "MISSION FAILED",
+        "All systems compromised. Initiating reset protocol."
+      ),
+      secondary_button("\u{1F504} Play Again", new RestartGame())
+    ])
   );
 }
 function view(model) {
-  return div(
-    toList([
-      class$(
-        "min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4"
+  let $ = model.status;
+  if ($ instanceof Playing) {
+    return app_container(
+      game_card(
+        toList([
+          game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level
+          ),
+          render_playing_view(model.last_orb, model.bag)
+        ])
       )
-    ]),
-    toList([view_game_card(model)])
-  );
+    );
+  } else if ($ instanceof Won) {
+    return app_container(
+      game_card(
+        toList([
+          game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level
+          ),
+          render_won_view(model.milestone)
+        ])
+      )
+    );
+  } else {
+    return app_container(
+      game_card(
+        toList([
+          game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level
+          ),
+          render_lost_view()
+        ])
+      )
+    );
+  }
 }
 
 // build/dev/javascript/newmoon/newmoon.mjs
