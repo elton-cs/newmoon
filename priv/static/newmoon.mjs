@@ -4855,7 +4855,7 @@ function game_card(content) {
   return div(
     toList([
       class$(
-        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200"
+        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200 flex flex-col gap-3"
       )
     ]),
     content
@@ -4883,10 +4883,7 @@ function game_header() {
   );
 }
 function stats_grid(stats) {
-  return div(
-    toList([class$("grid grid-cols-2 gap-3 mb-8")]),
-    stats
-  );
+  return div(toList([class$("grid grid-cols-2 gap-3")]), stats);
 }
 function stat_card(symbol, label, value, color_class) {
   return div(
@@ -4917,7 +4914,7 @@ function stat_card(symbol, label, value, color_class) {
 }
 function info_panel(message, text_class, bg_class) {
   return div(
-    toList([class$("mb-4 p-3 " + bg_class + " rounded border")]),
+    toList([class$("p-3 " + bg_class + " rounded border")]),
     toList([
       p(
         toList([class$(text_class + " font-light text-sm")]),
@@ -4936,14 +4933,12 @@ function orb_result_display(orb) {
       return info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300");
     }
   } else {
-    return div(toList([class$("h-8 mb-4")]), toList([]));
+    return div(toList([class$("h-8")]), toList([]));
   }
 }
 function container_display(orbs_left) {
   return div(
-    toList([
-      class$("mb-6 p-4 bg-gray-50 rounded border border-gray-100")
-    ]),
+    toList([class$("p-4 bg-gray-50 rounded border border-gray-100")]),
     toList([
       p(
         toList([
@@ -5013,7 +5008,7 @@ function secondary_button(text4, msg) {
 }
 function status_panel(title, message, bg_class) {
   return div(
-    toList([class$("mb-6 p-6 " + bg_class + " rounded border")]),
+    toList([class$("p-6 " + bg_class + " rounded border")]),
     toList([
       h2(
         toList([
@@ -5030,9 +5025,7 @@ function status_panel(title, message, bg_class) {
 }
 function failure_panel(title, message) {
   return div(
-    toList([
-      class$("mb-6 p-6 bg-gray-100 border border-gray-300 rounded")
-    ]),
+    toList([class$("p-6 bg-gray-100 border border-gray-300 rounded")]),
     toList([
       h2(
         toList([
@@ -5051,7 +5044,7 @@ function orb_selection_button(text4, msg) {
   return button(
     toList([
       class$(
-        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider mb-3"
+        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider"
       ),
       on_click(msg)
     ]),
@@ -5061,9 +5054,7 @@ function orb_selection_button(text4, msg) {
 function testing_mode_indicator2() {
   return div(
     toList([
-      class$(
-        "mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded"
-      )
+      class$("p-2 bg-yellow-50 border border-yellow-200 rounded")
     ]),
     toList([
       p(

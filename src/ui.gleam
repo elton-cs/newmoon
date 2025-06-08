@@ -25,7 +25,7 @@ pub fn game_card(content: List(Element(Msg))) -> Element(Msg) {
   html.div(
     [
       attribute.class(
-        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200",
+        "bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border border-gray-200 flex flex-col gap-3",
       ),
     ],
     content,
@@ -50,7 +50,7 @@ pub fn game_header() -> Element(Msg) {
 // Stat Display Components
 
 pub fn stats_grid(stats: List(Element(Msg))) -> Element(Msg) {
-  html.div([attribute.class("grid grid-cols-2 gap-3 mb-8")], stats)
+  html.div([attribute.class("grid grid-cols-2 gap-3")], stats)
 }
 
 pub fn stat_card(
@@ -80,7 +80,7 @@ pub fn stat_card(
 
 pub fn orb_result_display(orb: Option(Orb)) -> Element(Msg) {
   case orb {
-    None -> html.div([attribute.class("h-8 mb-4")], [])
+    None -> html.div([attribute.class("h-8")], [])
     Some(orb_value) -> {
       let message = display.orb_result_message(orb_value)
       case orb_value {
@@ -98,7 +98,7 @@ fn info_panel(
   text_class: String,
   bg_class: String,
 ) -> Element(Msg) {
-  html.div([attribute.class("mb-4 p-3 " <> bg_class <> " rounded border")], [
+  html.div([attribute.class("p-3 " <> bg_class <> " rounded border")], [
     html.p([attribute.class(text_class <> " font-light text-sm")], [
       html.text(message),
     ]),
@@ -108,20 +108,17 @@ fn info_panel(
 // Container Components
 
 pub fn container_display(orbs_left: Int) -> Element(Msg) {
-  html.div(
-    [attribute.class("mb-6 p-4 bg-gray-50 rounded border border-gray-100")],
-    [
-      html.p(
-        [attribute.class("text-gray-500 mb-2 text-sm font-light tracking-wide")],
-        [html.text(display.container_label)],
+  html.div([attribute.class("p-4 bg-gray-50 rounded border border-gray-100")], [
+    html.p(
+      [attribute.class("text-gray-500 mb-2 text-sm font-light tracking-wide")],
+      [html.text(display.container_label)],
+    ),
+    html.p([attribute.class("text-2xl font-light text-black")], [
+      html.text(
+        string.concat([int.to_string(orbs_left), display.specimens_suffix]),
       ),
-      html.p([attribute.class("text-2xl font-light text-black")], [
-        html.text(
-          string.concat([int.to_string(orbs_left), display.specimens_suffix]),
-        ),
-      ]),
-    ],
-  )
+    ]),
+  ])
 }
 
 // Button Components
@@ -178,7 +175,7 @@ pub fn status_panel(
   message: String,
   bg_class: String,
 ) -> Element(Msg) {
-  html.div([attribute.class("mb-6 p-6 " <> bg_class <> " rounded border")], [
+  html.div([attribute.class("p-6 " <> bg_class <> " rounded border")], [
     html.h2(
       [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
       [html.text(title)],
@@ -190,18 +187,15 @@ pub fn status_panel(
 }
 
 pub fn failure_panel(title: String, message: String) -> Element(Msg) {
-  html.div(
-    [attribute.class("mb-6 p-6 bg-gray-100 border border-gray-300 rounded")],
-    [
-      html.h2(
-        [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
-        [html.text(title)],
-      ),
-      html.p([attribute.class("text-gray-700 text-sm font-light")], [
-        html.text(message),
-      ]),
-    ],
-  )
+  html.div([attribute.class("p-6 bg-gray-100 border border-gray-300 rounded")], [
+    html.h2(
+      [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+      [html.text(title)],
+    ),
+    html.p([attribute.class("text-gray-700 text-sm font-light")], [
+      html.text(message),
+    ]),
+  ])
 }
 
 // Orb Testing Components
@@ -210,7 +204,7 @@ pub fn orb_selection_button(text: String, msg: Msg) -> Element(Msg) {
   html.button(
     [
       attribute.class(
-        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider mb-3",
+        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
       ),
       event.on_click(msg),
     ],
@@ -220,7 +214,7 @@ pub fn orb_selection_button(text: String, msg: Msg) -> Element(Msg) {
 
 pub fn testing_mode_indicator() -> Element(Msg) {
   html.div(
-    [attribute.class("mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded")],
+    [attribute.class("p-2 bg-yellow-50 border border-yellow-200 rounded")],
     [
       html.p(
         [attribute.class("text-yellow-700 font-medium text-xs tracking-wider")],
