@@ -365,14 +365,6 @@ function makeError(variant, file, module, line, fn, message, extra) {
   return error;
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/order.mjs
-var Lt = class extends CustomType {
-};
-var Eq = class extends CustomType {
-};
-var Gt = class extends CustomType {
-};
-
 // build/dev/javascript/gleam_stdlib/gleam/option.mjs
 var Some = class extends CustomType {
   constructor($0) {
@@ -1087,10 +1079,13 @@ var Dict = class _Dict {
 };
 var unequalDictSymbol = /* @__PURE__ */ Symbol();
 
-// build/dev/javascript/gleam_stdlib/gleam/dict.mjs
-function insert(dict2, key, value) {
-  return map_insert(key, value, dict2);
-}
+// build/dev/javascript/gleam_stdlib/gleam/order.mjs
+var Lt = class extends CustomType {
+};
+var Eq = class extends CustomType {
+};
+var Gt = class extends CustomType {
+};
 
 // build/dev/javascript/gleam_stdlib/gleam/list.mjs
 var Ascending = class extends CustomType {
@@ -1616,6 +1611,11 @@ function map_get(map4, key) {
 }
 function map_insert(key, value, map4) {
   return map4.set(key, value);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/dict.mjs
+function insert(dict2, key, value) {
+  return map_insert(key, value, dict2);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -4478,44 +4478,7 @@ function start3(app, selector, start_args) {
   );
 }
 
-// build/dev/javascript/lustre/lustre/event.mjs
-function is_immediate_event(name) {
-  if (name === "input") {
-    return true;
-  } else if (name === "change") {
-    return true;
-  } else if (name === "focus") {
-    return true;
-  } else if (name === "focusin") {
-    return true;
-  } else if (name === "focusout") {
-    return true;
-  } else if (name === "blur") {
-    return true;
-  } else if (name === "select") {
-    return true;
-  } else {
-    return false;
-  }
-}
-function on(name, handler) {
-  return event(
-    name,
-    handler,
-    empty_list,
-    false,
-    false,
-    is_immediate_event(name),
-    0,
-    0
-  );
-}
-function on_click(msg) {
-  return on("click", success(msg));
-}
-
-// build/dev/javascript/newmoon/newmoon.mjs
-var FILEPATH = "src/newmoon.gleam";
+// build/dev/javascript/newmoon/types.mjs
 var PointOrb = class extends CustomType {
 };
 var BombOrb = class extends CustomType {
@@ -4544,6 +4507,8 @@ var NextLevel = class extends CustomType {
 };
 var RestartGame = class extends CustomType {
 };
+
+// build/dev/javascript/newmoon/update.mjs
 function create_bag() {
   return append(
     repeat(new PointOrb(), 5),
@@ -4654,6 +4619,44 @@ function update2(model, msg) {
     return init(void 0);
   }
 }
+
+// build/dev/javascript/lustre/lustre/event.mjs
+function is_immediate_event(name) {
+  if (name === "input") {
+    return true;
+  } else if (name === "change") {
+    return true;
+  } else if (name === "focus") {
+    return true;
+  } else if (name === "focusin") {
+    return true;
+  } else if (name === "focusout") {
+    return true;
+  } else if (name === "blur") {
+    return true;
+  } else if (name === "select") {
+    return true;
+  } else {
+    return false;
+  }
+}
+function on(name, handler) {
+  return event(
+    name,
+    handler,
+    empty_list,
+    false,
+    false,
+    is_immediate_event(name),
+    0,
+    0
+  );
+}
+function on_click(msg) {
+  return on("click", success(msg));
+}
+
+// build/dev/javascript/newmoon/view.mjs
 function view_header() {
   return div(
     toList([]),
@@ -4936,6 +4939,9 @@ function view(model) {
     toList([view_game_card(model)])
   );
 }
+
+// build/dev/javascript/newmoon/newmoon.mjs
+var FILEPATH = "src/newmoon.gleam";
 function main() {
   let _block;
   let _pipe = simple(init, update2, view);
@@ -4946,10 +4952,10 @@ function main() {
       "let_assert",
       FILEPATH,
       "newmoon",
-      12,
+      6,
       "main",
       "Pattern match failed, no pattern matched the value.",
-      { value: $, start: 249, end: 334, pattern_start: 260, pattern_end: 265 }
+      { value: $, start: 66, end: 174, pattern_start: 77, pattern_end: 82 }
     );
   }
   return void 0;
