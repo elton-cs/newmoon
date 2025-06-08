@@ -3,9 +3,9 @@ import gleam/int
 import gleam/list
 import lustre/element.{type Element}
 import types.{
-  type Model, type Msg, BackToMainMenu, BombOrb, GoToOrbTesting, Lost, MainMenu,
-  NextLevel, OrbTesting, Playing, PointOrb, RestartGame, SelectTestOrb,
-  StartGame, TestingMode, Won,
+  type Model, type Msg, BackToMainMenu, BombOrb, ExitTesting, GoToOrbTesting,
+  Lost, MainMenu, NextLevel, OrbTesting, Playing, PointOrb, ResetTesting,
+  RestartGame, SelectTestOrb, StartGame, TestingMode, Won,
 }
 import ui
 
@@ -31,7 +31,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_playing_view(model.last_orb, model.bag),
+          render_testing_mode_view(model.last_orb, model.bag),
         ]),
       )
     Playing ->
@@ -178,5 +178,19 @@ fn render_orb_testing_view() -> Element(Msg) {
       SelectTestOrb(BombOrb),
     ),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
+  ])
+}
+
+// Testing Mode View - includes reset and exit buttons
+fn render_testing_mode_view(last_orb, bag) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let is_disabled = list.is_empty(bag)
+
+  element.fragment([
+    ui.orb_result_display(last_orb),
+    ui.container_display(orbs_left),
+    ui.extract_button(is_disabled),
+    ui.secondary_button(display.reset_testing_text, ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
   ])
 }

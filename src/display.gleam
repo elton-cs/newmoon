@@ -50,6 +50,10 @@ pub const test_data_sample_text = "Test Data Sample"
 
 pub const test_hazard_sample_text = "Test Hazard Sample"
 
+pub const reset_testing_text = "RESET TEST"
+
+pub const exit_testing_text = "EXIT TO MENU"
+
 // Game Status Messages
 pub const sector_complete_title = "SECTOR COMPLETE"
 

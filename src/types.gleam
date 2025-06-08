@@ -34,4 +34,6 @@ pub type Msg {
   PullOrb
   NextLevel
   RestartGame
+  ResetTesting
+  ExitTesting
 }

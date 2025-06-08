@@ -4525,6 +4525,10 @@ var NextLevel = class extends CustomType {
 };
 var RestartGame = class extends CustomType {
 };
+var ResetTesting = class extends CustomType {
+};
+var ExitTesting = class extends CustomType {
+};
 
 // build/dev/javascript/newmoon/update.mjs
 function create_bag() {
@@ -4599,6 +4603,21 @@ function handle_next_level(model) {
     new Playing(),
     new None()
   );
+}
+function handle_reset_testing(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new OrbTesting(),
+    _record.last_orb
+  );
+}
+function handle_exit_testing(_) {
+  return init(void 0);
 }
 function check_game_status(model) {
   let $ = model.health <= 0;
@@ -4741,8 +4760,12 @@ function update2(model, msg) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
-  } else {
+  } else if (msg instanceof RestartGame) {
     return init(void 0);
+  } else if (msg instanceof ResetTesting) {
+    return handle_reset_testing(model);
+  } else {
+    return handle_exit_testing(model);
   }
 }
 
@@ -4769,6 +4792,8 @@ var back_to_menu_text = "BACK TO MENU";
 var testing_mode_indicator = "TESTING MODE ACTIVE";
 var test_data_sample_text = "Test Data Sample";
 var test_hazard_sample_text = "Test Hazard Sample";
+var reset_testing_text = "RESET TEST";
+var exit_testing_text = "EXIT TO MENU";
 var sector_complete_title = "SECTOR COMPLETE";
 var mission_failed_title = "MISSION FAILED";
 var advance_button_text = "ADVANCE TO NEXT SECTOR";
@@ -5155,6 +5180,19 @@ function render_orb_testing_view() {
     ])
   );
 }
+function render_testing_mode_view(last_orb, bag) {
+  let orbs_left = length(bag);
+  let is_disabled = is_empty(bag);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb),
+      container_display(orbs_left),
+      extract_button(is_disabled),
+      secondary_button(reset_testing_text, new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting())
+    ])
+  );
+}
 function view(model) {
   let $ = model.status;
   if ($ instanceof MainMenu) {
@@ -5177,7 +5215,7 @@ function view(model) {
             model.milestone,
             model.level
           ),
-          render_playing_view(model.last_orb, model.bag)
+          render_testing_mode_view(model.last_orb, model.bag)
         ])
       )
     );

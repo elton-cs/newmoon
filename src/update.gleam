@@ -1,9 +1,10 @@
 import gleam/list
 import gleam/option.{None, Some}
 import types.{
-  type Model, type Msg, type Orb, BackToMainMenu, BombOrb, GoToOrbTesting, Lost,
-  MainMenu, Model, NextLevel, OrbTesting, Playing, PointOrb, PullOrb,
-  RestartGame, SelectTestOrb, StartGame, TestingMode, Won,
+  type Model, type Msg, type Orb, BackToMainMenu, BombOrb, ExitTesting,
+  GoToOrbTesting, Lost, MainMenu, Model, NextLevel, OrbTesting, Playing,
+  PointOrb, PullOrb, ResetTesting, RestartGame, SelectTestOrb, StartGame,
+  TestingMode, Won,
 }
 
 pub fn init(_) -> Model {
@@ -37,6 +38,8 @@ pub fn update(model: Model, msg: Msg) -> Model {
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> init(Nil)
+    ResetTesting -> handle_reset_testing(model)
+    ExitTesting -> handle_exit_testing(model)
   }
 }
 
@@ -95,6 +98,14 @@ fn handle_next_level(model: Model) -> Model {
     status: Playing,
     last_orb: None,
   )
+}
+
+fn handle_reset_testing(model: Model) -> Model {
+  Model(..model, status: OrbTesting)
+}
+
+fn handle_exit_testing(_model: Model) -> Model {
+  init(Nil)
 }
 
 fn check_game_status(model: Model) -> Model {
