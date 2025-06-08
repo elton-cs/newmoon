@@ -3,9 +3,10 @@ import gleam/int
 import gleam/list
 import lustre/element.{type Element}
 import types.{
-  type Model, type Msg, BackToMainMenu, BombOrb, ExitTesting, GoToOrbTesting,
-  Lost, MainMenu, NextLevel, OrbTesting, Playing, PointOrb, ResetTesting,
-  RestartGame, SelectTestOrb, StartGame, TestingMode, Won,
+  type Model, type Msg, type OrbType, BackToMainMenu, BackToOrbTesting,
+  ConfirmOrbValue, DataSample, ExitTesting, GoToOrbTesting, HazardSample, Lost,
+  MainMenu, NextLevel, OrbTesting, OrbValueSelection, Playing, ResetTesting,
+  RestartGame, SelectOrbType, StartGame, TestingMode, UpdateInputValue, Won,
 }
 import ui
 
@@ -19,6 +20,13 @@ pub fn view(model: Model) -> Element(Msg) {
     OrbTesting ->
       ui.app_container(
         ui.game_card([ui.game_header(), render_orb_testing_view()]),
+      )
+    OrbValueSelection(orb_type) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_orb_value_selection_view(orb_type, model.input_value),
+        ]),
       )
     TestingMode ->
       ui.app_container(
@@ -169,17 +177,35 @@ fn render_orb_testing_view() -> Element(Msg) {
       display.orb_testing_subtitle,
       "bg-purple-50 border-purple-200",
     ),
-    ui.orb_selection_button("Test Data Sample (+1)", SelectTestOrb(PointOrb(1))),
-    ui.orb_selection_button("Test Data Sample (+3)", SelectTestOrb(PointOrb(3))),
-    ui.orb_selection_button(
-      "Test Hazard Sample (-1)",
-      SelectTestOrb(BombOrb(1)),
-    ),
-    ui.orb_selection_button(
-      "Test Hazard Sample (-3)",
-      SelectTestOrb(BombOrb(3)),
-    ),
+    ui.orb_selection_button("Data Sample", SelectOrbType(DataSample)),
+    ui.orb_selection_button("Hazard Sample", SelectOrbType(HazardSample)),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
+  ])
+}
+
+// Orb Value Selection View - input specific value for orb type
+fn render_orb_value_selection_view(
+  orb_type: OrbType,
+  input_value: String,
+) -> Element(Msg) {
+  let orb_name = case orb_type {
+    DataSample -> "Data Sample"
+    HazardSample -> "Hazard Sample"
+  }
+  let description = case orb_type {
+    DataSample -> "Enter the data points this sample will provide"
+    HazardSample -> "Enter the system damage this sample will cause"
+  }
+
+  element.fragment([
+    ui.status_panel(
+      orb_name <> " Configuration",
+      description,
+      "bg-blue-50 border-blue-200",
+    ),
+    ui.number_input(input_value),
+    ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
+    ui.secondary_button("Back to Selection", BackToOrbTesting),
   ])
 }
 

@@ -2,7 +2,7 @@
 var CustomType = class {
   withFields(fields) {
     let properties = Object.keys(this).map(
-      (label) => label in fields ? fields[label] : this[label]
+      (label2) => label2 in fields ? fields[label2] : this[label2]
     );
     return new this.constructor(...properties);
   }
@@ -156,11 +156,11 @@ var BitArray = class {
    * @param {number} index
    * @returns {number | undefined}
    */
-  byteAt(index3) {
-    if (index3 < 0 || index3 >= this.byteSize) {
+  byteAt(index4) {
+    if (index4 < 0 || index4 >= this.byteSize) {
       return void 0;
     }
-    return bitArrayByteAt(this.rawBuffer, this.bitOffset, index3);
+    return bitArrayByteAt(this.rawBuffer, this.bitOffset, index4);
   }
   /** @internal */
   equals(other) {
@@ -248,12 +248,12 @@ var BitArray = class {
     return this.rawBuffer.length;
   }
 };
-function bitArrayByteAt(buffer, bitOffset, index3) {
+function bitArrayByteAt(buffer, bitOffset, index4) {
   if (bitOffset === 0) {
-    return buffer[index3] ?? 0;
+    return buffer[index4] ?? 0;
   } else {
-    const a = buffer[index3] << bitOffset & 255;
-    const b = buffer[index3 + 1] >> 8 - bitOffset;
+    const a = buffer[index4] << bitOffset & 255;
+    const b = buffer[index4 + 1] >> 8 - bitOffset;
     return a | b;
   }
 }
@@ -274,9 +274,9 @@ var Result = class _Result extends CustomType {
   }
 };
 var Ok = class extends Result {
-  constructor(value) {
+  constructor(value2) {
     super();
-    this[0] = value;
+    this[0] = value2;
   }
   // @internal
   isOk() {
@@ -1128,6 +1128,25 @@ function reverse(list4) {
 function is_empty(list4) {
   return isEqual(list4, toList([]));
 }
+function map_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return reverse(acc);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = prepend(fun(first$1), acc);
+    }
+  }
+}
+function map(list4, fun) {
+  return map_loop(list4, fun, toList([]));
+}
 function append_loop(loop$first, loop$second) {
   while (true) {
     let first = loop$first;
@@ -1516,6 +1535,14 @@ function concat2(strings) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
+var DecodeError = class extends CustomType {
+  constructor(expected, found, path) {
+    super();
+    this.expected = expected;
+    this.found = found;
+    this.path = path;
+  }
+};
 var Decoder = class extends CustomType {
   constructor(function$) {
     super();
@@ -1547,10 +1574,180 @@ function map2(decoder, transformer) {
     }
   );
 }
+function run_decoders(loop$data, loop$failure, loop$decoders) {
+  while (true) {
+    let data = loop$data;
+    let failure2 = loop$failure;
+    let decoders = loop$decoders;
+    if (decoders instanceof Empty) {
+      return failure2;
+    } else {
+      let decoder = decoders.head;
+      let decoders$1 = decoders.tail;
+      let $ = decoder.function(data);
+      let layer = $;
+      let errors = $[1];
+      if (errors instanceof Empty) {
+        return layer;
+      } else {
+        loop$data = data;
+        loop$failure = failure2;
+        loop$decoders = decoders$1;
+      }
+    }
+  }
+}
+function one_of(first, alternatives) {
+  return new Decoder(
+    (dynamic_data) => {
+      let $ = first.function(dynamic_data);
+      let layer = $;
+      let errors = $[1];
+      if (errors instanceof Empty) {
+        return layer;
+      } else {
+        return run_decoders(dynamic_data, layer, alternatives);
+      }
+    }
+  );
+}
+function run_dynamic_function(data, name, f) {
+  let $ = f(data);
+  if ($ instanceof Ok) {
+    let data$1 = $[0];
+    return [data$1, toList([])];
+  } else {
+    let zero = $[0];
+    return [
+      zero,
+      toList([new DecodeError(name, classify_dynamic(data), toList([]))])
+    ];
+  }
+}
+function decode_int(data) {
+  return run_dynamic_function(data, "Int", int);
+}
+var int2 = /* @__PURE__ */ new Decoder(decode_int);
+function decode_string(data) {
+  return run_dynamic_function(data, "String", string);
+}
+var string2 = /* @__PURE__ */ new Decoder(decode_string);
+function push_path(layer, path) {
+  let decoder = one_of(
+    string2,
+    toList([
+      (() => {
+        let _pipe = int2;
+        return map2(_pipe, to_string);
+      })()
+    ])
+  );
+  let path$1 = map(
+    path,
+    (key) => {
+      let key$1 = identity(key);
+      let $ = run(key$1, decoder);
+      if ($ instanceof Ok) {
+        let key$2 = $[0];
+        return key$2;
+      } else {
+        return "<" + classify_dynamic(key$1) + ">";
+      }
+    }
+  );
+  let errors = map(
+    layer[1],
+    (error) => {
+      let _record = error;
+      return new DecodeError(
+        _record.expected,
+        _record.found,
+        append(path$1, error.path)
+      );
+    }
+  );
+  return [layer[0], errors];
+}
+function index3(loop$path, loop$position, loop$inner, loop$data, loop$handle_miss) {
+  while (true) {
+    let path = loop$path;
+    let position = loop$position;
+    let inner = loop$inner;
+    let data = loop$data;
+    let handle_miss = loop$handle_miss;
+    if (path instanceof Empty) {
+      let _pipe = inner(data);
+      return push_path(_pipe, reverse(position));
+    } else {
+      let key = path.head;
+      let path$1 = path.tail;
+      let $ = index2(data, key);
+      if ($ instanceof Ok) {
+        let $1 = $[0];
+        if ($1 instanceof Some) {
+          let data$1 = $1[0];
+          loop$path = path$1;
+          loop$position = prepend(key, position);
+          loop$inner = inner;
+          loop$data = data$1;
+          loop$handle_miss = handle_miss;
+        } else {
+          return handle_miss(data, prepend(key, position));
+        }
+      } else {
+        let kind = $[0];
+        let $1 = inner(data);
+        let default$ = $1[0];
+        let _pipe = [
+          default$,
+          toList([new DecodeError(kind, classify_dynamic(data), toList([]))])
+        ];
+        return push_path(_pipe, reverse(position));
+      }
+    }
+  }
+}
+function subfield(field_path, field_decoder, next) {
+  return new Decoder(
+    (data) => {
+      let $ = index3(
+        field_path,
+        toList([]),
+        field_decoder.function,
+        data,
+        (data2, position) => {
+          let $12 = field_decoder.function(data2);
+          let default$ = $12[0];
+          let _pipe = [
+            default$,
+            toList([new DecodeError("Field", "Nothing", toList([]))])
+          ];
+          return push_path(_pipe, reverse(position));
+        }
+      );
+      let out = $[0];
+      let errors1 = $[1];
+      let $1 = next(out).function(data);
+      let out$1 = $1[0];
+      let errors2 = $1[1];
+      return [out$1, append(errors1, errors2)];
+    }
+  );
+}
 
 // build/dev/javascript/gleam_stdlib/gleam_stdlib.mjs
 var Nil = void 0;
 var NOT_FOUND = {};
+function identity(x) {
+  return x;
+}
+function parse_int(value2) {
+  if (/^[-+]?(\d+)$/.test(value2)) {
+    return new Ok(parseInt(value2));
+  } else {
+    return new Error(Nil);
+  }
+}
 function to_string(term) {
   return term.toString();
 }
@@ -1585,19 +1782,77 @@ function new_map() {
   return Dict.new();
 }
 function map_get(map4, key) {
-  const value = map4.get(key, NOT_FOUND);
-  if (value === NOT_FOUND) {
+  const value2 = map4.get(key, NOT_FOUND);
+  if (value2 === NOT_FOUND) {
     return new Error(Nil);
   }
-  return new Ok(value);
+  return new Ok(value2);
 }
-function map_insert(key, value, map4) {
-  return map4.set(key, value);
+function map_insert(key, value2, map4) {
+  return map4.set(key, value2);
+}
+function classify_dynamic(data) {
+  if (typeof data === "string") {
+    return "String";
+  } else if (typeof data === "boolean") {
+    return "Bool";
+  } else if (data instanceof Result) {
+    return "Result";
+  } else if (data instanceof List) {
+    return "List";
+  } else if (data instanceof BitArray) {
+    return "BitArray";
+  } else if (data instanceof Dict) {
+    return "Dict";
+  } else if (Number.isInteger(data)) {
+    return "Int";
+  } else if (Array.isArray(data)) {
+    return `Array`;
+  } else if (typeof data === "number") {
+    return "Float";
+  } else if (data === null) {
+    return "Nil";
+  } else if (data === void 0) {
+    return "Nil";
+  } else {
+    const type = typeof data;
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  }
+}
+function index2(data, key) {
+  if (data instanceof Dict || data instanceof WeakMap || data instanceof Map) {
+    const token2 = {};
+    const entry = data.get(key, token2);
+    if (entry === token2) return new Ok(new None());
+    return new Ok(new Some(entry));
+  }
+  const key_is_int = Number.isInteger(key);
+  if (key_is_int && key >= 0 && key < 8 && data instanceof List) {
+    let i = 0;
+    for (const value2 of data) {
+      if (i === key) return new Ok(new Some(value2));
+      i++;
+    }
+    return new Error("Indexable");
+  }
+  if (key_is_int && Array.isArray(data) || data && typeof data === "object" || data && Object.getPrototypeOf(data) === Object.prototype) {
+    if (key in data) return new Ok(new Some(data[key]));
+    return new Ok(new None());
+  }
+  return new Error(key_is_int ? "Indexable" : "Dict");
+}
+function int(data) {
+  if (Number.isInteger(data)) return new Ok(data);
+  return new Error(0);
+}
+function string(data) {
+  if (typeof data === "string") return new Ok(data);
+  return new Error("");
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dict.mjs
-function insert(dict2, key, value) {
-  return map_insert(key, value, dict2);
+function insert(dict2, key, value2) {
+  return map_insert(key, value2, dict2);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -1679,19 +1934,19 @@ function compare3(a, b) {
 
 // build/dev/javascript/lustre/lustre/vdom/vattr.mjs
 var Attribute = class extends CustomType {
-  constructor(kind, name, value) {
+  constructor(kind, name, value2) {
     super();
     this.kind = kind;
     this.name = name;
-    this.value = value;
+    this.value = value2;
   }
 };
 var Property = class extends CustomType {
-  constructor(kind, name, value) {
+  constructor(kind, name, value2) {
     super();
     this.kind = kind;
     this.name = name;
-    this.value = value;
+    this.value = value2;
   }
 };
 var Event2 = class extends CustomType {
@@ -1744,8 +1999,8 @@ function merge(loop$attributes, loop$merged) {
                   let class1 = $2;
                   let rest = $3.tail;
                   let class2 = $4.value;
-                  let value = class1 + " " + class2;
-                  let attribute$1 = new Attribute(kind, "class", value);
+                  let value2 = class1 + " " + class2;
+                  let attribute$1 = new Attribute(kind, "class", value2);
                   loop$attributes = prepend(attribute$1, rest);
                   loop$merged = merged;
                 } else {
@@ -1784,8 +2039,8 @@ function merge(loop$attributes, loop$merged) {
                   let style1 = $2;
                   let rest = $3.tail;
                   let style2 = $4.value;
-                  let value = style1 + ";" + style2;
-                  let attribute$1 = new Attribute(kind, "style", value);
+                  let value2 = style1 + ";" + style2;
+                  let attribute$1 = new Attribute(kind, "style", value2);
                   loop$attributes = prepend(attribute$1, rest);
                   loop$merged = merged;
                 } else {
@@ -1834,8 +2089,8 @@ function prepare(attributes) {
   }
 }
 var attribute_kind = 0;
-function attribute(name, value) {
-  return new Attribute(attribute_kind, name, value);
+function attribute(name, value2) {
+  return new Attribute(attribute_kind, name, value2);
 }
 var property_kind = 1;
 var event_kind = 2;
@@ -1854,11 +2109,29 @@ function event(name, handler, include, prevent_default, stop_propagation, immedi
 }
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
-function attribute2(name, value) {
-  return attribute(name, value);
+function attribute2(name, value2) {
+  return attribute(name, value2);
 }
 function class$(name) {
   return attribute2("class", name);
+}
+function id(value2) {
+  return attribute2("id", value2);
+}
+function for$(id2) {
+  return attribute2("for", id2);
+}
+function min2(value2) {
+  return attribute2("min", value2);
+}
+function placeholder(text4) {
+  return attribute2("placeholder", text4);
+}
+function type_(control_type) {
+  return attribute2("type", control_type);
+}
+function value(control_value) {
+  return attribute2("value", control_value);
 }
 
 // build/dev/javascript/lustre/lustre/effect.mjs
@@ -1884,16 +2157,16 @@ function empty2() {
   return null;
 }
 function get(map4, key) {
-  const value = map4?.get(key);
-  if (value != null) {
-    return new Ok(value);
+  const value2 = map4?.get(key);
+  if (value2 != null) {
+    return new Ok(value2);
   } else {
     return new Error(void 0);
   }
 }
-function insert3(map4, key, value) {
+function insert3(map4, key, value2) {
   map4 ??= /* @__PURE__ */ new Map();
-  map4.set(key, value);
+  map4.set(key, value2);
   return map4;
 }
 function remove(map4, key) {
@@ -1912,9 +2185,9 @@ var Key = class extends CustomType {
   }
 };
 var Index = class extends CustomType {
-  constructor(index3, parent) {
+  constructor(index4, parent) {
     super();
-    this.index = index3;
+    this.index = index4;
     this.parent = parent;
   }
 };
@@ -1937,9 +2210,9 @@ function do_matches(loop$path, loop$candidates) {
     }
   }
 }
-function add2(parent, index3, key) {
+function add2(parent, index4, key) {
   if (key === "") {
-    return new Index(index3, parent);
+    return new Index(index4, parent);
   } else {
     return new Key(key, parent);
   }
@@ -1964,12 +2237,12 @@ function do_to_string(loop$path, loop$acc) {
       loop$path = parent;
       loop$acc = prepend(separator_key, prepend(key, acc));
     } else {
-      let index3 = path.index;
+      let index4 = path.index;
       let parent = path.parent;
       loop$path = parent;
       loop$acc = prepend(
         separator_index,
-        prepend(to_string(index3), acc)
+        prepend(to_string(index4), acc)
       );
     }
   }
@@ -2117,7 +2390,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
   while (true) {
     let key = loop$key;
     let children = loop$children;
-    let index3 = loop$index;
+    let index4 = loop$index;
     let new_children = loop$new_children;
     let keyed_children = loop$keyed_children;
     if (children instanceof Empty) {
@@ -2128,7 +2401,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
         let node = $;
         if (node.key === "") {
           let children$1 = children.tail;
-          let child_key = key + "::" + to_string(index3);
+          let child_key = key + "::" + to_string(index4);
           let $1 = set_fragment_key(
             child_key,
             node.children,
@@ -2150,7 +2423,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
           );
           let new_node = _block;
           let new_children$1 = prepend(new_node, new_children);
-          let index$1 = index3 + 1;
+          let index$1 = index4 + 1;
           loop$key = key;
           loop$children = children$1;
           loop$index = index$1;
@@ -2168,7 +2441,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
               child_key,
               keyed_node
             );
-            let index$1 = index3 + 1;
+            let index$1 = index4 + 1;
             loop$key = key;
             loop$children = children$1;
             loop$index = index$1;
@@ -2178,7 +2451,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
             let node$2 = $;
             let children$1 = children.tail;
             let new_children$1 = prepend(node$2, new_children);
-            let index$1 = index3 + 1;
+            let index$1 = index4 + 1;
             loop$key = key;
             loop$children = children$1;
             loop$index = index$1;
@@ -2198,7 +2471,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
             child_key,
             keyed_node
           );
-          let index$1 = index3 + 1;
+          let index$1 = index4 + 1;
           loop$key = key;
           loop$children = children$1;
           loop$index = index$1;
@@ -2208,7 +2481,7 @@ function set_fragment_key(loop$key, loop$children, loop$index, loop$new_children
           let node$1 = $;
           let children$1 = children.tail;
           let new_children$1 = prepend(node$1, new_children);
-          let index$1 = index3 + 1;
+          let index$1 = index4 + 1;
           loop$key = key;
           loop$children = children$1;
           loop$index = index$1;
@@ -2273,9 +2546,9 @@ function to_keyed(key, node) {
 
 // build/dev/javascript/lustre/lustre/vdom/patch.mjs
 var Patch = class extends CustomType {
-  constructor(index3, removed, changes, children) {
+  constructor(index4, removed, changes, children) {
     super();
-    this.index = index3;
+    this.index = index4;
     this.removed = removed;
     this.changes = changes;
     this.children = children;
@@ -2345,8 +2618,8 @@ var Remove = class extends CustomType {
     this.count = count;
   }
 };
-function new$4(index3, removed, changes, children) {
-  return new Patch(index3, removed, changes, children);
+function new$4(index4, removed, changes, children) {
+  return new Patch(index4, removed, changes, children);
 }
 var replace_text_kind = 0;
 function replace_text(content) {
@@ -3448,11 +3721,11 @@ var Reconciler = class {
       let lastIndex = -1;
       let lastChild = null;
       iterate(patch.children, (child) => {
-        const index3 = child.index | 0;
-        const next = lastChild && lastIndex - index3 === 1 ? lastChild.previousSibling : childAt(node, index3);
+        const index4 = child.index | 0;
+        const next = lastChild && lastIndex - index4 === 1 ? lastChild.previousSibling : childAt(node, index4);
         self.#stack.push({ node: next, patch: child });
         lastChild = next;
-        lastIndex = index3;
+        lastIndex = index4;
       });
     }
   }
@@ -3568,7 +3841,7 @@ var Reconciler = class {
     const {
       kind,
       name,
-      value,
+      value: value2,
       prevent_default: prevent,
       stop_propagation: stop,
       immediate: immediate2,
@@ -3578,7 +3851,7 @@ var Reconciler = class {
     } = attribute3;
     switch (kind) {
       case attribute_kind: {
-        const valueOrDefault = value ?? "";
+        const valueOrDefault = value2 ?? "";
         if (name === "virtual:defaultValue") {
           node.defaultValue = valueOrDefault;
           return;
@@ -3586,11 +3859,11 @@ var Reconciler = class {
         if (valueOrDefault !== node.getAttribute(name)) {
           node.setAttribute(name, valueOrDefault);
         }
-        SYNCED_ATTRIBUTES[name]?.added?.(node, value);
+        SYNCED_ATTRIBUTES[name]?.added?.(node, value2);
         break;
       }
       case property_kind:
-        node[name] = value;
+        node[name] = value2;
         break;
       case event_kind: {
         if (!handlers.has(name)) {
@@ -3626,11 +3899,11 @@ var Reconciler = class {
               path = `${separator_key}${key}${path}`;
             } else {
               const siblings = parent.childNodes;
-              let index3 = [].indexOf.call(siblings, pathNode);
+              let index4 = [].indexOf.call(siblings, pathNode);
               if (parent === this.#root) {
-                index3 -= this.offset;
+                index4 -= this.offset;
               }
-              path = `${separator_index}${index3}${path}`;
+              path = `${separator_index}${index4}${path}`;
             }
             pathNode = parent;
           }
@@ -3730,13 +4003,13 @@ var createServerEvent = (event4, include = []) => {
   }
   for (const property3 of include) {
     const path = property3.split(".");
-    for (let i = 0, input = event4, output = data; i < path.length; i++) {
+    for (let i = 0, input2 = event4, output = data; i < path.length; i++) {
       if (i === path.length - 1) {
-        output[path[i]] = input[path[i]];
+        output[path[i]] = input2[path[i]];
         break;
       }
       output = output[path[i]] ??= {};
-      input = input[path[i]];
+      input2 = input2[path[i]];
     }
   }
   return data;
@@ -3753,8 +4026,8 @@ var syncedBooleanAttribute = (name) => {
 };
 var syncedAttribute = (name) => {
   return {
-    added(node, value) {
-      node[name] = value;
+    added(node, value2) {
+      node[name] = value2;
     }
   };
 };
@@ -3829,13 +4102,13 @@ var virtualiseNode = (parent, node) => {
 };
 var INPUT_ELEMENTS = ["input", "select", "textarea"];
 var virtualiseInputEvents = (tag, node) => {
-  const value = node.value;
+  const value2 = node.value;
   const checked = node.checked;
   if (tag === "input" && node.type === "checkbox" && !checked) return;
   if (tag === "input" && node.type === "radio" && !checked) return;
-  if (node.type !== "checkbox" && node.type !== "radio" && !value) return;
+  if (node.type !== "checkbox" && node.type !== "radio" && !value2) return;
   queueMicrotask(() => {
-    node.value = value;
+    node.value = value2;
     node.checked = checked;
     node.dispatchEvent(new Event("input", { bubbles: true }));
     node.dispatchEvent(new Event("change", { bubbles: true }));
@@ -3860,11 +4133,11 @@ var virtualiseChildNodes = (node) => {
   return children;
 };
 var virtualiseAttributes = (node) => {
-  let index3 = node.attributes.length;
+  let index4 = node.attributes.length;
   let attributes = empty_list;
-  while (index3-- > 0) {
+  while (index4-- > 0) {
     attributes = new NonEmpty(
-      virtualiseAttribute(node.attributes[index3]),
+      virtualiseAttribute(node.attributes[index4]),
       attributes
     );
   }
@@ -3872,8 +4145,8 @@ var virtualiseAttributes = (node) => {
 };
 var virtualiseAttribute = (attr) => {
   const name = attr.localName;
-  const value = attr.value;
-  return attribute2(name, value);
+  const value2 = attr.value;
+  return attribute2(name, value2);
 };
 
 // build/dev/javascript/lustre/lustre/runtime/client/runtime.ffi.mjs
@@ -4225,8 +4498,8 @@ function do_add_child(handlers, mapper, parent, child_index, child) {
     return add_attributes(handlers, composed_mapper, path, attributes);
   }
 }
-function add_child(events, mapper, parent, index3, child) {
-  let handlers = do_add_child(events.handlers, mapper, parent, index3, child);
+function add_child(events, mapper, parent, index4, child) {
+  let handlers = do_add_child(events.handlers, mapper, parent, index4, child);
   let _record = events;
   return new Events(
     handlers,
@@ -4332,6 +4605,12 @@ function p(attrs, children) {
 }
 function button(attrs, children) {
   return element2("button", attrs, children);
+}
+function input(attrs) {
+  return element2("input", attrs, empty_list);
+}
+function label(attrs, children) {
+  return element2("label", attrs, children);
 }
 
 // build/dev/javascript/lustre/lustre/runtime/server/runtime.mjs
@@ -4477,6 +4756,12 @@ var MainMenu = class extends CustomType {
 };
 var OrbTesting = class extends CustomType {
 };
+var OrbValueSelection = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
 var TestingMode = class extends CustomType {
 };
 var Playing = class extends CustomType {
@@ -4485,8 +4770,12 @@ var Won = class extends CustomType {
 };
 var Lost = class extends CustomType {
 };
+var DataSample = class extends CustomType {
+};
+var HazardSample = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, status, last_orb) {
+  constructor(health, points, level, milestone, bag, status, last_orb, input_value) {
     super();
     this.health = health;
     this.points = points;
@@ -4495,19 +4784,34 @@ var Model = class extends CustomType {
     this.bag = bag;
     this.status = status;
     this.last_orb = last_orb;
+    this.input_value = input_value;
   }
 };
 var StartGame = class extends CustomType {
 };
 var GoToOrbTesting = class extends CustomType {
 };
-var SelectTestOrb = class extends CustomType {
+var SelectOrbType = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var UpdateInputValue = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var ConfirmOrbValue = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
   }
 };
 var BackToMainMenu = class extends CustomType {
+};
+var BackToOrbTesting = class extends CustomType {
 };
 var PullOrb = class extends CustomType {
 };
@@ -4539,7 +4843,7 @@ function create_bag() {
   return append(point_orbs, bomb_orbs);
 }
 function init(_) {
-  return new Model(5, 0, 1, 5, create_bag(), new MainMenu(), new None());
+  return new Model(5, 0, 1, 5, create_bag(), new MainMenu(), new None(), "");
 }
 function create_test_bag(test_orb) {
   let _block;
@@ -4571,7 +4875,8 @@ function handle_start_game(model) {
     _record.milestone,
     _record.bag,
     new Playing(),
-    _record.last_orb
+    _record.last_orb,
+    _record.input_value
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -4583,19 +4888,77 @@ function handle_go_to_orb_testing(model) {
     _record.milestone,
     _record.bag,
     new OrbTesting(),
-    _record.last_orb
+    _record.last_orb,
+    _record.input_value
   );
 }
-function handle_select_test_orb(model, orb) {
+function handle_select_orb_type(model, orb_type) {
   let _record = model;
   return new Model(
-    5,
-    0,
+    _record.health,
+    _record.points,
     _record.level,
     _record.milestone,
-    create_test_bag(orb),
-    new TestingMode(),
-    new None()
+    _record.bag,
+    new OrbValueSelection(orb_type),
+    _record.last_orb,
+    "1"
+  );
+}
+function handle_update_input_value(model, value2) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.status,
+    _record.last_orb,
+    value2
+  );
+}
+function handle_confirm_orb_value(model, orb_type) {
+  let $ = parse_int(model.input_value);
+  if ($ instanceof Ok) {
+    let value2 = $[0];
+    if (value2 > 0) {
+      let _block;
+      if (orb_type instanceof DataSample) {
+        _block = new PointOrb(value2);
+      } else {
+        _block = new BombOrb(value2);
+      }
+      let test_orb = _block;
+      let _record = model;
+      return new Model(
+        5,
+        0,
+        _record.level,
+        _record.milestone,
+        create_test_bag(test_orb),
+        new TestingMode(),
+        new None(),
+        _record.input_value
+      );
+    } else {
+      return model;
+    }
+  } else {
+    return model;
+  }
+}
+function handle_back_to_orb_testing(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new OrbTesting(),
+    _record.last_orb,
+    _record.input_value
   );
 }
 function handle_back_to_main_menu(model) {
@@ -4607,7 +4970,8 @@ function handle_back_to_main_menu(model) {
     _record.milestone,
     _record.bag,
     new MainMenu(),
-    _record.last_orb
+    _record.last_orb,
+    _record.input_value
   );
 }
 function handle_next_level(model) {
@@ -4618,7 +4982,8 @@ function handle_next_level(model) {
     model.milestone + 2,
     create_bag(),
     new Playing(),
-    new None()
+    new None(),
+    model.input_value
   );
 }
 function handle_reset_testing(model) {
@@ -4630,7 +4995,8 @@ function handle_reset_testing(model) {
     _record.milestone,
     _record.bag,
     new OrbTesting(),
-    _record.last_orb
+    _record.last_orb,
+    _record.input_value
   );
 }
 function handle_exit_testing(_) {
@@ -4648,7 +5014,8 @@ function check_game_status(model) {
       _record.milestone,
       _record.bag,
       new Lost(),
-      _record.last_orb
+      _record.last_orb,
+      _record.input_value
     );
   } else if ($1) {
     let _record = model;
@@ -4659,7 +5026,8 @@ function check_game_status(model) {
       _record.milestone,
       _record.bag,
       new Won(),
-      _record.last_orb
+      _record.last_orb,
+      _record.input_value
     );
   } else {
     return model;
@@ -4676,28 +5044,30 @@ function handle_pull_orb(model) {
       let rest = $1.tail;
       let _block;
       if (first_orb instanceof PointOrb) {
-        let value = first_orb[0];
+        let value2 = first_orb[0];
         let _record2 = model;
         _block = new Model(
           _record2.health,
-          model.points + value,
+          model.points + value2,
           _record2.level,
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.input_value
         );
       } else {
-        let value = first_orb[0];
+        let value2 = first_orb[0];
         let _record2 = model;
         _block = new Model(
-          model.health - value,
+          model.health - value2,
           _record2.points,
           _record2.level,
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.input_value
         );
       }
       let new_model = _block;
@@ -4710,7 +5080,8 @@ function handle_pull_orb(model) {
         _record.milestone,
         rest,
         _record.status,
-        new Some(first_orb)
+        new Some(first_orb),
+        _record.input_value
       );
       let updated_model = _block$1;
       return check_game_status(updated_model);
@@ -4724,28 +5095,30 @@ function handle_pull_orb(model) {
       let rest = $1.tail;
       let _block;
       if (first_orb instanceof PointOrb) {
-        let value = first_orb[0];
+        let value2 = first_orb[0];
         let _record2 = model;
         _block = new Model(
           _record2.health,
-          model.points + value,
+          model.points + value2,
           _record2.level,
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.input_value
         );
       } else {
-        let value = first_orb[0];
+        let value2 = first_orb[0];
         let _record2 = model;
         _block = new Model(
-          model.health - value,
+          model.health - value2,
           _record2.points,
           _record2.level,
           _record2.milestone,
           _record2.bag,
           _record2.status,
-          _record2.last_orb
+          _record2.last_orb,
+          _record2.input_value
         );
       }
       let new_model = _block;
@@ -4758,7 +5131,8 @@ function handle_pull_orb(model) {
         _record.milestone,
         rest,
         _record.status,
-        new Some(first_orb)
+        new Some(first_orb),
+        _record.input_value
       );
       let updated_model = _block$1;
       return check_game_status(updated_model);
@@ -4772,11 +5146,19 @@ function update2(model, msg) {
     return handle_start_game(model);
   } else if (msg instanceof GoToOrbTesting) {
     return handle_go_to_orb_testing(model);
-  } else if (msg instanceof SelectTestOrb) {
-    let orb = msg[0];
-    return handle_select_test_orb(model, orb);
+  } else if (msg instanceof SelectOrbType) {
+    let orb_type = msg[0];
+    return handle_select_orb_type(model, orb_type);
+  } else if (msg instanceof UpdateInputValue) {
+    let value2 = msg[0];
+    return handle_update_input_value(model, value2);
+  } else if (msg instanceof ConfirmOrbValue) {
+    let orb_type = msg[0];
+    return handle_confirm_orb_value(model, orb_type);
   } else if (msg instanceof BackToMainMenu) {
     return handle_back_to_main_menu(model);
+  } else if (msg instanceof BackToOrbTesting) {
+    return handle_back_to_orb_testing(model);
   } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
@@ -4793,11 +5175,11 @@ function update2(model, msg) {
 // build/dev/javascript/newmoon/display.mjs
 function orb_result_message(orb) {
   if (orb instanceof PointOrb) {
-    let value = orb[0];
-    return "\u25CF DATA ACQUIRED +" + to_string(value);
+    let value2 = orb[0];
+    return "\u25CF DATA ACQUIRED +" + to_string(value2);
   } else {
-    let value = orb[0];
-    return "\u25CB SYSTEM DAMAGE -" + to_string(value);
+    let value2 = orb[0];
+    return "\u25CB SYSTEM DAMAGE -" + to_string(value2);
   }
 }
 function data_target_message(milestone) {
@@ -4860,6 +5242,18 @@ function on(name, handler) {
 function on_click(msg) {
   return on("click", success(msg));
 }
+function on_input(msg) {
+  return on(
+    "input",
+    subfield(
+      toList(["target", "value"]),
+      string2,
+      (value2) => {
+        return success(msg(value2));
+      }
+    )
+  );
+}
 
 // build/dev/javascript/newmoon/ui.mjs
 function app_container(content) {
@@ -4906,7 +5300,7 @@ function game_header() {
 function stats_grid(stats) {
   return div(toList([class$("grid grid-cols-2 gap-3")]), stats);
 }
-function stat_card(symbol, label, value, color_class) {
+function stat_card(symbol, label2, value2, color_class) {
   return div(
     toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
     toList([
@@ -4920,7 +5314,7 @@ function stat_card(symbol, label, value, color_class) {
             "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light"
           )
         ]),
-        toList([text3(label)])
+        toList([text3(label2)])
       ),
       div(
         toList([
@@ -4928,7 +5322,7 @@ function stat_card(symbol, label, value, color_class) {
             concat2(toList(["text-2xl font-light ", color_class]))
           )
         ]),
-        toList([text3(value)])
+        toList([text3(value2)])
       )
     ])
   );
@@ -5072,6 +5466,35 @@ function orb_selection_button(text4, msg) {
     toList([text3(text4)])
   );
 }
+function number_input(value2) {
+  return div(
+    toList([class$("mb-4")]),
+    toList([
+      label(
+        toList([
+          class$("block text-sm font-light text-gray-700 mb-2"),
+          for$("value-input")
+        ]),
+        toList([text3("Value:")])
+      ),
+      input(
+        toList([
+          id("value-input"),
+          type_("number"),
+          value(value2),
+          min2("1"),
+          placeholder("Enter a positive number"),
+          class$(
+            "w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg"
+          ),
+          on_input((var0) => {
+            return new UpdateInputValue(var0);
+          })
+        ])
+      )
+    ])
+  );
+}
 function testing_mode_indicator2() {
   return div(
     toList([
@@ -5181,22 +5604,42 @@ function render_orb_testing_view() {
         "bg-purple-50 border-purple-200"
       ),
       orb_selection_button(
-        "Test Data Sample (+1)",
-        new SelectTestOrb(new PointOrb(1))
+        "Data Sample",
+        new SelectOrbType(new DataSample())
       ),
       orb_selection_button(
-        "Test Data Sample (+3)",
-        new SelectTestOrb(new PointOrb(3))
-      ),
-      orb_selection_button(
-        "Test Hazard Sample (-1)",
-        new SelectTestOrb(new BombOrb(1))
-      ),
-      orb_selection_button(
-        "Test Hazard Sample (-3)",
-        new SelectTestOrb(new BombOrb(3))
+        "Hazard Sample",
+        new SelectOrbType(new HazardSample())
       ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
+    ])
+  );
+}
+function render_orb_value_selection_view(orb_type, input_value) {
+  let _block;
+  if (orb_type instanceof DataSample) {
+    _block = "Data Sample";
+  } else {
+    _block = "Hazard Sample";
+  }
+  let orb_name = _block;
+  let _block$1;
+  if (orb_type instanceof DataSample) {
+    _block$1 = "Enter the data points this sample will provide";
+  } else {
+    _block$1 = "Enter the system damage this sample will cause";
+  }
+  let description = _block$1;
+  return fragment2(
+    toList([
+      status_panel(
+        orb_name + " Configuration",
+        description,
+        "bg-blue-50 border-blue-200"
+      ),
+      number_input(input_value),
+      primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
+      secondary_button("Back to Selection", new BackToOrbTesting())
     ])
   );
 }
@@ -5222,6 +5665,16 @@ function view(model) {
   } else if ($ instanceof OrbTesting) {
     return app_container(
       game_card(toList([game_header(), render_orb_testing_view()]))
+    );
+  } else if ($ instanceof OrbValueSelection) {
+    let orb_type = $[0];
+    return app_container(
+      game_card(
+        toList([
+          game_header(),
+          render_orb_value_selection_view(orb_type, model.input_value)
+        ])
+      )
     );
   } else if ($ instanceof TestingMode) {
     return app_container(

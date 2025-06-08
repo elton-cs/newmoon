@@ -6,7 +6,7 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import types.{type Msg, type Orb, PullOrb}
+import types.{type Msg, type Orb, PullOrb, UpdateInputValue}
 
 // Layout Components
 
@@ -210,6 +210,31 @@ pub fn orb_selection_button(text: String, msg: Msg) -> Element(Msg) {
     ],
     [html.text(text)],
   )
+}
+
+// Input Components
+
+pub fn number_input(value: String) -> Element(Msg) {
+  html.div([attribute.class("mb-4")], [
+    html.label(
+      [
+        attribute.class("block text-sm font-light text-gray-700 mb-2"),
+        attribute.for("value-input"),
+      ],
+      [html.text("Value:")],
+    ),
+    html.input([
+      attribute.id("value-input"),
+      attribute.type_("number"),
+      attribute.value(value),
+      attribute.min("1"),
+      attribute.placeholder("Enter a positive number"),
+      attribute.class(
+        "w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg",
+      ),
+      event.on_input(UpdateInputValue),
+    ]),
+  ])
 }
 
 pub fn testing_mode_indicator() -> Element(Msg) {

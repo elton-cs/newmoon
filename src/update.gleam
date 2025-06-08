@@ -1,10 +1,12 @@
+import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import types.{
-  type Model, type Msg, type Orb, BackToMainMenu, BombOrb, ExitTesting,
-  GoToOrbTesting, Lost, MainMenu, Model, NextLevel, OrbTesting, Playing,
-  PointOrb, PullOrb, ResetTesting, RestartGame, SelectTestOrb, StartGame,
-  TestingMode, Won,
+  type Model, type Msg, type Orb, type OrbType, BackToMainMenu, BackToOrbTesting,
+  BombOrb, ConfirmOrbValue, DataSample, ExitTesting, GoToOrbTesting,
+  HazardSample, Lost, MainMenu, Model, NextLevel, OrbTesting, OrbValueSelection,
+  Playing, PointOrb, PullOrb, ResetTesting, RestartGame, SelectOrbType,
+  StartGame, TestingMode, UpdateInputValue, Won,
 }
 
 pub fn init(_) -> Model {
@@ -16,6 +18,7 @@ pub fn init(_) -> Model {
     bag: create_bag(),
     status: MainMenu,
     last_orb: None,
+    input_value: "",
   )
 }
 
@@ -43,8 +46,11 @@ pub fn update(model: Model, msg: Msg) -> Model {
   case msg {
     StartGame -> handle_start_game(model)
     GoToOrbTesting -> handle_go_to_orb_testing(model)
-    SelectTestOrb(orb) -> handle_select_test_orb(model, orb)
+    SelectOrbType(orb_type) -> handle_select_orb_type(model, orb_type)
+    UpdateInputValue(value) -> handle_update_input_value(model, value)
+    ConfirmOrbValue(orb_type) -> handle_confirm_orb_value(model, orb_type)
     BackToMainMenu -> handle_back_to_main_menu(model)
+    BackToOrbTesting -> handle_back_to_orb_testing(model)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> init(Nil)
@@ -61,15 +67,37 @@ fn handle_go_to_orb_testing(model: Model) -> Model {
   Model(..model, status: OrbTesting)
 }
 
-fn handle_select_test_orb(model: Model, orb: Orb) -> Model {
-  Model(
-    ..model,
-    status: TestingMode,
-    bag: create_test_bag(orb),
-    health: 5,
-    points: 0,
-    last_orb: None,
-  )
+fn handle_select_orb_type(model: Model, orb_type: OrbType) -> Model {
+  Model(..model, status: OrbValueSelection(orb_type), input_value: "1")
+}
+
+fn handle_update_input_value(model: Model, value: String) -> Model {
+  Model(..model, input_value: value)
+}
+
+fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
+  case int.parse(model.input_value) {
+    Ok(value) if value > 0 -> {
+      let test_orb = case orb_type {
+        DataSample -> PointOrb(value)
+        HazardSample -> BombOrb(value)
+      }
+      Model(
+        ..model,
+        status: TestingMode,
+        bag: create_test_bag(test_orb),
+        health: 5,
+        points: 0,
+        last_orb: None,
+      )
+    }
+    _ -> model
+    // Invalid input, stay on current screen
+  }
+}
+
+fn handle_back_to_orb_testing(model: Model) -> Model {
+  Model(..model, status: OrbTesting)
 }
 
 fn handle_back_to_main_menu(model: Model) -> Model {
@@ -107,6 +135,7 @@ fn handle_next_level(model: Model) -> Model {
     bag: create_bag(),
     status: Playing,
     last_orb: None,
+    input_value: model.input_value,
   )
 }
 

@@ -8,10 +8,16 @@ pub type Orb {
 pub type Status {
   MainMenu
   OrbTesting
+  OrbValueSelection(OrbType)
   TestingMode
   Playing
   Won
   Lost
+}
+
+pub type OrbType {
+  DataSample
+  HazardSample
 }
 
 pub type Model {
@@ -23,14 +29,18 @@ pub type Model {
     bag: List(Orb),
     status: Status,
     last_orb: Option(Orb),
+    input_value: String,
   )
 }
 
 pub type Msg {
   StartGame
   GoToOrbTesting
-  SelectTestOrb(Orb)
+  SelectOrbType(OrbType)
+  UpdateInputValue(String)
+  ConfirmOrbValue(OrbType)
   BackToMainMenu
+  BackToOrbTesting
   PullOrb
   NextLevel
   RestartGame
