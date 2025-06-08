@@ -169,13 +169,15 @@ fn render_orb_testing_view() -> Element(Msg) {
       display.orb_testing_subtitle,
       "bg-purple-50 border-purple-200",
     ),
+    ui.orb_selection_button("Test Data Sample (+1)", SelectTestOrb(PointOrb(1))),
+    ui.orb_selection_button("Test Data Sample (+3)", SelectTestOrb(PointOrb(3))),
     ui.orb_selection_button(
-      display.test_data_sample_text,
-      SelectTestOrb(PointOrb),
+      "Test Hazard Sample (-1)",
+      SelectTestOrb(BombOrb(1)),
     ),
     ui.orb_selection_button(
-      display.test_hazard_sample_text,
-      SelectTestOrb(BombOrb),
+      "Test Hazard Sample (-3)",
+      SelectTestOrb(BombOrb(3)),
     ),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])

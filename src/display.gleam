@@ -10,16 +10,16 @@ import gleam/int
 // Orb to Sample Display Names
 pub fn orb_display_name(orb: Orb) -> String {
   case orb {
-    PointOrb -> "Data Sample"
-    BombOrb -> "Hazard Sample"
+    PointOrb(_) -> "Data Sample"
+    BombOrb(_) -> "Hazard Sample"
   }
 }
 
 // Orb Result Messages (space-themed)
 pub fn orb_result_message(orb: Orb) -> String {
   case orb {
-    PointOrb -> "● DATA ACQUIRED +1"
-    BombOrb -> "○ SYSTEM DAMAGE -1"
+    PointOrb(value) -> "● DATA ACQUIRED +" <> int.to_string(value)
+    BombOrb(value) -> "○ SYSTEM DAMAGE -" <> int.to_string(value)
   }
 }
 

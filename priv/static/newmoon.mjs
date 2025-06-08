@@ -1495,24 +1495,6 @@ function sort(list4, compare4) {
     }
   }
 }
-function repeat_loop(loop$item, loop$times, loop$acc) {
-  while (true) {
-    let item = loop$item;
-    let times = loop$times;
-    let acc = loop$acc;
-    let $ = times <= 0;
-    if ($) {
-      return acc;
-    } else {
-      loop$item = item;
-      loop$times = times - 1;
-      loop$acc = prepend(item, acc);
-    }
-  }
-}
-function repeat(a, times) {
-  return repeat_loop(a, times, toList([]));
-}
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
 function concat_loop(loop$strings, loop$accumulator) {
@@ -4480,8 +4462,16 @@ function start3(app, selector, start_args) {
 
 // build/dev/javascript/newmoon/types.mjs
 var PointOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 var BombOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 var MainMenu = class extends CustomType {
 };
@@ -4532,18 +4522,45 @@ var ExitTesting = class extends CustomType {
 
 // build/dev/javascript/newmoon/update.mjs
 function create_bag() {
-  return append(
-    repeat(new PointOrb(), 5),
-    repeat(new BombOrb(), 5)
-  );
+  let point_orbs = toList([
+    new PointOrb(1),
+    new PointOrb(1),
+    new PointOrb(2),
+    new PointOrb(2),
+    new PointOrb(3)
+  ]);
+  let bomb_orbs = toList([
+    new BombOrb(1),
+    new BombOrb(1),
+    new BombOrb(2),
+    new BombOrb(2),
+    new BombOrb(3)
+  ]);
+  return append(point_orbs, bomb_orbs);
 }
 function init(_) {
   return new Model(5, 0, 1, 5, create_bag(), new MainMenu(), new None());
 }
 function create_test_bag(test_orb) {
+  let _block;
+  if (test_orb instanceof PointOrb) {
+    _block = toList([
+      new PointOrb(1),
+      new PointOrb(2),
+      new PointOrb(3),
+      new PointOrb(5)
+    ]);
+  } else {
+    _block = toList([
+      new BombOrb(1),
+      new BombOrb(2),
+      new BombOrb(3),
+      new BombOrb(4)
+    ]);
+  }
+  let base_orbs = _block;
   let _pipe = toList([test_orb]);
-  let _pipe$1 = append(_pipe, repeat(new PointOrb(), 4));
-  return append(_pipe$1, repeat(new BombOrb(), 4));
+  return append(_pipe, base_orbs);
 }
 function handle_start_game(model) {
   let _record = model;
@@ -4659,10 +4676,11 @@ function handle_pull_orb(model) {
       let rest = $1.tail;
       let _block;
       if (first_orb instanceof PointOrb) {
+        let value = first_orb[0];
         let _record2 = model;
         _block = new Model(
           _record2.health,
-          model.points + 1,
+          model.points + value,
           _record2.level,
           _record2.milestone,
           _record2.bag,
@@ -4670,9 +4688,10 @@ function handle_pull_orb(model) {
           _record2.last_orb
         );
       } else {
+        let value = first_orb[0];
         let _record2 = model;
         _block = new Model(
-          model.health - 1,
+          model.health - value,
           _record2.points,
           _record2.level,
           _record2.milestone,
@@ -4705,10 +4724,11 @@ function handle_pull_orb(model) {
       let rest = $1.tail;
       let _block;
       if (first_orb instanceof PointOrb) {
+        let value = first_orb[0];
         let _record2 = model;
         _block = new Model(
           _record2.health,
-          model.points + 1,
+          model.points + value,
           _record2.level,
           _record2.milestone,
           _record2.bag,
@@ -4716,9 +4736,10 @@ function handle_pull_orb(model) {
           _record2.last_orb
         );
       } else {
+        let value = first_orb[0];
         let _record2 = model;
         _block = new Model(
-          model.health - 1,
+          model.health - value,
           _record2.points,
           _record2.level,
           _record2.milestone,
@@ -4772,9 +4793,11 @@ function update2(model, msg) {
 // build/dev/javascript/newmoon/display.mjs
 function orb_result_message(orb) {
   if (orb instanceof PointOrb) {
-    return "\u25CF DATA ACQUIRED +1";
+    let value = orb[0];
+    return "\u25CF DATA ACQUIRED +" + to_string(value);
   } else {
-    return "\u25CB SYSTEM DAMAGE -1";
+    let value = orb[0];
+    return "\u25CB SYSTEM DAMAGE -" + to_string(value);
   }
 }
 function data_target_message(milestone) {
@@ -4790,8 +4813,6 @@ var orb_testing_title = "SAMPLE TESTING PROTOCOL";
 var orb_testing_subtitle = "Select a sample type for controlled testing";
 var back_to_menu_text = "BACK TO MENU";
 var testing_mode_indicator = "TESTING MODE ACTIVE";
-var test_data_sample_text = "Test Data Sample";
-var test_hazard_sample_text = "Test Hazard Sample";
 var reset_testing_text = "RESET TEST";
 var exit_testing_text = "EXIT TO MENU";
 var sector_complete_title = "SECTOR COMPLETE";
@@ -5160,12 +5181,20 @@ function render_orb_testing_view() {
         "bg-purple-50 border-purple-200"
       ),
       orb_selection_button(
-        test_data_sample_text,
-        new SelectTestOrb(new PointOrb())
+        "Test Data Sample (+1)",
+        new SelectTestOrb(new PointOrb(1))
       ),
       orb_selection_button(
-        test_hazard_sample_text,
-        new SelectTestOrb(new BombOrb())
+        "Test Data Sample (+3)",
+        new SelectTestOrb(new PointOrb(3))
+      ),
+      orb_selection_button(
+        "Test Hazard Sample (-1)",
+        new SelectTestOrb(new BombOrb(1))
+      ),
+      orb_selection_button(
+        "Test Hazard Sample (-3)",
+        new SelectTestOrb(new BombOrb(3))
       ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])

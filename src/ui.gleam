@@ -84,9 +84,9 @@ pub fn orb_result_display(orb: Option(Orb)) -> Element(Msg) {
     Some(orb_value) -> {
       let message = display.orb_result_message(orb_value)
       case orb_value {
-        types.PointOrb ->
+        types.PointOrb(_) ->
           info_panel(message, "text-gray-700", "bg-gray-50 border-gray-200")
-        types.BombOrb ->
+        types.BombOrb(_) ->
           info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300")
       }
     }

@@ -20,13 +20,23 @@ pub fn init(_) -> Model {
 }
 
 fn create_bag() -> List(Orb) {
-  list.append(list.repeat(PointOrb, 5), list.repeat(BombOrb, 5))
+  let point_orbs = [
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(2),
+    PointOrb(2),
+    PointOrb(3),
+  ]
+  let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
+  list.append(point_orbs, bomb_orbs)
 }
 
 fn create_test_bag(test_orb: Orb) -> List(Orb) {
-  [test_orb]
-  |> list.append(list.repeat(PointOrb, 4))
-  |> list.append(list.repeat(BombOrb, 4))
+  let base_orbs = case test_orb {
+    PointOrb(_) -> [PointOrb(1), PointOrb(2), PointOrb(3), PointOrb(5)]
+    BombOrb(_) -> [BombOrb(1), BombOrb(2), BombOrb(3), BombOrb(4)]
+  }
+  [test_orb] |> list.append(base_orbs)
 }
 
 pub fn update(model: Model, msg: Msg) -> Model {
@@ -73,8 +83,8 @@ fn handle_pull_orb(model: Model) -> Model {
         [] -> model
         [first_orb, ..rest] -> {
           let new_model = case first_orb {
-            PointOrb -> Model(..model, points: model.points + 1)
-            BombOrb -> Model(..model, health: model.health - 1)
+            PointOrb(value) -> Model(..model, points: model.points + value)
+            BombOrb(value) -> Model(..model, health: model.health - value)
           }
 
           let updated_model =

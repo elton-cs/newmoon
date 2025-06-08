@@ -1,8 +1,8 @@
 import gleam/option.{type Option}
 
 pub type Orb {
-  PointOrb
-  BombOrb
+  PointOrb(Int)
+  BombOrb(Int)
 }
 
 pub type Status {
