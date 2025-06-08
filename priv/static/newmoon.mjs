@@ -4483,6 +4483,8 @@ var PointOrb = class extends CustomType {
 };
 var BombOrb = class extends CustomType {
 };
+var MainMenu = class extends CustomType {
+};
 var Playing = class extends CustomType {
 };
 var Won = class extends CustomType {
@@ -4501,6 +4503,8 @@ var Model = class extends CustomType {
     this.last_orb = last_orb;
   }
 };
+var StartGame = class extends CustomType {
+};
 var PullOrb = class extends CustomType {
 };
 var NextLevel = class extends CustomType {
@@ -4516,7 +4520,19 @@ function create_bag() {
   );
 }
 function init(_) {
-  return new Model(5, 0, 1, 5, create_bag(), new Playing(), new None());
+  return new Model(5, 0, 1, 5, create_bag(), new MainMenu(), new None());
+}
+function handle_start_game(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new Playing(),
+    _record.last_orb
+  );
 }
 function handle_next_level(model) {
   return new Model(
@@ -4611,7 +4627,9 @@ function handle_pull_orb(model) {
   }
 }
 function update2(model, msg) {
-  if (msg instanceof PullOrb) {
+  if (msg instanceof StartGame) {
+    return handle_start_game(model);
+  } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
@@ -4634,6 +4652,8 @@ function data_target_message(milestone) {
 var container_label = "SAMPLE CONTAINER";
 var extract_button_text = "EXTRACT SAMPLE";
 var specimens_suffix = " specimens";
+var start_game_button_text = "START MISSION";
+var main_menu_subtitle = "Prepare for deep space exploration";
 var sector_complete_title = "SECTOR COMPLETE";
 var mission_failed_title = "MISSION FAILED";
 var advance_button_text = "ADVANCE TO NEXT SECTOR";
@@ -4954,9 +4974,25 @@ function render_lost_view() {
     ])
   );
 }
+function render_main_menu_view() {
+  return fragment2(
+    toList([
+      status_panel(
+        "MISSION BRIEFING",
+        main_menu_subtitle,
+        "bg-blue-50 border-blue-200"
+      ),
+      primary_button(start_game_button_text, new StartGame())
+    ])
+  );
+}
 function view(model) {
   let $ = model.status;
-  if ($ instanceof Playing) {
+  if ($ instanceof MainMenu) {
+    return app_container(
+      game_card(toList([game_header(), render_main_menu_view()]))
+    );
+  } else if ($ instanceof Playing) {
     return app_container(
       game_card(
         toList([

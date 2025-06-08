@@ -30,6 +30,11 @@ pub const extract_button_text = "EXTRACT SAMPLE"
 
 pub const specimens_suffix = " specimens"
 
+// Main Menu Messages
+pub const start_game_button_text = "START MISSION"
+
+pub const main_menu_subtitle = "Prepare for deep space exploration"
+
 // Game Status Messages
 pub const sector_complete_title = "SECTOR COMPLETE"
 

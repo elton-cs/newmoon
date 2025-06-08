@@ -6,6 +6,7 @@ pub type Orb {
 }
 
 pub type Status {
+  MainMenu
   Playing
   Won
   Lost
@@ -24,6 +25,7 @@ pub type Model {
 }
 
 pub type Msg {
+  StartGame
   PullOrb
   NextLevel
   RestartGame

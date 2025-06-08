@@ -1,3 +1,4 @@
+import display
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/string
@@ -6,7 +7,6 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import types.{type Msg, type Orb, PullOrb}
-import display
 
 // Layout Components
 
@@ -85,17 +85,9 @@ pub fn orb_result_display(orb: Option(Orb)) -> Element(Msg) {
       let message = display.orb_result_message(orb_value)
       case orb_value {
         types.PointOrb ->
-          info_panel(
-            message,
-            "text-gray-700",
-            "bg-gray-50 border-gray-200",
-          )
+          info_panel(message, "text-gray-700", "bg-gray-50 border-gray-200")
         types.BombOrb ->
-          info_panel(
-            message,
-            "text-gray-800",
-            "bg-gray-100 border-gray-300",
-          )
+          info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300")
       }
     }
   }
@@ -124,7 +116,9 @@ pub fn container_display(orbs_left: Int) -> Element(Msg) {
         [html.text(display.container_label)],
       ),
       html.p([attribute.class("text-2xl font-light text-black")], [
-        html.text(string.concat([int.to_string(orbs_left), display.specimens_suffix])),
+        html.text(
+          string.concat([int.to_string(orbs_left), display.specimens_suffix]),
+        ),
       ]),
     ],
   )

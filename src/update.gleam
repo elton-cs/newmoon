@@ -1,8 +1,8 @@
 import gleam/list
 import gleam/option.{None, Some}
 import types.{
-  type Model, type Msg, type Orb, BombOrb, Lost, Model, NextLevel, Playing,
-  PointOrb, PullOrb, RestartGame, Won,
+  type Model, type Msg, type Orb, BombOrb, Lost, MainMenu, Model, NextLevel,
+  Playing, PointOrb, PullOrb, RestartGame, StartGame, Won,
 }
 
 pub fn init(_) -> Model {
@@ -12,7 +12,7 @@ pub fn init(_) -> Model {
     level: 1,
     milestone: 5,
     bag: create_bag(),
-    status: Playing,
+    status: MainMenu,
     last_orb: None,
   )
 }
@@ -23,10 +23,15 @@ fn create_bag() -> List(Orb) {
 
 pub fn update(model: Model, msg: Msg) -> Model {
   case msg {
+    StartGame -> handle_start_game(model)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> init(Nil)
   }
+}
+
+fn handle_start_game(model: Model) -> Model {
+  Model(..model, status: Playing)
 }
 
 fn handle_pull_orb(model: Model) -> Model {
