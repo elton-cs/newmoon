@@ -13,6 +13,8 @@ pub type Status {
   Playing
   Won
   Lost
+  TestingWon
+  TestingLost
 }
 
 pub type OrbType {

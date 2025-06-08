@@ -6,7 +6,7 @@ import types.{
   BombOrb, ConfirmOrbValue, DataSample, ExitTesting, GoToOrbTesting,
   HazardSample, Lost, MainMenu, Model, NextLevel, OrbTesting, OrbValueSelection,
   Playing, PointOrb, PullOrb, ResetTesting, RestartGame, SelectOrbType,
-  StartGame, TestingMode, UpdateInputValue, Won,
+  StartGame, TestingLost, TestingMode, TestingWon, UpdateInputValue, Won,
 }
 
 pub fn init(_) -> Model {
@@ -15,14 +15,15 @@ pub fn init(_) -> Model {
     points: 0,
     level: 1,
     milestone: 5,
-    bag: create_bag(),
+    bag: starter_orbs(),
     status: MainMenu,
     last_orb: None,
     input_value: "",
   )
 }
 
-fn create_bag() -> List(Orb) {
+// Single consistent orb bag used for all levels
+fn starter_orbs() -> List(Orb) {
   let point_orbs = [
     PointOrb(1),
     PointOrb(1),
@@ -34,12 +35,9 @@ fn create_bag() -> List(Orb) {
   list.append(point_orbs, bomb_orbs)
 }
 
+// Test bag that includes the test orb plus the standard starter orbs
 fn create_test_bag(test_orb: Orb) -> List(Orb) {
-  let base_orbs = case test_orb {
-    PointOrb(_) -> [PointOrb(1), PointOrb(2), PointOrb(3), PointOrb(5)]
-    BombOrb(_) -> [BombOrb(1), BombOrb(2), BombOrb(3), BombOrb(4)]
-  }
-  [test_orb] |> list.append(base_orbs)
+  [test_orb] |> list.append(starter_orbs())
 }
 
 pub fn update(model: Model, msg: Msg) -> Model {
@@ -60,7 +58,14 @@ pub fn update(model: Model, msg: Msg) -> Model {
 }
 
 fn handle_start_game(model: Model) -> Model {
-  Model(..model, status: Playing)
+  Model(
+    ..model,
+    status: Playing,
+    bag: starter_orbs(),
+    health: 5,
+    points: 0,
+    last_orb: None,
+  )
 }
 
 fn handle_go_to_orb_testing(model: Model) -> Model {
@@ -132,7 +137,7 @@ fn handle_next_level(model: Model) -> Model {
     points: 0,
     level: model.level + 1,
     milestone: model.milestone + 2,
-    bag: create_bag(),
+    bag: starter_orbs(),
     status: Playing,
     last_orb: None,
     input_value: model.input_value,
@@ -148,9 +153,19 @@ fn handle_exit_testing(_model: Model) -> Model {
 }
 
 fn check_game_status(model: Model) -> Model {
-  case model.health <= 0, model.points >= model.milestone {
-    True, _ -> Model(..model, status: Lost)
-    False, True -> Model(..model, status: Won)
-    False, False -> model
+  case model.status {
+    TestingMode ->
+      case model.health <= 0, model.points >= model.milestone {
+        True, _ -> Model(..model, status: TestingLost)
+        False, True -> Model(..model, status: TestingWon)
+        False, False -> model
+      }
+    Playing ->
+      case model.health <= 0, model.points >= model.milestone {
+        True, _ -> Model(..model, status: Lost)
+        False, True -> Model(..model, status: Won)
+        False, False -> model
+      }
+    _ -> model
   }
 }

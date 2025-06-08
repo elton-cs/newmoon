@@ -6,7 +6,8 @@ import types.{
   type Model, type Msg, type OrbType, BackToMainMenu, BackToOrbTesting,
   ConfirmOrbValue, DataSample, ExitTesting, GoToOrbTesting, HazardSample, Lost,
   MainMenu, NextLevel, OrbTesting, OrbValueSelection, Playing, ResetTesting,
-  RestartGame, SelectOrbType, StartGame, TestingMode, UpdateInputValue, Won,
+  RestartGame, SelectOrbType, StartGame, TestingLost, TestingMode, TestingWon,
+  UpdateInputValue, Won,
 }
 import ui
 
@@ -79,6 +80,32 @@ pub fn view(model: Model) -> Element(Msg) {
             model.level,
           ),
           render_lost_view(),
+        ]),
+      )
+    TestingWon ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level,
+          ),
+          render_testing_won_view(model.milestone),
+        ]),
+      )
+    TestingLost ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level,
+          ),
+          render_testing_lost_view(),
         ]),
       )
   }
@@ -219,6 +246,29 @@ fn render_testing_mode_view(last_orb, bag) -> Element(Msg) {
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
     ui.secondary_button(display.reset_testing_text, ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
+  ])
+}
+
+// Testing Won View - only restart testing or main menu options
+fn render_testing_won_view(milestone: Int) -> Element(Msg) {
+  let message = display.data_target_message(milestone)
+
+  element.fragment([
+    ui.status_panel("TEST COMPLETE", message, "bg-green-50 border-green-200"),
+    ui.secondary_button("Restart Testing", ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
+  ])
+}
+
+// Testing Lost View - only restart testing or main menu options
+fn render_testing_lost_view() -> Element(Msg) {
+  element.fragment([
+    ui.failure_panel(
+      "TEST FAILED",
+      "All systems compromised during testing. Analyze results and retry.",
+    ),
+    ui.secondary_button("Restart Testing", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
   ])
 }
