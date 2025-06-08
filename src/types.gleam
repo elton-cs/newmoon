@@ -7,6 +7,8 @@ pub type Orb {
 
 pub type Status {
   MainMenu
+  OrbTesting
+  TestingMode
   Playing
   Won
   Lost
@@ -26,6 +28,9 @@ pub type Model {
 
 pub type Msg {
   StartGame
+  GoToOrbTesting
+  SelectTestOrb(Orb)
+  BackToMainMenu
   PullOrb
   NextLevel
   RestartGame

@@ -33,7 +33,22 @@ pub const specimens_suffix = " specimens"
 // Main Menu Messages
 pub const start_game_button_text = "START MISSION"
 
+pub const orb_testing_button_text = "SAMPLE TESTING"
+
 pub const main_menu_subtitle = "Prepare for deep space exploration"
+
+// Orb Testing Messages
+pub const orb_testing_title = "SAMPLE TESTING PROTOCOL"
+
+pub const orb_testing_subtitle = "Select a sample type for controlled testing"
+
+pub const back_to_menu_text = "BACK TO MENU"
+
+pub const testing_mode_indicator = "TESTING MODE ACTIVE"
+
+pub const test_data_sample_text = "Test Data Sample"
+
+pub const test_hazard_sample_text = "Test Hazard Sample"
 
 // Game Status Messages
 pub const sector_complete_title = "SECTOR COMPLETE"

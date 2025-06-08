@@ -3,8 +3,9 @@ import gleam/int
 import gleam/list
 import lustre/element.{type Element}
 import types.{
-  type Model, type Msg, Lost, MainMenu, NextLevel, Playing, RestartGame,
-  StartGame, Won,
+  type Model, type Msg, BackToMainMenu, BombOrb, GoToOrbTesting, Lost, MainMenu,
+  NextLevel, OrbTesting, Playing, PointOrb, RestartGame, SelectTestOrb,
+  StartGame, TestingMode, Won,
 }
 import ui
 
@@ -14,6 +15,24 @@ pub fn view(model: Model) -> Element(Msg) {
     MainMenu ->
       ui.app_container(
         ui.game_card([ui.game_header(), render_main_menu_view()]),
+      )
+    OrbTesting ->
+      ui.app_container(
+        ui.game_card([ui.game_header(), render_orb_testing_view()]),
+      )
+    TestingMode ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level,
+          ),
+          render_playing_view(model.last_orb, model.bag),
+        ]),
       )
     Playing ->
       ui.app_container(
@@ -138,5 +157,26 @@ fn render_main_menu_view() -> Element(Msg) {
       "bg-blue-50 border-blue-200",
     ),
     ui.primary_button(display.start_game_button_text, StartGame),
+    ui.orb_selection_button(display.orb_testing_button_text, GoToOrbTesting),
+  ])
+}
+
+// Orb Testing View - no model data needed
+fn render_orb_testing_view() -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      display.orb_testing_title,
+      display.orb_testing_subtitle,
+      "bg-purple-50 border-purple-200",
+    ),
+    ui.orb_selection_button(
+      display.test_data_sample_text,
+      SelectTestOrb(PointOrb),
+    ),
+    ui.orb_selection_button(
+      display.test_hazard_sample_text,
+      SelectTestOrb(BombOrb),
+    ),
+    ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }

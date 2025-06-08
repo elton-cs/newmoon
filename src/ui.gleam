@@ -203,3 +203,29 @@ pub fn failure_panel(title: String, message: String) -> Element(Msg) {
     ],
   )
 }
+
+// Orb Testing Components
+
+pub fn orb_selection_button(text: String, msg: Msg) -> Element(Msg) {
+  html.button(
+    [
+      attribute.class(
+        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider mb-3",
+      ),
+      event.on_click(msg),
+    ],
+    [html.text(text)],
+  )
+}
+
+pub fn testing_mode_indicator() -> Element(Msg) {
+  html.div(
+    [attribute.class("mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded")],
+    [
+      html.p(
+        [attribute.class("text-yellow-700 font-medium text-xs tracking-wider")],
+        [html.text(display.testing_mode_indicator)],
+      ),
+    ],
+  )
+}

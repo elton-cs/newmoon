@@ -4485,6 +4485,10 @@ var BombOrb = class extends CustomType {
 };
 var MainMenu = class extends CustomType {
 };
+var OrbTesting = class extends CustomType {
+};
+var TestingMode = class extends CustomType {
+};
 var Playing = class extends CustomType {
 };
 var Won = class extends CustomType {
@@ -4505,6 +4509,16 @@ var Model = class extends CustomType {
 };
 var StartGame = class extends CustomType {
 };
+var GoToOrbTesting = class extends CustomType {
+};
+var SelectTestOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var BackToMainMenu = class extends CustomType {
+};
 var PullOrb = class extends CustomType {
 };
 var NextLevel = class extends CustomType {
@@ -4522,6 +4536,11 @@ function create_bag() {
 function init(_) {
   return new Model(5, 0, 1, 5, create_bag(), new MainMenu(), new None());
 }
+function create_test_bag(test_orb) {
+  let _pipe = toList([test_orb]);
+  let _pipe$1 = append(_pipe, repeat(new PointOrb(), 4));
+  return append(_pipe$1, repeat(new BombOrb(), 4));
+}
 function handle_start_game(model) {
   let _record = model;
   return new Model(
@@ -4531,6 +4550,42 @@ function handle_start_game(model) {
     _record.milestone,
     _record.bag,
     new Playing(),
+    _record.last_orb
+  );
+}
+function handle_go_to_orb_testing(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new OrbTesting(),
+    _record.last_orb
+  );
+}
+function handle_select_test_orb(model, orb) {
+  let _record = model;
+  return new Model(
+    5,
+    0,
+    _record.level,
+    _record.milestone,
+    create_test_bag(orb),
+    new TestingMode(),
+    new None()
+  );
+}
+function handle_back_to_main_menu(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new MainMenu(),
     _record.last_orb
   );
 }
@@ -4576,7 +4631,53 @@ function check_game_status(model) {
 }
 function handle_pull_orb(model) {
   let $ = model.status;
-  if ($ instanceof Playing) {
+  if ($ instanceof TestingMode) {
+    let $1 = model.bag;
+    if ($1 instanceof Empty) {
+      return model;
+    } else {
+      let first_orb = $1.head;
+      let rest = $1.tail;
+      let _block;
+      if (first_orb instanceof PointOrb) {
+        let _record2 = model;
+        _block = new Model(
+          _record2.health,
+          model.points + 1,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb
+        );
+      } else {
+        let _record2 = model;
+        _block = new Model(
+          model.health - 1,
+          _record2.points,
+          _record2.level,
+          _record2.milestone,
+          _record2.bag,
+          _record2.status,
+          _record2.last_orb
+        );
+      }
+      let new_model = _block;
+      let _block$1;
+      let _record = new_model;
+      _block$1 = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        rest,
+        _record.status,
+        new Some(first_orb)
+      );
+      let updated_model = _block$1;
+      return check_game_status(updated_model);
+    }
+  } else if ($ instanceof Playing) {
     let $1 = model.bag;
     if ($1 instanceof Empty) {
       return model;
@@ -4629,6 +4730,13 @@ function handle_pull_orb(model) {
 function update2(model, msg) {
   if (msg instanceof StartGame) {
     return handle_start_game(model);
+  } else if (msg instanceof GoToOrbTesting) {
+    return handle_go_to_orb_testing(model);
+  } else if (msg instanceof SelectTestOrb) {
+    let orb = msg[0];
+    return handle_select_test_orb(model, orb);
+  } else if (msg instanceof BackToMainMenu) {
+    return handle_back_to_main_menu(model);
   } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
@@ -4653,7 +4761,14 @@ var container_label = "SAMPLE CONTAINER";
 var extract_button_text = "EXTRACT SAMPLE";
 var specimens_suffix = " specimens";
 var start_game_button_text = "START MISSION";
+var orb_testing_button_text = "SAMPLE TESTING";
 var main_menu_subtitle = "Prepare for deep space exploration";
+var orb_testing_title = "SAMPLE TESTING PROTOCOL";
+var orb_testing_subtitle = "Select a sample type for controlled testing";
+var back_to_menu_text = "BACK TO MENU";
+var testing_mode_indicator = "TESTING MODE ACTIVE";
+var test_data_sample_text = "Test Data Sample";
+var test_hazard_sample_text = "Test Hazard Sample";
 var sector_complete_title = "SECTOR COMPLETE";
 var mission_failed_title = "MISSION FAILED";
 var advance_button_text = "ADVANCE TO NEXT SECTOR";
@@ -4907,6 +5022,36 @@ function failure_panel(title, message) {
     ])
   );
 }
+function orb_selection_button(text4, msg) {
+  return button(
+    toList([
+      class$(
+        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider mb-3"
+      ),
+      on_click(msg)
+    ]),
+    toList([text3(text4)])
+  );
+}
+function testing_mode_indicator2() {
+  return div(
+    toList([
+      class$(
+        "mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded"
+      )
+    ]),
+    toList([
+      p(
+        toList([
+          class$(
+            "text-yellow-700 font-medium text-xs tracking-wider"
+          )
+        ]),
+        toList([text3(testing_mode_indicator)])
+      )
+    ])
+  );
+}
 
 // build/dev/javascript/newmoon/view.mjs
 function render_game_stats(health, points, milestone, level) {
@@ -4982,7 +5127,31 @@ function render_main_menu_view() {
         main_menu_subtitle,
         "bg-blue-50 border-blue-200"
       ),
-      primary_button(start_game_button_text, new StartGame())
+      primary_button(start_game_button_text, new StartGame()),
+      orb_selection_button(
+        orb_testing_button_text,
+        new GoToOrbTesting()
+      )
+    ])
+  );
+}
+function render_orb_testing_view() {
+  return fragment2(
+    toList([
+      status_panel(
+        orb_testing_title,
+        orb_testing_subtitle,
+        "bg-purple-50 border-purple-200"
+      ),
+      orb_selection_button(
+        test_data_sample_text,
+        new SelectTestOrb(new PointOrb())
+      ),
+      orb_selection_button(
+        test_hazard_sample_text,
+        new SelectTestOrb(new BombOrb())
+      ),
+      secondary_button(back_to_menu_text, new BackToMainMenu())
     ])
   );
 }
@@ -4991,6 +5160,26 @@ function view(model) {
   if ($ instanceof MainMenu) {
     return app_container(
       game_card(toList([game_header(), render_main_menu_view()]))
+    );
+  } else if ($ instanceof OrbTesting) {
+    return app_container(
+      game_card(toList([game_header(), render_orb_testing_view()]))
+    );
+  } else if ($ instanceof TestingMode) {
+    return app_container(
+      game_card(
+        toList([
+          game_header(),
+          testing_mode_indicator2(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level
+          ),
+          render_playing_view(model.last_orb, model.bag)
+        ])
+      )
     );
   } else if ($ instanceof Playing) {
     return app_container(
