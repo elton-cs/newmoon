@@ -9,6 +9,7 @@ This is a comprehensive Gleam-based web game called "New Moon" built with the Lu
 ## Development Commands
 
 - `gleam check` - Check for compiler errors
+- `gleam format` - Format project after edits
 
 ## Architecture
 

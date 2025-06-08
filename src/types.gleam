@@ -1,21 +1,39 @@
 import gleam/option.{type Option}
 
+pub type GameState {
+  GameState(milestone: Int, bag: List(Orb), last_orb: Option(Orb))
+}
+
+pub type LogState {
+  LogState(entries: List(LogEntry), sequence: Int)
+}
+
+pub type ChoiceState {
+  ChoiceState(pending: Option(#(Orb, Orb)))
+}
+
+pub type GambleState {
+  GambleState(
+    pending: Option(Bool),
+    orbs: List(Orb),
+    current_index: Int,
+    in_choice: Bool,
+  )
+}
+
+pub type Settings {
+  Settings(shuffle_enabled: Bool, dev_mode: Bool)
+}
+
 pub type Model {
   Model(
     player: Player,
-    milestone: Int,
-    bag: List(Orb),
-    status: GameStatus,
-    last_orb: Option(Orb),
-    shuffle_enabled: Bool,
-    dev_mode: Bool,
-    log_entries: List(LogEntry),
-    log_sequence: Int,
-    pending_choice: Option(#(Orb, Orb)),
-    pending_gamble: Option(Bool),
-    gamble_orbs: List(Orb),
-    gamble_current_index: Int,
-    in_gamble_choice: Bool,
+    status: Status,
+    game_state: GameState,
+    log_state: LogState,
+    choice_state: ChoiceState,
+    gamble_state: GambleState,
+    settings: Settings,
   )
 }
 
@@ -69,7 +87,7 @@ pub type Orb {
   PointRecovery
 }
 
-pub type GameStatus {
+pub type Status {
   MainMenu
   Playing
   Paused

@@ -35,7 +35,7 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
       <> int.to_string(value)
       <> " SYS"
     Collector -> {
-      let base_points = model.bag |> list.length
+      let base_points = model.game_state.bag |> list.length
       let multiplied_points = base_points * model.player.current_multiplier
       case model.player.current_multiplier > 1 {
         True ->
@@ -70,7 +70,7 @@ pub fn get_orb_result_message(orb: Orb, model: Model) -> String {
     Gamble -> "🎲 GAMBLE PROTOCOL ACTIVATED [HIGH RISK/REWARD SCENARIO]"
     PointScanner -> {
       let point_orbs_count =
-        model.bag
+        model.game_state.bag
         |> list.count(fn(orb) {
           case orb {
             Point(_) -> True
@@ -159,7 +159,7 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
       )
     }
     Collector -> {
-      let remaining_orbs = { model.bag |> list.length } - 1
+      let remaining_orbs = { model.game_state.bag |> list.length } - 1
       let collector_points = remaining_orbs * model.player.current_multiplier
       types.Model(
         ..model,
@@ -191,7 +191,7 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
     Gamble -> handle_gamble_orb(model)
     PointScanner -> {
       let point_orbs_count =
-        model.bag
+        model.game_state.bag
         |> list.count(fn(orb) {
           case orb {
             Point(_) -> True
@@ -216,13 +216,17 @@ pub fn apply_orb_effect(orb: Orb, model: Model) -> Model {
           case min_value {
             Ok(value) -> {
               // Add Point(value) back to bag
-              let updated_bag = model.bag |> list.append([Point(value)])
+              let updated_bag =
+                model.game_state.bag |> list.append([Point(value)])
               // Remove first occurrence of min_value from tracking list
               let updated_tracking =
                 remove_first_occurrence(pulled_points, value)
               types.Model(
                 ..model,
-                bag: updated_bag,
+                game_state: types.GameState(
+                  ..model.game_state,
+                  bag: updated_bag,
+                ),
                 player: types.Player(
                   ..model.player,
                   point_orbs_pulled_this_level: updated_tracking,
@@ -242,13 +246,16 @@ fn handle_gamble_orb(model: Model) -> Model {
   types.Model(
     ..model,
     status: GamblingChoice,
-    pending_gamble: option.Some(True),
+    gamble_state: types.GambleState(
+      ..model.gamble_state,
+      pending: option.Some(True),
+    ),
   )
 }
 
 // Helper function to handle Choice orb logic
 fn handle_choice_orb(model: Model) -> Model {
-  case model.bag {
+  case model.game_state.bag {
     // Empty bag - no effect
     [] -> model
 
@@ -257,12 +264,14 @@ fn handle_choice_orb(model: Model) -> Model {
       types.Model(
         ..model,
         status: ChoosingOrb,
-        pending_choice: option.Some(#(single_orb, single_orb)),
-        bag: [],
+        game_state: types.GameState(..model.game_state, bag: []),
+        choice_state: types.ChoiceState(
+          pending: option.Some(#(single_orb, single_orb)),
+        ),
       )
 
     // Multiple orbs - draw 2 non-Choice orbs
-    _ -> draw_two_non_choice_orbs(model, model.bag, [])
+    _ -> draw_two_non_choice_orbs(model, model.game_state.bag, [])
   }
 }
 
@@ -275,7 +284,10 @@ fn draw_two_non_choice_orbs(
   case remaining_bag {
     [] ->
       // Not enough non-Choice orbs, fallback to no effect
-      types.Model(..model, bag: choice_orbs_found)
+      types.Model(
+        ..model,
+        game_state: types.GameState(..model.game_state, bag: choice_orbs_found),
+      )
 
     [Choice, ..rest] ->
       // Skip Choice orb, add to end, continue drawing
@@ -300,8 +312,13 @@ fn draw_two_non_choice_orbs(
       types.Model(
         ..model,
         status: ChoosingOrb,
-        pending_choice: option.Some(#(first_orb, second_orb)),
-        bag: rest |> list.append(choice_orbs_found),
+        game_state: types.GameState(
+          ..model.game_state,
+          bag: rest |> list.append(choice_orbs_found),
+        ),
+        choice_state: types.ChoiceState(
+          pending: option.Some(#(first_orb, second_orb)),
+        ),
       )
 
     [single_orb] ->
@@ -309,8 +326,10 @@ fn draw_two_non_choice_orbs(
       types.Model(
         ..model,
         status: ChoosingOrb,
-        pending_choice: option.Some(#(single_orb, single_orb)),
-        bag: choice_orbs_found,
+        game_state: types.GameState(..model.game_state, bag: choice_orbs_found),
+        choice_state: types.ChoiceState(
+          pending: option.Some(#(single_orb, single_orb)),
+        ),
       )
   }
 }
@@ -329,8 +348,13 @@ fn draw_second_non_choice_orb(
       types.Model(
         ..model,
         status: ChoosingOrb,
-        pending_choice: option.Some(#(first_orb, first_orb)),
-        bag: original_choice_orbs |> list.append(more_choice_orbs),
+        game_state: types.GameState(
+          ..model.game_state,
+          bag: original_choice_orbs |> list.append(more_choice_orbs),
+        ),
+        choice_state: types.ChoiceState(
+          pending: option.Some(#(first_orb, first_orb)),
+        ),
       )
 
     [Choice, ..rest] ->
@@ -348,10 +372,15 @@ fn draw_second_non_choice_orb(
       types.Model(
         ..model,
         status: ChoosingOrb,
-        pending_choice: option.Some(#(first_orb, second_orb)),
-        bag: rest
-          |> list.append(original_choice_orbs)
-          |> list.append(more_choice_orbs),
+        game_state: types.GameState(
+          ..model.game_state,
+          bag: rest
+            |> list.append(original_choice_orbs)
+            |> list.append(more_choice_orbs),
+        ),
+        choice_state: types.ChoiceState(
+          pending: option.Some(#(first_orb, second_orb)),
+        ),
       )
   }
 }

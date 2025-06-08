@@ -86,7 +86,7 @@ fn view_game_stats(model: Model) -> Element(Msg) {
       view_stat_card(
         "◎",
         "TARGET",
-        int.to_string(model.milestone),
+        int.to_string(model.game_state.milestone),
         "text-gray-600",
       ),
       view_stat_card(
@@ -195,7 +195,7 @@ fn view_game_content(model: Model) -> Element(Msg) {
 
 fn view_playing_state(model: Model) -> Element(Msg) {
   html.div([], [
-    case model.dev_mode {
+    case model.settings.dev_mode {
       True -> view_dev_mode_panel(model)
       False -> html.div([], [])
     },
@@ -208,7 +208,7 @@ fn view_playing_state(model: Model) -> Element(Msg) {
 }
 
 fn view_bag_info(model: Model) -> Element(Msg) {
-  let orbs_left = model.bag |> list.length
+  let orbs_left = model.game_state.bag |> list.length
 
   html.div(
     [attribute.class("mb-6 p-4 bg-gray-50 rounded border border-gray-100")],
@@ -227,7 +227,7 @@ fn view_recent_orb_panel(model: Model) -> Element(Msg) {
       [attribute.class("text-gray-500 mb-2 text-xs font-light tracking-wide")],
       [html.text("RECENT SAMPLE")],
     ),
-    view_orb_box(model.last_orb),
+    view_orb_box(model.game_state.last_orb),
   ])
 }
 
@@ -384,11 +384,11 @@ fn view_game_toggles(model: Model) -> Element(Msg) {
 }
 
 fn view_shuffle_toggle_button(model: Model) -> Element(Msg) {
-  let toggle_text = case model.shuffle_enabled {
+  let toggle_text = case model.settings.shuffle_enabled {
     True -> "SHUFFLE: ON"
     False -> "SHUFFLE: OFF"
   }
-  let toggle_color = case model.shuffle_enabled {
+  let toggle_color = case model.settings.shuffle_enabled {
     True -> "bg-yellow-100 border-yellow-300 text-yellow-700"
     False -> "bg-gray-100 border-gray-300 text-gray-700"
   }
@@ -408,11 +408,11 @@ fn view_shuffle_toggle_button(model: Model) -> Element(Msg) {
 }
 
 fn view_dev_mode_toggle_button(model: Model) -> Element(Msg) {
-  let toggle_text = case model.dev_mode {
+  let toggle_text = case model.settings.dev_mode {
     True -> "DEV: ON"
     False -> "DEV: OFF"
   }
-  let toggle_color = case model.dev_mode {
+  let toggle_color = case model.settings.dev_mode {
     True -> "bg-orange-100 border-orange-300 text-orange-700"
     False -> "bg-gray-100 border-gray-300 text-gray-700"
   }
@@ -432,21 +432,21 @@ fn view_dev_mode_toggle_button(model: Model) -> Element(Msg) {
 }
 
 fn view_choosing_orb_state(model: Model) -> Element(Msg) {
-  let header_text = case model.in_gamble_choice {
+  let header_text = case model.gamble_state.in_choice {
     True -> "GAMBLE CHOICE PROTOCOL"
     False -> "CHOICE PROTOCOL ACTIVATED"
   }
-  let description_text = case model.in_gamble_choice {
+  let description_text = case model.gamble_state.in_choice {
     True ->
       "Choice orb during gamble! Select one sample from beyond the gamble sequence."
     False ->
       "Select one sample to extract. The other will return to your container."
   }
-  let color_classes = case model.in_gamble_choice {
+  let color_classes = case model.gamble_state.in_choice {
     True -> "bg-red-50 border border-red-200"
     False -> "bg-orange-50 border border-orange-200"
   }
-  let text_color_class = case model.in_gamble_choice {
+  let text_color_class = case model.gamble_state.in_choice {
     True -> "text-red-700"
     False -> "text-orange-700"
   }
@@ -461,7 +461,7 @@ fn view_choosing_orb_state(model: Model) -> Element(Msg) {
         html.text(description_text),
       ]),
     ]),
-    case model.pending_choice {
+    case model.choice_state.pending {
       option.Some(#(first_orb, second_orb)) ->
         view_choice_selection(first_orb, second_orb)
       option.None ->
@@ -556,7 +556,7 @@ fn view_gamble_results_state(model: Model) -> Element(Msg) {
         ]),
       ],
     ),
-    view_gamble_orbs_dice_pattern(model.gamble_orbs),
+    view_gamble_orbs_dice_pattern(model.gamble_state.orbs),
     html.button(
       [
         attribute.class(
@@ -581,16 +581,16 @@ fn view_applying_gamble_orbs_state(model: Model) -> Element(Msg) {
         html.p([attribute.class("text-red-700 text-sm font-light mb-4")], [
           html.text(
             "Orb "
-            <> int.to_string(model.gamble_current_index + 1)
+            <> int.to_string(model.gamble_state.current_index + 1)
             <> " of "
-            <> int.to_string(list.length(model.gamble_orbs)),
+            <> int.to_string(list.length(model.gamble_state.orbs)),
           ),
         ]),
       ],
     ),
     view_gamble_orbs_dice_pattern_with_progress(
-      model.gamble_orbs,
-      model.gamble_current_index,
+      model.gamble_state.orbs,
+      model.gamble_state.current_index,
     ),
     html.button(
       [
@@ -798,12 +798,12 @@ fn view_choice_option(
 }
 
 fn view_extraction_log(model: Model) -> Element(Msg) {
-  case model.log_entries |> list.is_empty {
+  case model.log_state.entries |> list.is_empty {
     True -> html.div([], [])
     False ->
       html.div([attribute.class("mb-4")], [
         view_log_header(),
-        view_log_entries(model.log_entries),
+        view_log_entries(model.log_state.entries),
       ])
   }
 }
@@ -863,7 +863,7 @@ fn view_log_entry(entry: LogEntry) -> Element(Msg) {
 }
 
 fn view_pull_orb_button(model: Model) -> Element(Msg) {
-  let is_disabled = model.bag |> list.is_empty
+  let is_disabled = model.game_state.bag |> list.is_empty
   let button_classes = case is_disabled {
     True -> "bg-gray-200 cursor-not-allowed text-gray-400 border-gray-200"
     False ->
@@ -1025,7 +1025,7 @@ fn view_level_complete_state(model: Model) -> Element(Msg) {
           html.p([attribute.class("text-gray-600 text-sm mb-1")], [
             html.text(
               "Target achieved: "
-              <> int.to_string(model.milestone)
+              <> int.to_string(model.game_state.milestone)
               <> " data units",
             ),
           ]),
@@ -1109,7 +1109,7 @@ fn view_game_over_state(model: Model) -> Element(Msg) {
               "Final score: "
               <> int.to_string(model.player.points)
               <> " / "
-              <> int.to_string(model.milestone),
+              <> int.to_string(model.game_state.milestone),
             ),
           ]),
           html.p([], [
@@ -1189,7 +1189,7 @@ fn view_dev_mode_panel(model: Model) -> Element(Msg) {
 }
 
 fn view_next_orb_preview(model: Model) -> Element(Msg) {
-  case model.bag {
+  case model.game_state.bag {
     [] ->
       html.p([attribute.class("text-xs text-red-700 mb-1")], [
         html.text("Next: No samples remaining"),
@@ -1202,7 +1202,7 @@ fn view_next_orb_preview(model: Model) -> Element(Msg) {
 }
 
 fn view_bag_order_display(model: Model) -> Element(Msg) {
-  case model.bag {
+  case model.game_state.bag {
     [] ->
       html.p([attribute.class("text-xs text-red-600")], [
         html.text("Container: Empty"),

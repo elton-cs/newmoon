@@ -10,7 +10,8 @@ import types.{
   DeclineGamble, GameOver, GoToMainMenu, GoToMarketplace, InMarketplace,
   LevelComplete, MainMenu, NextGambleOrb, NextLevel, PauseGame, Paused, Playing,
   PullOrb, RestartLevel, ResumeGame, SelectFirstChoice, SelectSecondChoice,
-  ShowHowToPlay, StartNewGame, ToggleDevMode, ToggleShuffle,
+  ShowHowToPlay, StartNewGame, ToggleDevMode, ToggleShuffle, GameState, LogState,
+  ChoiceState, GambleState, Settings,
 }
 import view
 
@@ -32,19 +33,29 @@ fn init(_) -> Model {
       credits: 0,
       point_orbs_pulled_this_level: [],
     ),
-    milestone: level.get_milestone_for_level(1),
-    bag: level.create_level_bag(1),
     status: MainMenu,
-    last_orb: option.None,
-    shuffle_enabled: False,
-    dev_mode: False,
-    log_entries: [],
-    log_sequence: 0,
-    pending_choice: option.None,
-    pending_gamble: option.None,
-    gamble_orbs: [],
-    gamble_current_index: 0,
-    in_gamble_choice: False,
+    game_state: GameState(
+      milestone: level.get_milestone_for_level(1),
+      bag: level.create_level_bag(1),
+      last_orb: option.None,
+    ),
+    log_state: LogState(
+      entries: [],
+      sequence: 0,
+    ),
+    choice_state: ChoiceState(
+      pending: option.None,
+    ),
+    gamble_state: GambleState(
+      pending: option.None,
+      orbs: [],
+      current_index: 0,
+      in_choice: False,
+    ),
+    settings: Settings(
+      shuffle_enabled: False,
+      dev_mode: False,
+    ),
   )
 }
 
@@ -75,7 +86,7 @@ fn update(model: Model, msg: Msg) -> Model {
 
     // Game Settings
     ToggleShuffle -> handle_toggle_shuffle(model)
-    ToggleDevMode -> types.Model(..model, dev_mode: !model.dev_mode)
+    ToggleDevMode -> types.Model(..model, settings: Settings(..model.settings, dev_mode: !model.settings.dev_mode))
 
     // Choice Orb Actions
     SelectFirstChoice -> handle_choice_selection(model, True)
@@ -91,11 +102,11 @@ fn update(model: Model, msg: Msg) -> Model {
 fn handle_pull_orb(model: Model) -> Model {
   case model.status {
     Playing -> {
-      case model.bag {
+      case model.game_state.bag {
         [] -> model
         [first_orb, ..rest] -> {
           let new_model = orb.apply_orb_effect(first_orb, model)
-          let new_sequence = model.log_sequence + 1
+          let new_sequence = model.log_state.sequence + 1
           let log_message = orb.get_orb_result_message(first_orb, new_model)
           let new_log_entry =
             types.LogEntry(
@@ -106,10 +117,15 @@ fn handle_pull_orb(model: Model) -> Model {
           let updated_model =
             types.Model(
               ..new_model,
-              bag: rest,
-              last_orb: option.Some(first_orb),
-              log_entries: [new_log_entry, ..model.log_entries],
-              log_sequence: new_sequence,
+              game_state: GameState(
+                ..new_model.game_state,
+                bag: rest,
+                last_orb: option.Some(first_orb),
+              ),
+              log_state: LogState(
+                entries: [new_log_entry, ..model.log_state.entries],
+                sequence: new_sequence,
+              ),
             )
           check_game_status(updated_model)
         }
@@ -122,7 +138,7 @@ fn handle_pull_orb(model: Model) -> Model {
 fn handle_next_level(model: Model) -> Model {
   let new_level = model.player.level + 1
   let base_bag = level.create_level_bag(new_level)
-  let final_bag = case model.shuffle_enabled {
+  let final_bag = case model.settings.shuffle_enabled {
     True -> base_bag |> list.shuffle
     False -> base_bag
   }
@@ -137,19 +153,26 @@ fn handle_next_level(model: Model) -> Model {
       credits: model.player.credits,
       point_orbs_pulled_this_level: [],
     ),
-    milestone: level.get_milestone_for_level(new_level),
-    bag: final_bag,
     status: Playing,
-    last_orb: option.None,
-    shuffle_enabled: model.shuffle_enabled,
-    dev_mode: model.dev_mode,
-    log_entries: [],
-    log_sequence: 0,
-    pending_choice: option.None,
-    pending_gamble: option.None,
-    gamble_orbs: [],
-    gamble_current_index: 0,
-    in_gamble_choice: False,
+    game_state: GameState(
+      milestone: level.get_milestone_for_level(new_level),
+      bag: final_bag,
+      last_orb: option.None,
+    ),
+    log_state: LogState(
+      entries: [],
+      sequence: 0,
+    ),
+    choice_state: ChoiceState(
+      pending: option.None,
+    ),
+    gamble_state: GambleState(
+      pending: option.None,
+      orbs: [],
+      current_index: 0,
+      in_choice: False,
+    ),
+    settings: model.settings,
   )
 }
 
@@ -166,25 +189,35 @@ fn start_new_game() -> Model {
       credits: 0,
       point_orbs_pulled_this_level: [],
     ),
-    milestone: level.get_milestone_for_level(1),
-    bag: base_bag,
     status: Playing,
-    last_orb: option.None,
-    shuffle_enabled: False,
-    dev_mode: False,
-    log_entries: [],
-    log_sequence: 0,
-    pending_choice: option.None,
-    pending_gamble: option.None,
-    gamble_orbs: [],
-    gamble_current_index: 0,
-    in_gamble_choice: False,
+    game_state: GameState(
+      milestone: level.get_milestone_for_level(1),
+      bag: base_bag,
+      last_orb: option.None,
+    ),
+    log_state: LogState(
+      entries: [],
+      sequence: 0,
+    ),
+    choice_state: ChoiceState(
+      pending: option.None,
+    ),
+    gamble_state: GambleState(
+      pending: option.None,
+      orbs: [],
+      current_index: 0,
+      in_choice: False,
+    ),
+    settings: Settings(
+      shuffle_enabled: False,
+      dev_mode: False,
+    ),
   )
 }
 
 fn restart_current_level(model: Model) -> Model {
   let base_bag = level.create_level_bag(model.player.level)
-  let final_bag = case model.shuffle_enabled {
+  let final_bag = case model.settings.shuffle_enabled {
     True -> base_bag |> list.shuffle
     False -> base_bag
   }
@@ -198,57 +231,76 @@ fn restart_current_level(model: Model) -> Model {
       credits: model.player.credits,
       point_orbs_pulled_this_level: [],
     ),
-    milestone: model.milestone,
-    bag: final_bag,
     status: Playing,
-    last_orb: option.None,
-    shuffle_enabled: model.shuffle_enabled,
-    dev_mode: model.dev_mode,
-    log_entries: [],
-    log_sequence: 0,
-    pending_choice: option.None,
-    pending_gamble: option.None,
-    gamble_orbs: [],
-    gamble_current_index: 0,
-    in_gamble_choice: False,
+    game_state: GameState(
+      milestone: model.game_state.milestone,
+      bag: final_bag,
+      last_orb: option.None,
+    ),
+    log_state: LogState(
+      entries: [],
+      sequence: 0,
+    ),
+    choice_state: ChoiceState(
+      pending: option.None,
+    ),
+    gamble_state: GambleState(
+      pending: option.None,
+      orbs: [],
+      current_index: 0,
+      in_choice: False,
+    ),
+    settings: model.settings,
   )
 }
 
 fn handle_toggle_shuffle(model: Model) -> Model {
-  let new_shuffle_enabled = !model.shuffle_enabled
+  let new_shuffle_enabled = !model.settings.shuffle_enabled
   case model.status == Playing && new_shuffle_enabled {
     True -> {
       // If enabling shuffle during gameplay, reshuffle the current bag
-      let shuffled_bag = model.bag |> list.shuffle
+      let shuffled_bag = model.game_state.bag |> list.shuffle
       types.Model(
         ..model,
-        shuffle_enabled: new_shuffle_enabled,
-        bag: shuffled_bag,
+        settings: Settings(
+          ..model.settings,
+          shuffle_enabled: new_shuffle_enabled,
+        ),
+        game_state: GameState(
+          ..model.game_state,
+          bag: shuffled_bag,
+        ),
       )
     }
     False -> {
       // If disabling shuffle or not playing, just toggle the setting
-      types.Model(..model, shuffle_enabled: new_shuffle_enabled)
+      types.Model(
+        ..model,
+        settings: Settings(
+          ..model.settings,
+          shuffle_enabled: new_shuffle_enabled,
+        ),
+      )
     }
   }
 }
 
 fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
-  case model.pending_choice {
+  case model.choice_state.pending {
     option.Some(#(first_orb, second_orb)) -> {
       let #(chosen_orb, unchosen_orb) = case select_first {
         True -> #(first_orb, second_orb)
         False -> #(second_orb, first_orb)
       }
 
-      case model.in_gamble_choice {
+      case model.gamble_state.in_choice {
         True -> {
           // We're in a gamble-choice scenario
           // Apply chosen orb with gamble effects and return to gamble state
           let after_effect = apply_gamble_orb_effect(chosen_orb, model)
 
           // Create log entry for the chosen orb
-          let new_sequence = model.log_sequence + 1
+          let new_sequence = model.log_state.sequence + 1
           let log_message = orb.get_orb_result_message(chosen_orb, after_effect)
           let new_log_entry =
             types.LogEntry(
@@ -259,7 +311,7 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
 
           // Remove chosen orb from bag (it was from position 5+) and return unchosen orb to end
           // We need to carefully manage the bag since we pulled from positions 5+
-          let orbs_after_gamble = model.bag |> list.drop(5)
+          let orbs_after_gamble = model.game_state.bag |> list.drop(5)
           let remaining_after_gamble = case first_orb == second_orb {
             True -> orbs_after_gamble |> list.drop(1)
             // Remove one copy of the duplicated orb
@@ -268,18 +320,28 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
             // Remove both, add unchosen back
           }
           let new_bag =
-            model.bag |> list.take(5) |> list.append(remaining_after_gamble)
+            model.game_state.bag |> list.take(5) |> list.append(remaining_after_gamble)
 
           let updated_model =
             types.Model(
               ..after_effect,
               status: types.ApplyingGambleOrbs,
-              pending_choice: option.None,
-              bag: new_bag,
-              last_orb: option.Some(chosen_orb),
-              log_entries: [new_log_entry, ..model.log_entries],
-              log_sequence: new_sequence,
-              in_gamble_choice: False,
+              game_state: GameState(
+                ..after_effect.game_state,
+                bag: new_bag,
+                last_orb: option.Some(chosen_orb),
+              ),
+              log_state: LogState(
+                entries: [new_log_entry, ..model.log_state.entries],
+                sequence: new_sequence,
+              ),
+              choice_state: ChoiceState(
+                pending: option.None,
+              ),
+              gamble_state: GambleState(
+                ..after_effect.gamble_state,
+                in_choice: False,
+              ),
             )
 
           check_game_status(updated_model)
@@ -290,7 +352,7 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
           let after_effect = orb.apply_orb_effect(chosen_orb, model)
 
           // Create log entry for the chosen orb
-          let new_sequence = model.log_sequence + 1
+          let new_sequence = model.log_state.sequence + 1
           let log_message = orb.get_orb_result_message(chosen_orb, after_effect)
           let new_log_entry =
             types.LogEntry(
@@ -301,20 +363,27 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
 
           // Return unchosen orb to end of bag (unless it's a duplicate from single orb case)
           let new_bag = case first_orb == second_orb {
-            True -> after_effect.bag
+            True -> after_effect.game_state.bag
             // Don't return duplicate orb
-            False -> after_effect.bag |> list.append([unchosen_orb])
+            False -> after_effect.game_state.bag |> list.append([unchosen_orb])
           }
 
           let updated_model =
             types.Model(
               ..after_effect,
               status: Playing,
-              pending_choice: option.None,
-              bag: new_bag,
-              last_orb: option.Some(chosen_orb),
-              log_entries: [new_log_entry, ..model.log_entries],
-              log_sequence: new_sequence,
+              game_state: GameState(
+                ..after_effect.game_state,
+                bag: new_bag,
+                last_orb: option.Some(chosen_orb),
+              ),
+              log_state: LogState(
+                entries: [new_log_entry, ..model.log_state.entries],
+                sequence: new_sequence,
+              ),
+              choice_state: ChoiceState(
+                pending: option.None,
+              ),
             )
 
           check_game_status(updated_model)
@@ -328,28 +397,37 @@ fn handle_choice_selection(model: Model, select_first: Bool) -> Model {
 
 fn handle_accept_gamble(model: Model) -> Model {
   // Preview 5 orbs from bag but don't consume them yet
-  let gamble_orbs = model.bag |> list.take(5)
+  let gamble_orbs = model.game_state.bag |> list.take(5)
 
   types.Model(
     ..model,
     status: types.ViewingGambleResults,
-    pending_gamble: option.None,
-    gamble_orbs: gamble_orbs,
-    gamble_current_index: 0,
-    in_gamble_choice: False,
+    gamble_state: GambleState(
+      pending: option.None,
+      orbs: gamble_orbs,
+      current_index: 0,
+      in_choice: False,
+    ),
     // Keep original bag until orbs are actually applied
   )
 }
 
 fn handle_decline_gamble(model: Model) -> Model {
-  types.Model(..model, status: Playing, pending_gamble: option.None)
+  types.Model(
+    ..model,
+    status: Playing,
+    gamble_state: GambleState(
+      ..model.gamble_state,
+      pending: option.None,
+    ),
+  )
 }
 
 fn handle_next_gamble_orb(model: Model) -> Model {
   case model.status {
     types.ViewingGambleResults -> {
       // Start applying orbs
-      case model.gamble_orbs {
+      case model.gamble_state.orbs {
         [] -> types.Model(..model, status: Playing)
         // No orbs to apply
         _ -> {
@@ -357,8 +435,11 @@ fn handle_next_gamble_orb(model: Model) -> Model {
             types.Model(
               ..model,
               status: types.ApplyingGambleOrbs,
-              gamble_current_index: 0,
-              in_gamble_choice: False,
+              gamble_state: GambleState(
+                ..model.gamble_state,
+                current_index: 0,
+                in_choice: False,
+              ),
             )
           apply_current_gamble_orb(updated_model)
         }
@@ -366,21 +447,30 @@ fn handle_next_gamble_orb(model: Model) -> Model {
     }
     types.ApplyingGambleOrbs -> {
       // Apply next orb
-      let next_index = model.gamble_current_index + 1
-      case next_index >= { model.gamble_orbs |> list.length } {
+      let next_index = model.gamble_state.current_index + 1
+      case next_index >= { model.gamble_state.orbs |> list.length } {
         True -> {
           // Done with all orbs, return to playing
           types.Model(
             ..model,
             status: Playing,
-            gamble_orbs: [],
-            gamble_current_index: 0,
-            in_gamble_choice: False,
+            gamble_state: GambleState(
+              ..model.gamble_state,
+              orbs: [],
+              current_index: 0,
+              in_choice: False,
+            ),
           )
         }
         False -> {
           let updated_model =
-            types.Model(..model, gamble_current_index: next_index)
+            types.Model(
+              ..model,
+              gamble_state: GambleState(
+                ..model.gamble_state,
+                current_index: next_index,
+              ),
+            )
           apply_current_gamble_orb(updated_model)
         }
       }
@@ -391,15 +481,21 @@ fn handle_next_gamble_orb(model: Model) -> Model {
 
 fn apply_current_gamble_orb(model: Model) -> Model {
   case
-    model.gamble_orbs |> list.drop(model.gamble_current_index) |> list.first
+    model.gamble_state.orbs |> list.drop(model.gamble_state.current_index) |> list.first
   {
     Ok(orb) -> {
       // Consume one orb from the bag (the one we're currently applying)
-      let remaining_bag = model.bag |> list.drop(1)
-      let model_with_consumed_orb = types.Model(..model, bag: remaining_bag)
+      let remaining_bag = model.game_state.bag |> list.drop(1)
+      let model_with_consumed_orb = types.Model(
+        ..model,
+        game_state: GameState(
+          ..model.game_state,
+          bag: remaining_bag,
+        ),
+      )
 
       let modified_model = apply_gamble_orb_effect(orb, model_with_consumed_orb)
-      let new_sequence = model.log_sequence + 1
+      let new_sequence = model.log_state.sequence + 1
       let log_message = orb.get_orb_result_message(orb, modified_model)
       let new_log_entry =
         types.LogEntry(sequence: new_sequence, orb: orb, message: log_message)
@@ -407,8 +503,10 @@ fn apply_current_gamble_orb(model: Model) -> Model {
       let updated_model =
         types.Model(
           ..modified_model,
-          log_entries: [new_log_entry, ..model.log_entries],
-          log_sequence: new_sequence,
+          log_state: LogState(
+            entries: [new_log_entry, ..model.log_state.entries],
+            sequence: new_sequence,
+          ),
         )
 
       check_game_status(updated_model)
@@ -448,7 +546,7 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
     }
     types.Collector -> {
       // Count remaining orbs in bag AFTER gamble orbs were removed
-      let remaining_orbs = model.bag |> list.length
+      let remaining_orbs = model.game_state.bag |> list.length
       let collector_points = remaining_orbs * model.player.current_multiplier
       types.Model(
         ..model,
@@ -479,7 +577,7 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
     types.Choice -> {
       // During gamble, Choice orb transitions to choice view
       // Pull orbs from positions 5+ in bag (after the 5 gamble orbs)
-      let orbs_after_gamble = model.bag |> list.drop(5)
+      let orbs_after_gamble = model.game_state.bag |> list.drop(5)
       case orbs_after_gamble {
         [] -> {
           // No orbs available after gamble orbs, treat as Point(5) with gamble bonus
@@ -497,8 +595,13 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
           types.Model(
             ..model,
             status: types.ChoosingOrb,
-            pending_choice: option.Some(#(single_orb, single_orb)),
-            in_gamble_choice: True,
+            choice_state: ChoiceState(
+              pending: option.Some(#(single_orb, single_orb)),
+            ),
+            gamble_state: GambleState(
+              ..model.gamble_state,
+              in_choice: True,
+            ),
           )
         }
         [first_orb, second_orb, ..] -> {
@@ -506,8 +609,13 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
           types.Model(
             ..model,
             status: types.ChoosingOrb,
-            pending_choice: option.Some(#(first_orb, second_orb)),
-            in_gamble_choice: True,
+            choice_state: ChoiceState(
+              pending: option.Some(#(first_orb, second_orb)),
+            ),
+            gamble_state: GambleState(
+              ..model.gamble_state,
+              in_choice: True,
+            ),
           )
         }
       }
@@ -519,7 +627,7 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
     types.PointScanner -> {
       // During gamble, count Point orbs in bag AFTER gamble orbs were removed
       let point_orbs_count =
-        model.bag
+        model.game_state.bag
         |> list.count(fn(orb) {
           case orb {
             types.Point(_) -> True
@@ -545,13 +653,16 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
           case min_value {
             Ok(value) -> {
               // Add Point(value) back to bag
-              let updated_bag = model.bag |> list.append([types.Point(value)])
+              let updated_bag = model.game_state.bag |> list.append([types.Point(value)])
               // Remove first occurrence of min_value from tracking list
               let updated_tracking =
                 remove_first_occurrence(pulled_points, value)
               types.Model(
                 ..model,
-                bag: updated_bag,
+                game_state: GameState(
+                  ..model.game_state,
+                  bag: updated_bag,
+                ),
                 player: types.Player(
                   ..model.player,
                   point_orbs_pulled_this_level: updated_tracking,
@@ -567,7 +678,7 @@ fn apply_gamble_orb_effect(orb: types.Orb, model: Model) -> Model {
 }
 
 fn check_game_status(model: Model) -> Model {
-  case model.player.health <= 0, model.player.points >= model.milestone {
+  case model.player.health <= 0, model.player.points >= model.game_state.milestone {
     True, _ -> types.Model(..model, status: GameOver)
     False, True ->
       types.Model(

@@ -48,11 +48,11 @@ pub fn purchase_orb(model: Model, orb: Orb) -> Model {
       case can_afford(model, item) {
         True -> {
           let new_credits = model.player.credits - item.price
-          let new_bag = [orb, ..model.bag]
+          let new_bag = [orb, ..model.game_state.bag]
           types.Model(
             ..model,
             player: types.Player(..model.player, credits: new_credits),
-            bag: new_bag,
+            game_state: types.GameState(..model.game_state, bag: new_bag),
           )
         }
         False -> model
