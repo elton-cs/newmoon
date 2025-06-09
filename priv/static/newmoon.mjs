@@ -4866,23 +4866,7 @@ var ExitTesting = class extends CustomType {
 
 // build/dev/javascript/newmoon/update.mjs
 function starter_orbs() {
-  let point_orbs = toList([
-    new PointOrb(1),
-    new PointOrb(1),
-    new PointOrb(2),
-    new PointOrb(2),
-    new PointOrb(3)
-  ]);
-  let bomb_orbs = toList([
-    new BombOrb(1),
-    new BombOrb(1),
-    new BombOrb(2),
-    new BombOrb(2),
-    new BombOrb(3)
-  ]);
-  let health_orbs = toList([new HealthOrb(1), new HealthOrb(2)]);
-  let _pipe = append(point_orbs, bomb_orbs);
-  return append(_pipe, health_orbs);
+  return toList([new PointOrb(1), new BombOrb(2), new HealthOrb(3)]);
 }
 function init(_) {
   return new Model(

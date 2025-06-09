@@ -25,16 +25,7 @@ pub fn init(_) -> Model {
 
 // Single consistent orb bag used for all levels
 fn starter_orbs() -> List(Orb) {
-  let point_orbs = [
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(2),
-    PointOrb(2),
-    PointOrb(3),
-  ]
-  let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
-  let health_orbs = [HealthOrb(1), HealthOrb(2)]
-  list.append(point_orbs, bomb_orbs) |> list.append(health_orbs)
+  [PointOrb(1), BombOrb(2), HealthOrb(3)]
 }
 
 // Test bag that includes the test orb plus the standard starter orbs
