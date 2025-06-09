@@ -5,9 +5,9 @@ import lustre/element.{type Element}
 import types.{
   type Model, type Msg, type OrbType, BackToMainMenu, BackToOrbTesting,
   ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game, Gameplay,
-  GoToOrbTesting, HazardSample, Main, Menu, NextLevel, OrbSelection, Playing,
-  ResetTesting, RestartGame, SelectOrbType, StartGame, Success, Testing,
-  ValueConfiguration, Victory,
+  GoToOrbTesting, HazardSample, HealthSample, Main, Menu, NextLevel,
+  OrbSelection, Playing, ResetTesting, RestartGame, SelectOrbType, StartGame,
+  Success, Testing, ValueConfiguration, Victory,
 }
 import ui
 
@@ -206,6 +206,7 @@ fn render_orb_testing_view() -> Element(Msg) {
     ),
     ui.orb_selection_button("Data Sample", SelectOrbType(DataSample)),
     ui.orb_selection_button("Hazard Sample", SelectOrbType(HazardSample)),
+    ui.orb_selection_button("Health Sample", SelectOrbType(HealthSample)),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }
@@ -218,10 +219,12 @@ fn render_orb_value_selection_view(
   let orb_name = case orb_type {
     DataSample -> "Data Sample"
     HazardSample -> "Hazard Sample"
+    HealthSample -> "Health Sample"
   }
   let description = case orb_type {
     DataSample -> "Enter the data points this sample will provide"
     HazardSample -> "Enter the system damage this sample will cause"
+    HealthSample -> "Enter the health points this sample will restore"
   }
 
   element.fragment([

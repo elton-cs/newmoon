@@ -1087,6 +1087,16 @@ var Eq = class extends CustomType {
 var Gt = class extends CustomType {
 };
 
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function min(a, b) {
+  let $ = a < b;
+  if ($) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/list.mjs
 var Ascending = class extends CustomType {
 };
@@ -4752,6 +4762,12 @@ var BombOrb = class extends CustomType {
     this[0] = $0;
   }
 };
+var HealthOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
 var Main = class extends CustomType {
 };
 var OrbSelection = class extends CustomType {
@@ -4795,6 +4811,8 @@ var Game = class extends CustomType {
 var DataSample = class extends CustomType {
 };
 var HazardSample = class extends CustomType {
+};
+var HealthSample = class extends CustomType {
 };
 var Model = class extends CustomType {
   constructor(health, points, level, milestone, bag, screen, last_orb, input_value) {
@@ -4862,7 +4880,9 @@ function starter_orbs() {
     new BombOrb(2),
     new BombOrb(3)
   ]);
-  return append(point_orbs, bomb_orbs);
+  let health_orbs = toList([new HealthOrb(1), new HealthOrb(2)]);
+  let _pipe = append(point_orbs, bomb_orbs);
+  return append(_pipe, health_orbs);
 }
 function init(_) {
   return new Model(
@@ -4940,8 +4960,10 @@ function handle_confirm_orb_value(model, orb_type) {
       let _block;
       if (orb_type instanceof DataSample) {
         _block = new PointOrb(value2);
-      } else {
+      } else if (orb_type instanceof HazardSample) {
         _block = new BombOrb(value2);
+      } else {
+        _block = new HealthOrb(value2);
       }
       let test_orb = _block;
       let _record = model;
@@ -5117,11 +5139,25 @@ function handle_pull_orb(model) {
             _record2.last_orb,
             _record2.input_value
           );
-        } else {
+        } else if (first_orb instanceof BombOrb) {
           let value2 = first_orb[0];
           let _record2 = model;
           _block = new Model(
             model.health - value2,
+            _record2.points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.input_value
+          );
+        } else {
+          let value2 = first_orb[0];
+          let new_health = min(model.health + value2, 5);
+          let _record2 = model;
+          _block = new Model(
+            new_health,
             _record2.points,
             _record2.level,
             _record2.milestone,
@@ -5173,11 +5209,25 @@ function handle_pull_orb(model) {
             _record2.last_orb,
             _record2.input_value
           );
-        } else {
+        } else if (first_orb instanceof BombOrb) {
           let value2 = first_orb[0];
           let _record2 = model;
           _block = new Model(
             model.health - value2,
+            _record2.points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.input_value
+          );
+        } else {
+          let value2 = first_orb[0];
+          let new_health = min(model.health + value2, 5);
+          let _record2 = model;
+          _block = new Model(
+            new_health,
             _record2.points,
             _record2.level,
             _record2.milestone,
@@ -5246,9 +5296,12 @@ function orb_result_message(orb) {
   if (orb instanceof PointOrb) {
     let value2 = orb[0];
     return "\u25CF DATA ACQUIRED +" + to_string(value2);
-  } else {
+  } else if (orb instanceof BombOrb) {
     let value2 = orb[0];
     return "\u25CB SYSTEM DAMAGE -" + to_string(value2);
+  } else {
+    let value2 = orb[0];
+    return "\u25C7 SYSTEMS RESTORED +" + to_string(value2);
   }
 }
 function data_target_message(milestone) {
@@ -5413,8 +5466,14 @@ function orb_result_display(orb) {
     let message = orb_result_message(orb_value);
     if (orb_value instanceof PointOrb) {
       return info_panel(message, "text-gray-700", "bg-gray-50 border-gray-200");
-    } else {
+    } else if (orb_value instanceof BombOrb) {
       return info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300");
+    } else {
+      return info_panel(
+        message,
+        "text-green-700",
+        "bg-green-50 border-green-200"
+      );
     }
   } else {
     return div(toList([class$("h-8")]), toList([]));
@@ -5680,6 +5739,10 @@ function render_orb_testing_view() {
         "Hazard Sample",
         new SelectOrbType(new HazardSample())
       ),
+      orb_selection_button(
+        "Health Sample",
+        new SelectOrbType(new HealthSample())
+      ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])
   );
@@ -5688,15 +5751,19 @@ function render_orb_value_selection_view(orb_type, input_value) {
   let _block;
   if (orb_type instanceof DataSample) {
     _block = "Data Sample";
-  } else {
+  } else if (orb_type instanceof HazardSample) {
     _block = "Hazard Sample";
+  } else {
+    _block = "Health Sample";
   }
   let orb_name = _block;
   let _block$1;
   if (orb_type instanceof DataSample) {
     _block$1 = "Enter the data points this sample will provide";
-  } else {
+  } else if (orb_type instanceof HazardSample) {
     _block$1 = "Enter the system damage this sample will cause";
+  } else {
+    _block$1 = "Enter the health points this sample will restore";
   }
   let description = _block$1;
   return fragment2(

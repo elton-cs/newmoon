@@ -4,9 +4,9 @@ import gleam/option.{None, Some}
 import types.{
   type Model, type Msg, type Orb, type OrbType, BackToMainMenu, BackToOrbTesting,
   BombOrb, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game,
-  Gameplay, GoToOrbTesting, HazardSample, Main, Menu, Model, NextLevel,
-  OrbSelection, Playing, PointOrb, PullOrb, ResetTesting, RestartGame,
-  SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
+  Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Menu,
+  Model, NextLevel, OrbSelection, Playing, PointOrb, PullOrb, ResetTesting,
+  RestartGame, SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
   ValueConfiguration, Victory,
 }
 
@@ -33,7 +33,8 @@ fn starter_orbs() -> List(Orb) {
     PointOrb(3),
   ]
   let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
-  list.append(point_orbs, bomb_orbs)
+  let health_orbs = [HealthOrb(1), HealthOrb(2)]
+  list.append(point_orbs, bomb_orbs) |> list.append(health_orbs)
 }
 
 // Test bag that includes the test orb plus the standard starter orbs
@@ -91,6 +92,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
       let test_orb = case orb_type {
         DataSample -> PointOrb(value)
         HazardSample -> BombOrb(value)
+        HealthSample -> HealthOrb(value)
       }
       Model(
         ..model,
@@ -123,6 +125,10 @@ fn handle_pull_orb(model: Model) -> Model {
           let new_model = case first_orb {
             PointOrb(value) -> Model(..model, points: model.points + value)
             BombOrb(value) -> Model(..model, health: model.health - value)
+            HealthOrb(value) -> {
+              let new_health = int.min(model.health + value, 5)
+              Model(..model, health: new_health)
+            }
           }
 
           let updated_model =

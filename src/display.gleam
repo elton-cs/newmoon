@@ -1,4 +1,4 @@
-import types.{type Orb, BombOrb, PointOrb}
+import types.{type Orb, BombOrb, HealthOrb, PointOrb}
 
 // Import int for string conversion
 import gleam/int
@@ -12,6 +12,7 @@ pub fn orb_display_name(orb: Orb) -> String {
   case orb {
     PointOrb(_) -> "Data Sample"
     BombOrb(_) -> "Hazard Sample"
+    HealthOrb(_) -> "Health Sample"
   }
 }
 
@@ -20,6 +21,7 @@ pub fn orb_result_message(orb: Orb) -> String {
   case orb {
     PointOrb(value) -> "● DATA ACQUIRED +" <> int.to_string(value)
     BombOrb(value) -> "○ SYSTEM DAMAGE -" <> int.to_string(value)
+    HealthOrb(value) -> "◇ SYSTEMS RESTORED +" <> int.to_string(value)
   }
 }
 

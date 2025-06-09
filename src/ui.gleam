@@ -88,6 +88,8 @@ pub fn orb_result_display(orb: Option(Orb)) -> Element(Msg) {
           info_panel(message, "text-gray-700", "bg-gray-50 border-gray-200")
         types.BombOrb(_) ->
           info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300")
+        types.HealthOrb(_) ->
+          info_panel(message, "text-green-700", "bg-green-50 border-green-200")
       }
     }
   }

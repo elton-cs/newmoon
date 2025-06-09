@@ -3,6 +3,7 @@ import gleam/option.{type Option}
 pub type Orb {
   PointOrb(Int)
   BombOrb(Int)
+  HealthOrb(Int)
 }
 
 pub type MenuScreen {
@@ -32,6 +33,7 @@ pub type Screen {
 pub type OrbType {
   DataSample
   HazardSample
+  HealthSample
 }
 
 pub type Model {
