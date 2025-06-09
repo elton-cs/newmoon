@@ -5029,6 +5029,7 @@ function check_game_status(model) {
     if ($1 instanceof Gameplay) {
       let $2 = model.health <= 0;
       let $3 = model.points >= model.milestone;
+      let $4 = is_empty(model.bag);
       if ($2) {
         let _record = model;
         return new Model(
@@ -5053,6 +5054,18 @@ function check_game_status(model) {
           _record.last_orb,
           _record.input_value
         );
+      } else if ($4) {
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          _record.bag,
+          new Testing(new Failure()),
+          _record.last_orb,
+          _record.input_value
+        );
       } else {
         return model;
       }
@@ -5064,6 +5077,7 @@ function check_game_status(model) {
     if ($1 instanceof Playing) {
       let $2 = model.health <= 0;
       let $3 = model.points >= model.milestone;
+      let $4 = is_empty(model.bag);
       if ($2) {
         let _record = model;
         return new Model(
@@ -5088,6 +5102,18 @@ function check_game_status(model) {
           _record.last_orb,
           _record.input_value
         );
+      } else if ($4) {
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          _record.bag,
+          new Game(new Defeat()),
+          _record.last_orb,
+          _record.input_value
+        );
       } else {
         return model;
       }
@@ -5105,7 +5131,7 @@ function handle_pull_orb(model) {
     if ($1 instanceof Gameplay) {
       let $2 = model.bag;
       if ($2 instanceof Empty) {
-        return model;
+        return check_game_status(model);
       } else {
         let first_orb = $2.head;
         let rest = $2.tail;
@@ -5175,7 +5201,7 @@ function handle_pull_orb(model) {
     if ($1 instanceof Playing) {
       let $2 = model.bag;
       if ($2 instanceof Empty) {
-        return model;
+        return check_game_status(model);
       } else {
         let first_orb = $2.head;
         let rest = $2.tail;

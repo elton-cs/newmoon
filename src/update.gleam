@@ -111,7 +111,7 @@ fn handle_pull_orb(model: Model) -> Model {
   case model.screen {
     Game(Playing) | Testing(Gameplay) -> {
       case model.bag {
-        [] -> model
+        [] -> check_game_status(model)
         [first_orb, ..rest] -> {
           let new_model = case first_orb {
             PointOrb(value) -> Model(..model, points: model.points + value)
@@ -157,16 +157,26 @@ fn handle_exit_testing(_model: Model) -> Model {
 fn check_game_status(model: Model) -> Model {
   case model.screen {
     Testing(Gameplay) ->
-      case model.health <= 0, model.points >= model.milestone {
-        True, _ -> Model(..model, screen: Testing(Failure))
-        False, True -> Model(..model, screen: Testing(Success))
-        False, False -> model
+      case
+        model.health <= 0,
+        model.points >= model.milestone,
+        list.is_empty(model.bag)
+      {
+        True, _, _ -> Model(..model, screen: Testing(Failure))
+        False, True, _ -> Model(..model, screen: Testing(Success))
+        False, False, True -> Model(..model, screen: Testing(Failure))
+        False, False, False -> model
       }
     Game(Playing) ->
-      case model.health <= 0, model.points >= model.milestone {
-        True, _ -> Model(..model, screen: Game(Defeat))
-        False, True -> Model(..model, screen: Game(Victory))
-        False, False -> model
+      case
+        model.health <= 0,
+        model.points >= model.milestone,
+        list.is_empty(model.bag)
+      {
+        True, _, _ -> Model(..model, screen: Game(Defeat))
+        False, True, _ -> Model(..model, screen: Game(Victory))
+        False, False, True -> Model(..model, screen: Game(Defeat))
+        False, False, False -> model
       }
     _ -> model
   }
