@@ -5,28 +5,28 @@ pub type Orb {
   BombOrb(Int)
 }
 
-pub type MainMenuMode {
-  MainMenu
+pub type MenuScreen {
+  Main
 }
 
-pub type TestingMode {
-  OrbTesting
-  OrbValueSelection(OrbType)
-  TestingGameplay
-  TestingWon
-  TestingLost
+pub type TestingScreen {
+  OrbSelection
+  ValueConfiguration(OrbType)
+  Gameplay
+  Success
+  Failure
 }
 
-pub type GameMode {
+pub type GameScreen {
   Playing
-  Won
-  Lost
+  Victory
+  Defeat
 }
 
-pub type Mode {
-  MainMenuMode(MainMenuMode)
-  TestingMode(TestingMode)
-  GameMode(GameMode)
+pub type Screen {
+  Menu(MenuScreen)
+  Testing(TestingScreen)
+  Game(GameScreen)
 }
 
 pub type OrbType {
@@ -41,7 +41,7 @@ pub type Model {
     level: Int,
     milestone: Int,
     bag: List(Orb),
-    mode: Mode,
+    screen: Screen,
     last_orb: Option(Orb),
     input_value: String,
   )

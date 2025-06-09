@@ -3,11 +3,11 @@ import gleam/list
 import gleam/option.{None, Some}
 import types.{
   type Model, type Msg, type Orb, type OrbType, BackToMainMenu, BackToOrbTesting,
-  BombOrb, ConfirmOrbValue, DataSample, ExitTesting, GameMode, GoToOrbTesting,
-  HazardSample, Lost, MainMenu, MainMenuMode, Model, NextLevel, OrbTesting,
-  OrbValueSelection, Playing, PointOrb, PullOrb, ResetTesting, RestartGame,
-  SelectOrbType, StartGame, TestingGameplay, TestingLost, TestingMode,
-  TestingWon, UpdateInputValue, Won,
+  BombOrb, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game,
+  Gameplay, GoToOrbTesting, HazardSample, Main, Menu, Model, NextLevel,
+  OrbSelection, Playing, PointOrb, PullOrb, ResetTesting, RestartGame,
+  SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
+  ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -17,7 +17,7 @@ pub fn init(_) -> Model {
     level: 1,
     milestone: 5,
     bag: starter_orbs(),
-    mode: MainMenuMode(MainMenu),
+    screen: Menu(Main),
     last_orb: None,
     input_value: "",
   )
@@ -61,7 +61,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
 fn handle_start_game(model: Model) -> Model {
   Model(
     ..model,
-    mode: GameMode(Playing),
+    screen: Game(Playing),
     bag: starter_orbs(),
     health: 5,
     points: 0,
@@ -70,13 +70,13 @@ fn handle_start_game(model: Model) -> Model {
 }
 
 fn handle_go_to_orb_testing(model: Model) -> Model {
-  Model(..model, mode: TestingMode(OrbTesting))
+  Model(..model, screen: Testing(OrbSelection))
 }
 
 fn handle_select_orb_type(model: Model, orb_type: OrbType) -> Model {
   Model(
     ..model,
-    mode: TestingMode(OrbValueSelection(orb_type)),
+    screen: Testing(ValueConfiguration(orb_type)),
     input_value: "1",
   )
 }
@@ -94,7 +94,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
       }
       Model(
         ..model,
-        mode: TestingMode(TestingGameplay),
+        screen: Testing(Gameplay),
         bag: create_test_bag(test_orb),
         health: 5,
         points: 0,
@@ -107,16 +107,16 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
 }
 
 fn handle_back_to_orb_testing(model: Model) -> Model {
-  Model(..model, mode: TestingMode(OrbTesting))
+  Model(..model, screen: Testing(OrbSelection))
 }
 
 fn handle_back_to_main_menu(model: Model) -> Model {
-  Model(..model, mode: MainMenuMode(MainMenu))
+  Model(..model, screen: Menu(Main))
 }
 
 fn handle_pull_orb(model: Model) -> Model {
-  case model.mode {
-    GameMode(Playing) | TestingMode(TestingGameplay) -> {
+  case model.screen {
+    Game(Playing) | Testing(Gameplay) -> {
       case model.bag {
         [] -> model
         [first_orb, ..rest] -> {
@@ -143,14 +143,14 @@ fn handle_next_level(model: Model) -> Model {
     level: model.level + 1,
     milestone: model.milestone + 2,
     bag: starter_orbs(),
-    mode: GameMode(Playing),
+    screen: Game(Playing),
     last_orb: None,
     input_value: model.input_value,
   )
 }
 
 fn handle_reset_testing(model: Model) -> Model {
-  Model(..model, mode: TestingMode(OrbTesting))
+  Model(..model, screen: Testing(OrbSelection))
 }
 
 fn handle_exit_testing(_model: Model) -> Model {
@@ -158,17 +158,17 @@ fn handle_exit_testing(_model: Model) -> Model {
 }
 
 fn check_game_status(model: Model) -> Model {
-  case model.mode {
-    TestingMode(TestingGameplay) ->
+  case model.screen {
+    Testing(Gameplay) ->
       case model.health <= 0, model.points >= model.milestone {
-        True, _ -> Model(..model, mode: TestingMode(TestingLost))
-        False, True -> Model(..model, mode: TestingMode(TestingWon))
+        True, _ -> Model(..model, screen: Testing(Failure))
+        False, True -> Model(..model, screen: Testing(Success))
         False, False -> model
       }
-    GameMode(Playing) ->
+    Game(Playing) ->
       case model.health <= 0, model.points >= model.milestone {
-        True, _ -> Model(..model, mode: GameMode(Lost))
-        False, True -> Model(..model, mode: GameMode(Won))
+        True, _ -> Model(..model, screen: Game(Defeat))
+        False, True -> Model(..model, screen: Game(Victory))
         False, False -> model
       }
     _ -> model

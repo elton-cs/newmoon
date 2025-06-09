@@ -4752,41 +4752,41 @@ var BombOrb = class extends CustomType {
     this[0] = $0;
   }
 };
-var MainMenu = class extends CustomType {
+var Main = class extends CustomType {
 };
-var OrbTesting = class extends CustomType {
+var OrbSelection = class extends CustomType {
 };
-var OrbValueSelection = class extends CustomType {
+var ValueConfiguration = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
   }
 };
-var TestingGameplay = class extends CustomType {
+var Gameplay = class extends CustomType {
 };
-var TestingWon = class extends CustomType {
+var Success = class extends CustomType {
 };
-var TestingLost = class extends CustomType {
+var Failure = class extends CustomType {
 };
 var Playing = class extends CustomType {
 };
-var Won = class extends CustomType {
+var Victory = class extends CustomType {
 };
-var Lost = class extends CustomType {
+var Defeat = class extends CustomType {
 };
-var MainMenuMode = class extends CustomType {
+var Menu = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
   }
 };
-var TestingMode = class extends CustomType {
+var Testing = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
   }
 };
-var GameMode = class extends CustomType {
+var Game = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
@@ -4797,14 +4797,14 @@ var DataSample = class extends CustomType {
 var HazardSample = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, mode, last_orb, input_value) {
+  constructor(health, points, level, milestone, bag, screen, last_orb, input_value) {
     super();
     this.health = health;
     this.points = points;
     this.level = level;
     this.milestone = milestone;
     this.bag = bag;
-    this.mode = mode;
+    this.screen = screen;
     this.last_orb = last_orb;
     this.input_value = input_value;
   }
@@ -4871,7 +4871,7 @@ function init(_) {
     1,
     5,
     starter_orbs(),
-    new MainMenuMode(new MainMenu()),
+    new Menu(new Main()),
     new None(),
     ""
   );
@@ -4888,7 +4888,7 @@ function handle_start_game(model) {
     _record.level,
     _record.milestone,
     starter_orbs(),
-    new GameMode(new Playing()),
+    new Game(new Playing()),
     new None(),
     _record.input_value
   );
@@ -4901,7 +4901,7 @@ function handle_go_to_orb_testing(model) {
     _record.level,
     _record.milestone,
     _record.bag,
-    new TestingMode(new OrbTesting()),
+    new Testing(new OrbSelection()),
     _record.last_orb,
     _record.input_value
   );
@@ -4914,7 +4914,7 @@ function handle_select_orb_type(model, orb_type) {
     _record.level,
     _record.milestone,
     _record.bag,
-    new TestingMode(new OrbValueSelection(orb_type)),
+    new Testing(new ValueConfiguration(orb_type)),
     _record.last_orb,
     "1"
   );
@@ -4927,7 +4927,7 @@ function handle_update_input_value(model, value2) {
     _record.level,
     _record.milestone,
     _record.bag,
-    _record.mode,
+    _record.screen,
     _record.last_orb,
     value2
   );
@@ -4951,7 +4951,7 @@ function handle_confirm_orb_value(model, orb_type) {
         _record.level,
         _record.milestone,
         create_test_bag(test_orb),
-        new TestingMode(new TestingGameplay()),
+        new Testing(new Gameplay()),
         new None(),
         _record.input_value
       );
@@ -4970,7 +4970,7 @@ function handle_back_to_orb_testing(model) {
     _record.level,
     _record.milestone,
     _record.bag,
-    new TestingMode(new OrbTesting()),
+    new Testing(new OrbSelection()),
     _record.last_orb,
     _record.input_value
   );
@@ -4983,7 +4983,7 @@ function handle_back_to_main_menu(model) {
     _record.level,
     _record.milestone,
     _record.bag,
-    new MainMenuMode(new MainMenu()),
+    new Menu(new Main()),
     _record.last_orb,
     _record.input_value
   );
@@ -4995,7 +4995,7 @@ function handle_next_level(model) {
     model.level + 1,
     model.milestone + 2,
     starter_orbs(),
-    new GameMode(new Playing()),
+    new Game(new Playing()),
     new None(),
     model.input_value
   );
@@ -5008,7 +5008,7 @@ function handle_reset_testing(model) {
     _record.level,
     _record.milestone,
     _record.bag,
-    new TestingMode(new OrbTesting()),
+    new Testing(new OrbSelection()),
     _record.last_orb,
     _record.input_value
   );
@@ -5017,10 +5017,10 @@ function handle_exit_testing(_) {
   return init(void 0);
 }
 function check_game_status(model) {
-  let $ = model.mode;
-  if ($ instanceof TestingMode) {
+  let $ = model.screen;
+  if ($ instanceof Testing) {
     let $1 = $[0];
-    if ($1 instanceof TestingGameplay) {
+    if ($1 instanceof Gameplay) {
       let $2 = model.health <= 0;
       let $3 = model.points >= model.milestone;
       if ($2) {
@@ -5031,7 +5031,7 @@ function check_game_status(model) {
           _record.level,
           _record.milestone,
           _record.bag,
-          new TestingMode(new TestingLost()),
+          new Testing(new Failure()),
           _record.last_orb,
           _record.input_value
         );
@@ -5043,7 +5043,7 @@ function check_game_status(model) {
           _record.level,
           _record.milestone,
           _record.bag,
-          new TestingMode(new TestingWon()),
+          new Testing(new Success()),
           _record.last_orb,
           _record.input_value
         );
@@ -5053,7 +5053,7 @@ function check_game_status(model) {
     } else {
       return model;
     }
-  } else if ($ instanceof GameMode) {
+  } else if ($ instanceof Game) {
     let $1 = $[0];
     if ($1 instanceof Playing) {
       let $2 = model.health <= 0;
@@ -5066,7 +5066,7 @@ function check_game_status(model) {
           _record.level,
           _record.milestone,
           _record.bag,
-          new GameMode(new Lost()),
+          new Game(new Defeat()),
           _record.last_orb,
           _record.input_value
         );
@@ -5078,7 +5078,7 @@ function check_game_status(model) {
           _record.level,
           _record.milestone,
           _record.bag,
-          new GameMode(new Won()),
+          new Game(new Victory()),
           _record.last_orb,
           _record.input_value
         );
@@ -5093,10 +5093,10 @@ function check_game_status(model) {
   }
 }
 function handle_pull_orb(model) {
-  let $ = model.mode;
-  if ($ instanceof TestingMode) {
+  let $ = model.screen;
+  if ($ instanceof Testing) {
     let $1 = $[0];
-    if ($1 instanceof TestingGameplay) {
+    if ($1 instanceof Gameplay) {
       let $2 = model.bag;
       if ($2 instanceof Empty) {
         return model;
@@ -5113,7 +5113,7 @@ function handle_pull_orb(model) {
             _record2.level,
             _record2.milestone,
             _record2.bag,
-            _record2.mode,
+            _record2.screen,
             _record2.last_orb,
             _record2.input_value
           );
@@ -5126,7 +5126,7 @@ function handle_pull_orb(model) {
             _record2.level,
             _record2.milestone,
             _record2.bag,
-            _record2.mode,
+            _record2.screen,
             _record2.last_orb,
             _record2.input_value
           );
@@ -5140,7 +5140,7 @@ function handle_pull_orb(model) {
           _record.level,
           _record.milestone,
           rest,
-          _record.mode,
+          _record.screen,
           new Some(first_orb),
           _record.input_value
         );
@@ -5150,7 +5150,7 @@ function handle_pull_orb(model) {
     } else {
       return model;
     }
-  } else if ($ instanceof GameMode) {
+  } else if ($ instanceof Game) {
     let $1 = $[0];
     if ($1 instanceof Playing) {
       let $2 = model.bag;
@@ -5169,7 +5169,7 @@ function handle_pull_orb(model) {
             _record2.level,
             _record2.milestone,
             _record2.bag,
-            _record2.mode,
+            _record2.screen,
             _record2.last_orb,
             _record2.input_value
           );
@@ -5182,7 +5182,7 @@ function handle_pull_orb(model) {
             _record2.level,
             _record2.milestone,
             _record2.bag,
-            _record2.mode,
+            _record2.screen,
             _record2.last_orb,
             _record2.input_value
           );
@@ -5196,7 +5196,7 @@ function handle_pull_orb(model) {
           _record.level,
           _record.milestone,
           rest,
-          _record.mode,
+          _record.screen,
           new Some(first_orb),
           _record.input_value
         );
@@ -5748,18 +5748,18 @@ function render_testing_lost_view() {
   );
 }
 function view(model) {
-  let $ = model.mode;
-  if ($ instanceof MainMenuMode) {
+  let $ = model.screen;
+  if ($ instanceof Menu) {
     return app_container(
       game_card(toList([game_header(), render_main_menu_view()]))
     );
-  } else if ($ instanceof TestingMode) {
+  } else if ($ instanceof Testing) {
     let $1 = $[0];
-    if ($1 instanceof OrbTesting) {
+    if ($1 instanceof OrbSelection) {
       return app_container(
         game_card(toList([game_header(), render_orb_testing_view()]))
       );
-    } else if ($1 instanceof OrbValueSelection) {
+    } else if ($1 instanceof ValueConfiguration) {
       let orb_type = $1[0];
       return app_container(
         game_card(
@@ -5769,7 +5769,7 @@ function view(model) {
           ])
         )
       );
-    } else if ($1 instanceof TestingGameplay) {
+    } else if ($1 instanceof Gameplay) {
       return app_container(
         game_card(
           toList([
@@ -5785,7 +5785,7 @@ function view(model) {
           ])
         )
       );
-    } else if ($1 instanceof TestingWon) {
+    } else if ($1 instanceof Success) {
       return app_container(
         game_card(
           toList([
@@ -5833,7 +5833,7 @@ function view(model) {
           ])
         )
       );
-    } else if ($1 instanceof Won) {
+    } else if ($1 instanceof Victory) {
       return app_container(
         game_card(
           toList([
