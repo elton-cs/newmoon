@@ -4,32 +4,32 @@ import gleam/list
 import lustre/element.{type Element}
 import types.{
   type Model, type Msg, type OrbType, BackToMainMenu, BackToOrbTesting,
-  ConfirmOrbValue, DataSample, ExitTesting, GoToOrbTesting, HazardSample, Lost,
-  MainMenu, NextLevel, OrbTesting, OrbValueSelection, Playing, ResetTesting,
-  RestartGame, SelectOrbType, StartGame, TestingLost, TestingMode, TestingWon,
-  UpdateInputValue, Won,
+  ConfirmOrbValue, DataSample, ExitTesting, GameMode, GoToOrbTesting,
+  HazardSample, Lost, MainMenu, MainMenuMode, NextLevel, OrbTesting,
+  OrbValueSelection, Playing, ResetTesting, RestartGame, SelectOrbType,
+  StartGame, TestingGameplay, TestingLost, TestingMode, TestingWon, Won,
 }
 import ui
 
 pub fn view(model: Model) -> Element(Msg) {
   // Clear pattern matching on model fields to determine view
-  case model.status {
-    MainMenu ->
+  case model.mode {
+    MainMenuMode(MainMenu) ->
       ui.app_container(
         ui.game_card([ui.game_header(), render_main_menu_view()]),
       )
-    OrbTesting ->
+    TestingMode(OrbTesting) ->
       ui.app_container(
         ui.game_card([ui.game_header(), render_orb_testing_view()]),
       )
-    OrbValueSelection(orb_type) ->
+    TestingMode(OrbValueSelection(orb_type)) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
           render_orb_value_selection_view(orb_type, model.input_value),
         ]),
       )
-    TestingMode ->
+    TestingMode(TestingGameplay) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
@@ -43,7 +43,7 @@ pub fn view(model: Model) -> Element(Msg) {
           render_testing_mode_view(model.last_orb, model.bag),
         ]),
       )
-    Playing ->
+    GameMode(Playing) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
@@ -56,7 +56,7 @@ pub fn view(model: Model) -> Element(Msg) {
           render_playing_view(model.last_orb, model.bag),
         ]),
       )
-    Won ->
+    GameMode(Won) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
@@ -69,7 +69,7 @@ pub fn view(model: Model) -> Element(Msg) {
           render_won_view(model.milestone),
         ]),
       )
-    Lost ->
+    GameMode(Lost) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
@@ -82,7 +82,7 @@ pub fn view(model: Model) -> Element(Msg) {
           render_lost_view(),
         ]),
       )
-    TestingWon ->
+    TestingMode(TestingWon) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
@@ -95,7 +95,7 @@ pub fn view(model: Model) -> Element(Msg) {
           render_testing_won_view(model.milestone),
         ]),
       )
-    TestingLost ->
+    TestingMode(TestingLost) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
