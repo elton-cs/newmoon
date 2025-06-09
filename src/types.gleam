@@ -4,6 +4,9 @@ pub type Orb {
   PointOrb(Int)
   BombOrb(Int)
   HealthOrb(Int)
+  AllCollectorOrb
+  PointCollectorOrb
+  BombSurvivorOrb
 }
 
 pub type MenuScreen {
@@ -34,6 +37,9 @@ pub type OrbType {
   DataSample
   HazardSample
   HealthSample
+  AllCollectorSample
+  PointCollectorSample
+  BombSurvivorSample
 }
 
 pub type Model {
@@ -45,7 +51,9 @@ pub type Model {
     bag: List(Orb),
     screen: Screen,
     last_orb: Option(Orb),
+    last_orb_message: Option(String),
     input_value: String,
+    pulled_orbs: List(Orb),
   )
 }
 

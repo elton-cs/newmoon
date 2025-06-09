@@ -4768,6 +4768,12 @@ var HealthOrb = class extends CustomType {
     this[0] = $0;
   }
 };
+var AllCollectorOrb = class extends CustomType {
+};
+var PointCollectorOrb = class extends CustomType {
+};
+var BombSurvivorOrb = class extends CustomType {
+};
 var Main = class extends CustomType {
 };
 var OrbSelection = class extends CustomType {
@@ -4814,8 +4820,14 @@ var HazardSample = class extends CustomType {
 };
 var HealthSample = class extends CustomType {
 };
+var AllCollectorSample = class extends CustomType {
+};
+var PointCollectorSample = class extends CustomType {
+};
+var BombSurvivorSample = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, screen, last_orb, input_value) {
+  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs) {
     super();
     this.health = health;
     this.points = points;
@@ -4824,7 +4836,9 @@ var Model = class extends CustomType {
     this.bag = bag;
     this.screen = screen;
     this.last_orb = last_orb;
+    this.last_orb_message = last_orb_message;
     this.input_value = input_value;
+    this.pulled_orbs = pulled_orbs;
   }
 };
 var StartGame = class extends CustomType {
@@ -4864,9 +4878,86 @@ var ResetTesting = class extends CustomType {
 var ExitTesting = class extends CustomType {
 };
 
+// build/dev/javascript/newmoon/display.mjs
+function orb_result_message(orb) {
+  if (orb instanceof PointOrb) {
+    let value2 = orb[0];
+    return "\u25CF DATA ACQUIRED +" + to_string(value2);
+  } else if (orb instanceof BombOrb) {
+    let value2 = orb[0];
+    return "\u25CB SYSTEM DAMAGE -" + to_string(value2);
+  } else if (orb instanceof HealthOrb) {
+    let value2 = orb[0];
+    return "\u25C7 SYSTEMS RESTORED +" + to_string(value2);
+  } else if (orb instanceof AllCollectorOrb) {
+    return "\u25C8 TOTAL COLLECTION +?";
+  } else if (orb instanceof PointCollectorOrb) {
+    return "\u25C9 DATA COLLECTION +?";
+  } else {
+    return "\u25C6 SURVIVAL BONUS +?";
+  }
+}
+function collector_result_message(orb, bonus_points) {
+  if (orb instanceof AllCollectorOrb) {
+    return "\u25C8 TOTAL COLLECTION +" + to_string(bonus_points);
+  } else if (orb instanceof PointCollectorOrb) {
+    return "\u25C9 DATA COLLECTION +" + to_string(bonus_points);
+  } else if (orb instanceof BombSurvivorOrb) {
+    return "\u25C6 SURVIVAL BONUS +" + to_string(bonus_points);
+  } else {
+    return orb_result_message(orb);
+  }
+}
+function data_target_message(milestone) {
+  return "Data target achieved: " + to_string(milestone) + " units";
+}
+var container_label = "SAMPLE CONTAINER";
+var extract_button_text = "EXTRACT SAMPLE";
+var specimens_suffix = " specimens";
+var start_game_button_text = "START MISSION";
+var orb_testing_button_text = "SAMPLE TESTING";
+var main_menu_subtitle = "Prepare for deep space exploration";
+var orb_testing_title = "SAMPLE TESTING PROTOCOL";
+var orb_testing_subtitle = "Select a sample type for controlled testing";
+var back_to_menu_text = "BACK TO MENU";
+var testing_mode_indicator = "TESTING MODE ACTIVE";
+var reset_testing_text = "RESET TEST";
+var exit_testing_text = "EXIT TO MENU";
+var sector_complete_title = "SECTOR COMPLETE";
+var mission_failed_title = "MISSION FAILED";
+var advance_button_text = "ADVANCE TO NEXT SECTOR";
+var play_again_text = "\u{1F504} Play Again";
+var systems_label = "SYSTEMS";
+var data_label = "DATA";
+var target_label = "TARGET";
+var sector_label = "SECTOR";
+var mission_failed_message = "All systems compromised. Initiating reset protocol.";
+
 // build/dev/javascript/newmoon/update.mjs
 function starter_orbs() {
-  return toList([new PointOrb(1), new BombOrb(2), new HealthOrb(3)]);
+  let point_orbs = toList([
+    new PointOrb(1),
+    new PointOrb(1),
+    new PointOrb(2),
+    new PointOrb(2),
+    new PointOrb(3)
+  ]);
+  let bomb_orbs = toList([
+    new BombOrb(1),
+    new BombOrb(1),
+    new BombOrb(2),
+    new BombOrb(2),
+    new BombOrb(3)
+  ]);
+  let health_orbs = toList([new HealthOrb(1), new HealthOrb(2)]);
+  let collector_orbs = toList([
+    new AllCollectorOrb(),
+    new PointCollectorOrb(),
+    new BombSurvivorOrb()
+  ]);
+  let _pipe = append(point_orbs, bomb_orbs);
+  let _pipe$1 = append(_pipe, health_orbs);
+  return append(_pipe$1, collector_orbs);
 }
 function init(_) {
   return new Model(
@@ -4877,12 +4968,40 @@ function init(_) {
     starter_orbs(),
     new Menu(new Main()),
     new None(),
-    ""
+    new None(),
+    "",
+    toList([])
   );
 }
 function create_test_bag(test_orb) {
   let _pipe = toList([test_orb]);
   return append(_pipe, starter_orbs());
+}
+function count_point_orbs(orbs) {
+  return fold(
+    orbs,
+    0,
+    (count, orb) => {
+      if (orb instanceof PointOrb) {
+        return count + 1;
+      } else {
+        return count;
+      }
+    }
+  );
+}
+function count_pulled_bomb_orbs(pulled_orbs) {
+  return fold(
+    pulled_orbs,
+    0,
+    (count, orb) => {
+      if (orb instanceof BombOrb) {
+        return count + 1;
+      } else {
+        return count;
+      }
+    }
+  );
 }
 function handle_start_game(model) {
   let _record = model;
@@ -4894,7 +5013,9 @@ function handle_start_game(model) {
     starter_orbs(),
     new Game(new Playing()),
     new None(),
-    _record.input_value
+    new None(),
+    _record.input_value,
+    toList([])
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -4907,7 +5028,9 @@ function handle_go_to_orb_testing(model) {
     _record.bag,
     new Testing(new OrbSelection()),
     _record.last_orb,
-    _record.input_value
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs
   );
 }
 function handle_select_orb_type(model, orb_type) {
@@ -4920,7 +5043,9 @@ function handle_select_orb_type(model, orb_type) {
     _record.bag,
     new Testing(new ValueConfiguration(orb_type)),
     _record.last_orb,
-    "1"
+    _record.last_orb_message,
+    "1",
+    _record.pulled_orbs
   );
 }
 function handle_update_input_value(model, value2) {
@@ -4933,7 +5058,9 @@ function handle_update_input_value(model, value2) {
     _record.bag,
     _record.screen,
     _record.last_orb,
-    value2
+    _record.last_orb_message,
+    value2,
+    _record.pulled_orbs
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
@@ -4946,8 +5073,14 @@ function handle_confirm_orb_value(model, orb_type) {
         _block = new PointOrb(value2);
       } else if (orb_type instanceof HazardSample) {
         _block = new BombOrb(value2);
-      } else {
+      } else if (orb_type instanceof HealthSample) {
         _block = new HealthOrb(value2);
+      } else if (orb_type instanceof AllCollectorSample) {
+        _block = new AllCollectorOrb();
+      } else if (orb_type instanceof PointCollectorSample) {
+        _block = new PointCollectorOrb();
+      } else {
+        _block = new BombSurvivorOrb();
       }
       let test_orb = _block;
       let _record = model;
@@ -4959,7 +5092,9 @@ function handle_confirm_orb_value(model, orb_type) {
         create_test_bag(test_orb),
         new Testing(new Gameplay()),
         new None(),
-        _record.input_value
+        new None(),
+        _record.input_value,
+        toList([])
       );
     } else {
       return model;
@@ -4978,7 +5113,9 @@ function handle_back_to_orb_testing(model) {
     _record.bag,
     new Testing(new OrbSelection()),
     _record.last_orb,
-    _record.input_value
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs
   );
 }
 function handle_back_to_main_menu(model) {
@@ -4991,7 +5128,9 @@ function handle_back_to_main_menu(model) {
     _record.bag,
     new Menu(new Main()),
     _record.last_orb,
-    _record.input_value
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs
   );
 }
 function handle_next_level(model) {
@@ -5003,7 +5142,9 @@ function handle_next_level(model) {
     starter_orbs(),
     new Game(new Playing()),
     new None(),
-    model.input_value
+    new None(),
+    model.input_value,
+    toList([])
   );
 }
 function handle_reset_testing(model) {
@@ -5016,7 +5157,9 @@ function handle_reset_testing(model) {
     _record.bag,
     new Testing(new OrbSelection()),
     _record.last_orb,
-    _record.input_value
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs
   );
 }
 function handle_exit_testing(_) {
@@ -5040,7 +5183,9 @@ function check_game_status(model) {
           _record.bag,
           new Testing(new Failure()),
           _record.last_orb,
-          _record.input_value
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs
         );
       } else if ($3) {
         let _record = model;
@@ -5052,7 +5197,9 @@ function check_game_status(model) {
           _record.bag,
           new Testing(new Success()),
           _record.last_orb,
-          _record.input_value
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs
         );
       } else if ($4) {
         let _record = model;
@@ -5064,7 +5211,9 @@ function check_game_status(model) {
           _record.bag,
           new Testing(new Failure()),
           _record.last_orb,
-          _record.input_value
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs
         );
       } else {
         return model;
@@ -5088,7 +5237,9 @@ function check_game_status(model) {
           _record.bag,
           new Game(new Defeat()),
           _record.last_orb,
-          _record.input_value
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs
         );
       } else if ($3) {
         let _record = model;
@@ -5100,7 +5251,9 @@ function check_game_status(model) {
           _record.bag,
           new Game(new Victory()),
           _record.last_orb,
-          _record.input_value
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs
         );
       } else if ($4) {
         let _record = model;
@@ -5112,7 +5265,9 @@ function check_game_status(model) {
           _record.bag,
           new Game(new Defeat()),
           _record.last_orb,
-          _record.input_value
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs
         );
       } else {
         return model;
@@ -5138,8 +5293,9 @@ function handle_pull_orb(model) {
         let _block;
         if (first_orb instanceof PointOrb) {
           let value2 = first_orb[0];
+          let _block$12;
           let _record2 = model;
-          _block = new Model(
+          _block$12 = new Model(
             _record2.health,
             model.points + value2,
             _record2.level,
@@ -5147,12 +5303,18 @@ function handle_pull_orb(model) {
             _record2.bag,
             _record2.screen,
             _record2.last_orb,
-            _record2.input_value
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
           );
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message];
         } else if (first_orb instanceof BombOrb) {
           let value2 = first_orb[0];
+          let _block$12;
           let _record2 = model;
-          _block = new Model(
+          _block$12 = new Model(
             model.health - value2,
             _record2.points,
             _record2.level,
@@ -5160,13 +5322,19 @@ function handle_pull_orb(model) {
             _record2.bag,
             _record2.screen,
             _record2.last_orb,
-            _record2.input_value
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
           );
-        } else {
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message];
+        } else if (first_orb instanceof HealthOrb) {
           let value2 = first_orb[0];
           let new_health = min(model.health + value2, 5);
+          let _block$12;
           let _record2 = model;
-          _block = new Model(
+          _block$12 = new Model(
             new_health,
             _record2.points,
             _record2.level,
@@ -5174,10 +5342,83 @@ function handle_pull_orb(model) {
             _record2.bag,
             _record2.screen,
             _record2.last_orb,
-            _record2.input_value
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
           );
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message];
+        } else if (first_orb instanceof AllCollectorOrb) {
+          let bonus_points = length(rest);
+          let _block$12;
+          let _record2 = model;
+          _block$12 = new Model(
+            _record2.health,
+            model.points + bonus_points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
+          );
+          let new_model2 = _block$12;
+          let message = collector_result_message(
+            first_orb,
+            bonus_points
+          );
+          _block = [new_model2, message];
+        } else if (first_orb instanceof PointCollectorOrb) {
+          let bonus_points = count_point_orbs(rest);
+          let _block$12;
+          let _record2 = model;
+          _block$12 = new Model(
+            _record2.health,
+            model.points + bonus_points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
+          );
+          let new_model2 = _block$12;
+          let message = collector_result_message(
+            first_orb,
+            bonus_points
+          );
+          _block = [new_model2, message];
+        } else {
+          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs);
+          let _block$12;
+          let _record2 = model;
+          _block$12 = new Model(
+            _record2.health,
+            model.points + bonus_points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
+          );
+          let new_model2 = _block$12;
+          let message = collector_result_message(
+            first_orb,
+            bonus_points
+          );
+          _block = [new_model2, message];
         }
-        let new_model = _block;
+        let $3 = _block;
+        let new_model = $3[0];
+        let orb_message = $3[1];
         let _block$1;
         let _record = new_model;
         _block$1 = new Model(
@@ -5188,7 +5429,9 @@ function handle_pull_orb(model) {
           rest,
           _record.screen,
           new Some(first_orb),
-          _record.input_value
+          new Some(orb_message),
+          _record.input_value,
+          prepend(first_orb, model.pulled_orbs)
         );
         let updated_model = _block$1;
         return check_game_status(updated_model);
@@ -5208,8 +5451,9 @@ function handle_pull_orb(model) {
         let _block;
         if (first_orb instanceof PointOrb) {
           let value2 = first_orb[0];
+          let _block$12;
           let _record2 = model;
-          _block = new Model(
+          _block$12 = new Model(
             _record2.health,
             model.points + value2,
             _record2.level,
@@ -5217,12 +5461,18 @@ function handle_pull_orb(model) {
             _record2.bag,
             _record2.screen,
             _record2.last_orb,
-            _record2.input_value
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
           );
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message];
         } else if (first_orb instanceof BombOrb) {
           let value2 = first_orb[0];
+          let _block$12;
           let _record2 = model;
-          _block = new Model(
+          _block$12 = new Model(
             model.health - value2,
             _record2.points,
             _record2.level,
@@ -5230,13 +5480,19 @@ function handle_pull_orb(model) {
             _record2.bag,
             _record2.screen,
             _record2.last_orb,
-            _record2.input_value
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
           );
-        } else {
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message];
+        } else if (first_orb instanceof HealthOrb) {
           let value2 = first_orb[0];
           let new_health = min(model.health + value2, 5);
+          let _block$12;
           let _record2 = model;
-          _block = new Model(
+          _block$12 = new Model(
             new_health,
             _record2.points,
             _record2.level,
@@ -5244,10 +5500,83 @@ function handle_pull_orb(model) {
             _record2.bag,
             _record2.screen,
             _record2.last_orb,
-            _record2.input_value
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
           );
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message];
+        } else if (first_orb instanceof AllCollectorOrb) {
+          let bonus_points = length(rest);
+          let _block$12;
+          let _record2 = model;
+          _block$12 = new Model(
+            _record2.health,
+            model.points + bonus_points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
+          );
+          let new_model2 = _block$12;
+          let message = collector_result_message(
+            first_orb,
+            bonus_points
+          );
+          _block = [new_model2, message];
+        } else if (first_orb instanceof PointCollectorOrb) {
+          let bonus_points = count_point_orbs(rest);
+          let _block$12;
+          let _record2 = model;
+          _block$12 = new Model(
+            _record2.health,
+            model.points + bonus_points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
+          );
+          let new_model2 = _block$12;
+          let message = collector_result_message(
+            first_orb,
+            bonus_points
+          );
+          _block = [new_model2, message];
+        } else {
+          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs);
+          let _block$12;
+          let _record2 = model;
+          _block$12 = new Model(
+            _record2.health,
+            model.points + bonus_points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs
+          );
+          let new_model2 = _block$12;
+          let message = collector_result_message(
+            first_orb,
+            bonus_points
+          );
+          _block = [new_model2, message];
         }
-        let new_model = _block;
+        let $3 = _block;
+        let new_model = $3[0];
+        let orb_message = $3[1];
         let _block$1;
         let _record = new_model;
         _block$1 = new Model(
@@ -5258,7 +5587,9 @@ function handle_pull_orb(model) {
           rest,
           _record.screen,
           new Some(first_orb),
-          _record.input_value
+          new Some(orb_message),
+          _record.input_value,
+          prepend(first_orb, model.pulled_orbs)
         );
         let updated_model = _block$1;
         return check_game_status(updated_model);
@@ -5300,44 +5631,6 @@ function update2(model, msg) {
     return handle_exit_testing(model);
   }
 }
-
-// build/dev/javascript/newmoon/display.mjs
-function orb_result_message(orb) {
-  if (orb instanceof PointOrb) {
-    let value2 = orb[0];
-    return "\u25CF DATA ACQUIRED +" + to_string(value2);
-  } else if (orb instanceof BombOrb) {
-    let value2 = orb[0];
-    return "\u25CB SYSTEM DAMAGE -" + to_string(value2);
-  } else {
-    let value2 = orb[0];
-    return "\u25C7 SYSTEMS RESTORED +" + to_string(value2);
-  }
-}
-function data_target_message(milestone) {
-  return "Data target achieved: " + to_string(milestone) + " units";
-}
-var container_label = "SAMPLE CONTAINER";
-var extract_button_text = "EXTRACT SAMPLE";
-var specimens_suffix = " specimens";
-var start_game_button_text = "START MISSION";
-var orb_testing_button_text = "SAMPLE TESTING";
-var main_menu_subtitle = "Prepare for deep space exploration";
-var orb_testing_title = "SAMPLE TESTING PROTOCOL";
-var orb_testing_subtitle = "Select a sample type for controlled testing";
-var back_to_menu_text = "BACK TO MENU";
-var testing_mode_indicator = "TESTING MODE ACTIVE";
-var reset_testing_text = "RESET TEST";
-var exit_testing_text = "EXIT TO MENU";
-var sector_complete_title = "SECTOR COMPLETE";
-var mission_failed_title = "MISSION FAILED";
-var advance_button_text = "ADVANCE TO NEXT SECTOR";
-var play_again_text = "\u{1F504} Play Again";
-var systems_label = "SYSTEMS";
-var data_label = "DATA";
-var target_label = "TARGET";
-var sector_label = "SECTOR";
-var mission_failed_message = "All systems compromised. Initiating reset protocol.";
 
 // build/dev/javascript/lustre/lustre/event.mjs
 function is_immediate_event(name) {
@@ -5470,20 +5763,88 @@ function info_panel(message, text_class, bg_class) {
     ])
   );
 }
-function orb_result_display(orb) {
+function orb_result_display(orb, message) {
   if (orb instanceof Some) {
-    let orb_value = orb[0];
-    let message = orb_result_message(orb_value);
-    if (orb_value instanceof PointOrb) {
-      return info_panel(message, "text-gray-700", "bg-gray-50 border-gray-200");
-    } else if (orb_value instanceof BombOrb) {
-      return info_panel(message, "text-gray-800", "bg-gray-100 border-gray-300");
+    if (message instanceof Some) {
+      let orb_value = orb[0];
+      let orb_message = message[0];
+      if (orb_value instanceof PointOrb) {
+        return info_panel(
+          orb_message,
+          "text-gray-700",
+          "bg-gray-50 border-gray-200"
+        );
+      } else if (orb_value instanceof BombOrb) {
+        return info_panel(
+          orb_message,
+          "text-gray-800",
+          "bg-gray-100 border-gray-300"
+        );
+      } else if (orb_value instanceof HealthOrb) {
+        return info_panel(
+          orb_message,
+          "text-green-700",
+          "bg-green-50 border-green-200"
+        );
+      } else if (orb_value instanceof AllCollectorOrb) {
+        return info_panel(
+          orb_message,
+          "text-purple-700",
+          "bg-purple-50 border-purple-200"
+        );
+      } else if (orb_value instanceof PointCollectorOrb) {
+        return info_panel(
+          orb_message,
+          "text-blue-700",
+          "bg-blue-50 border-blue-200"
+        );
+      } else {
+        return info_panel(
+          orb_message,
+          "text-orange-700",
+          "bg-orange-50 border-orange-200"
+        );
+      }
     } else {
-      return info_panel(
-        message,
-        "text-green-700",
-        "bg-green-50 border-green-200"
-      );
+      let orb_value = orb[0];
+      let fallback_message = orb_result_message(orb_value);
+      if (orb_value instanceof PointOrb) {
+        return info_panel(
+          fallback_message,
+          "text-gray-700",
+          "bg-gray-50 border-gray-200"
+        );
+      } else if (orb_value instanceof BombOrb) {
+        return info_panel(
+          fallback_message,
+          "text-gray-800",
+          "bg-gray-100 border-gray-300"
+        );
+      } else if (orb_value instanceof HealthOrb) {
+        return info_panel(
+          fallback_message,
+          "text-green-700",
+          "bg-green-50 border-green-200"
+        );
+      } else if (orb_value instanceof AllCollectorOrb) {
+        return info_panel(
+          fallback_message,
+          "text-purple-700",
+          "bg-purple-50 border-purple-200"
+        );
+      } else if (orb_value instanceof PointCollectorOrb) {
+        return info_panel(
+          fallback_message,
+          "text-blue-700",
+          "bg-blue-50 border-blue-200"
+        );
+      } else {
+        return info_panel(
+          fallback_message,
+          "text-orange-700",
+          "bg-orange-50 border-orange-200"
+        );
+      }
     }
   } else {
     return div(toList([class$("h-8")]), toList([]));
@@ -5682,12 +6043,12 @@ function render_game_stats(health, points, milestone, level) {
     ])
   );
 }
-function render_playing_view(last_orb, bag) {
+function render_playing_view(last_orb, last_orb_message, bag) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
   return fragment2(
     toList([
-      orb_result_display(last_orb),
+      orb_result_display(last_orb, last_orb_message),
       container_display(orbs_left),
       extract_button(is_disabled)
     ])
@@ -5753,6 +6114,18 @@ function render_orb_testing_view() {
         "Health Sample",
         new SelectOrbType(new HealthSample())
       ),
+      orb_selection_button(
+        "All Collector Sample",
+        new SelectOrbType(new AllCollectorSample())
+      ),
+      orb_selection_button(
+        "Point Collector Sample",
+        new SelectOrbType(new PointCollectorSample())
+      ),
+      orb_selection_button(
+        "Bomb Survivor Sample",
+        new SelectOrbType(new BombSurvivorSample())
+      ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])
   );
@@ -5763,8 +6136,14 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block = "Data Sample";
   } else if (orb_type instanceof HazardSample) {
     _block = "Hazard Sample";
-  } else {
+  } else if (orb_type instanceof HealthSample) {
     _block = "Health Sample";
+  } else if (orb_type instanceof AllCollectorSample) {
+    _block = "All Collector Sample";
+  } else if (orb_type instanceof PointCollectorSample) {
+    _block = "Point Collector Sample";
+  } else {
+    _block = "Bomb Survivor Sample";
   }
   let orb_name = _block;
   let _block$1;
@@ -5772,29 +6151,99 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block$1 = "Enter the data points this sample will provide";
   } else if (orb_type instanceof HazardSample) {
     _block$1 = "Enter the system damage this sample will cause";
-  } else {
+  } else if (orb_type instanceof HealthSample) {
     _block$1 = "Enter the health points this sample will restore";
+  } else if (orb_type instanceof AllCollectorSample) {
+    _block$1 = "Awards points equal to remaining samples in container";
+  } else if (orb_type instanceof PointCollectorSample) {
+    _block$1 = "Awards points equal to number of data samples left in container";
+  } else {
+    _block$1 = "Awards points equal to number of hazard samples encountered so far";
   }
   let description = _block$1;
-  return fragment2(
-    toList([
-      status_panel(
-        orb_name + " Configuration",
-        description,
-        "bg-blue-50 border-blue-200"
-      ),
-      number_input(input_value),
-      primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
-      secondary_button("Back to Selection", new BackToOrbTesting())
-    ])
-  );
+  if (orb_type instanceof DataSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-blue-50 border-blue-200"
+        ),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof HazardSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-blue-50 border-blue-200"
+        ),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof HealthSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-blue-50 border-blue-200"
+        ),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof AllCollectorSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-purple-50 border-purple-200"
+        ),
+        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof PointCollectorSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-purple-50 border-purple-200"
+        ),
+        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-purple-50 border-purple-200"
+        ),
+        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  }
 }
-function render_testing_mode_view(last_orb, bag) {
+function render_testing_mode_view(last_orb, last_orb_message, bag) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
   return fragment2(
     toList([
-      orb_result_display(last_orb),
+      orb_result_display(last_orb, last_orb_message),
       container_display(orbs_left),
       extract_button(is_disabled),
       secondary_button(reset_testing_text, new ResetTesting()),
@@ -5858,7 +6307,11 @@ function view(model) {
               model.milestone,
               model.level
             ),
-            render_testing_mode_view(model.last_orb, model.bag)
+            render_testing_mode_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag
+            )
           ])
         )
       );
@@ -5906,7 +6359,11 @@ function view(model) {
               model.milestone,
               model.level
             ),
-            render_playing_view(model.last_orb, model.bag)
+            render_playing_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag
+            )
           ])
         )
       );

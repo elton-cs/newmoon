@@ -3,10 +3,11 @@ import gleam/int
 import gleam/list
 import lustre/element.{type Element}
 import types.{
-  type Model, type Msg, type OrbType, BackToMainMenu, BackToOrbTesting,
-  ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game, Gameplay,
-  GoToOrbTesting, HazardSample, HealthSample, Main, Menu, NextLevel,
-  OrbSelection, Playing, ResetTesting, RestartGame, SelectOrbType, StartGame,
+  type Model, type Msg, type OrbType, AllCollectorSample, BackToMainMenu,
+  BackToOrbTesting, BombSurvivorSample, ConfirmOrbValue, DataSample, Defeat,
+  ExitTesting, Failure, Game, Gameplay, GoToOrbTesting, HazardSample,
+  HealthSample, Main, Menu, NextLevel, OrbSelection, Playing,
+  PointCollectorSample, ResetTesting, RestartGame, SelectOrbType, StartGame,
   Success, Testing, ValueConfiguration, Victory,
 }
 import ui
@@ -40,7 +41,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_testing_mode_view(model.last_orb, model.bag),
+          render_testing_mode_view(model.last_orb, model.last_orb_message, model.bag),
         ]),
       )
     Game(Playing) ->
@@ -53,7 +54,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_playing_view(model.last_orb, model.bag),
+          render_playing_view(model.last_orb, model.last_orb_message, model.bag),
         ]),
       )
     Game(Victory) ->
@@ -147,12 +148,12 @@ fn render_game_stats(
 }
 
 // Playing View - takes specific fields needed
-fn render_playing_view(last_orb, bag) -> Element(Msg) {
+fn render_playing_view(last_orb, last_orb_message, bag) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
 
   element.fragment([
-    ui.orb_result_display(last_orb),
+    ui.orb_result_display(last_orb, last_orb_message),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
   ])
@@ -207,6 +208,9 @@ fn render_orb_testing_view() -> Element(Msg) {
     ui.orb_selection_button("Data Sample", SelectOrbType(DataSample)),
     ui.orb_selection_button("Hazard Sample", SelectOrbType(HazardSample)),
     ui.orb_selection_button("Health Sample", SelectOrbType(HealthSample)),
+    ui.orb_selection_button("All Collector Sample", SelectOrbType(AllCollectorSample)),
+    ui.orb_selection_button("Point Collector Sample", SelectOrbType(PointCollectorSample)),
+    ui.orb_selection_button("Bomb Survivor Sample", SelectOrbType(BombSurvivorSample)),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }
@@ -220,32 +224,51 @@ fn render_orb_value_selection_view(
     DataSample -> "Data Sample"
     HazardSample -> "Hazard Sample"
     HealthSample -> "Health Sample"
+    AllCollectorSample -> "All Collector Sample"
+    PointCollectorSample -> "Point Collector Sample"
+    BombSurvivorSample -> "Bomb Survivor Sample"
   }
   let description = case orb_type {
     DataSample -> "Enter the data points this sample will provide"
     HazardSample -> "Enter the system damage this sample will cause"
     HealthSample -> "Enter the health points this sample will restore"
+    AllCollectorSample -> "Awards points equal to remaining samples in container"
+    PointCollectorSample -> "Awards points equal to number of data samples left in container"
+    BombSurvivorSample -> "Awards points equal to number of hazard samples encountered so far"
   }
 
-  element.fragment([
-    ui.status_panel(
-      orb_name <> " Configuration",
-      description,
-      "bg-blue-50 border-blue-200",
-    ),
-    ui.number_input(input_value),
-    ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
-    ui.secondary_button("Back to Selection", BackToOrbTesting),
-  ])
+  case orb_type {
+    DataSample | HazardSample | HealthSample -> 
+      element.fragment([
+        ui.status_panel(
+          orb_name <> " Configuration",
+          description,
+          "bg-blue-50 border-blue-200",
+        ),
+        ui.number_input(input_value),
+        ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
+        ui.secondary_button("Back to Selection", BackToOrbTesting),
+      ])
+    AllCollectorSample | PointCollectorSample | BombSurvivorSample ->
+      element.fragment([
+        ui.status_panel(
+          orb_name <> " Configuration",
+          description,
+          "bg-purple-50 border-purple-200",
+        ),
+        ui.primary_button("Start Test", ConfirmOrbValue(orb_type)),
+        ui.secondary_button("Back to Selection", BackToOrbTesting),
+      ])
+  }
 }
 
 // Testing Mode View - includes reset and exit buttons
-fn render_testing_mode_view(last_orb, bag) -> Element(Msg) {
+fn render_testing_mode_view(last_orb, last_orb_message, bag) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
 
   element.fragment([
-    ui.orb_result_display(last_orb),
+    ui.orb_result_display(last_orb, last_orb_message),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
     ui.secondary_button(display.reset_testing_text, ResetTesting),
