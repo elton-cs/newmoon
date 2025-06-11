@@ -1,4 +1,4 @@
-import types.{type Orb, AllCollectorOrb, BombOrb, BombSurvivorOrb, HealthOrb, PointCollectorOrb, PointOrb}
+import types.{type Orb, AllCollectorOrb, BombOrb, BombSurvivorOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb}
 
 // Import int for string conversion
 import gleam/int
@@ -16,6 +16,7 @@ pub fn orb_display_name(orb: Orb) -> String {
     AllCollectorOrb -> "All Collector Sample"
     PointCollectorOrb -> "Point Collector Sample"
     BombSurvivorOrb -> "Bomb Survivor Sample"
+    MultiplierOrb -> "Multiplier Sample"
   }
 }
 
@@ -28,6 +29,7 @@ pub fn orb_result_message(orb: Orb) -> String {
     AllCollectorOrb -> "◈ TOTAL COLLECTION +?"
     PointCollectorOrb -> "◉ DATA COLLECTION +?"
     BombSurvivorOrb -> "◆ SURVIVAL BONUS +?"
+    MultiplierOrb -> "◈ MULTIPLIER ACTIVATED ×2"
   }
 }
 

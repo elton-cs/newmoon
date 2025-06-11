@@ -7,7 +7,7 @@ import types.{
   AllCollectorSample, BackToMainMenu, BackToOrbTesting, BombOrb, BombSurvivorOrb,
   BombSurvivorSample, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure,
   Game, Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main,
-  Menu, Model, NextLevel, OrbSelection, Playing, PointCollectorOrb,
+  Menu, Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorOrb,
   PointCollectorSample, PointOrb, PullOrb, ResetTesting, RestartGame,
   SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
   ValueConfiguration, Victory,
@@ -25,6 +25,7 @@ pub fn init(_) -> Model {
     last_orb_message: None,
     input_value: "",
     pulled_orbs: [],
+    point_multiplier: 1,
   )
 }
 
@@ -39,7 +40,7 @@ fn starter_orbs() -> List(Orb) {
   ]
   let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
   let health_orbs = [HealthOrb(1), HealthOrb(2)]
-  let collector_orbs = [AllCollectorOrb, PointCollectorOrb, BombSurvivorOrb]
+  let collector_orbs = [AllCollectorOrb, PointCollectorOrb, BombSurvivorOrb, MultiplierOrb]
   list.append(point_orbs, bomb_orbs)
   |> list.append(health_orbs)
   |> list.append(collector_orbs)
@@ -97,6 +98,7 @@ fn handle_start_game(model: Model) -> Model {
     last_orb: None,
     last_orb_message: None,
     pulled_orbs: [],
+    point_multiplier: 1,
   )
 }
 
@@ -123,6 +125,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         DataSample -> PointOrb(value)
         HazardSample -> BombOrb(value)
         HealthSample -> HealthOrb(value)
+        MultiplierSample -> MultiplierOrb
         AllCollectorSample -> AllCollectorOrb
         PointCollectorSample -> PointCollectorOrb
         BombSurvivorSample -> BombSurvivorOrb
@@ -136,6 +139,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         last_orb: None,
         last_orb_message: None,
         pulled_orbs: [],
+        point_multiplier: 1,
       )
     }
     _ -> model
@@ -159,7 +163,8 @@ fn handle_pull_orb(model: Model) -> Model {
         [first_orb, ..rest] -> {
           let #(new_model, orb_message) = case first_orb {
             PointOrb(value) -> {
-              let new_model = Model(..model, points: model.points + value)
+              let points = value * model.point_multiplier
+              let new_model = Model(..model, points: model.points + points)
               let message = display.orb_result_message(first_orb)
               #(new_model, message)
             }
@@ -175,7 +180,7 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message)
             }
             AllCollectorOrb -> {
-              let bonus_points = list.length(rest)
+              let bonus_points = list.length(rest) * model.point_multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -183,7 +188,7 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message)
             }
             PointCollectorOrb -> {
-              let bonus_points = count_point_orbs(rest)
+              let bonus_points = count_point_orbs(rest) * model.point_multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -191,11 +196,17 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message)
             }
             BombSurvivorOrb -> {
-              let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs)
+              let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * model.point_multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
                 display.collector_result_message(first_orb, bonus_points)
+              #(new_model, message)
+            }
+            MultiplierOrb -> {
+              let new_multiplier = model.point_multiplier * 2
+              let new_model = Model(..model, point_multiplier: new_multiplier)
+              let message = display.orb_result_message(first_orb)
               #(new_model, message)
             }
           }
@@ -229,6 +240,7 @@ fn handle_next_level(model: Model) -> Model {
     last_orb_message: None,
     input_value: model.input_value,
     pulled_orbs: [],
+    point_multiplier: 1,
   )
 }
 

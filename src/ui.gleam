@@ -95,6 +95,8 @@ pub fn orb_result_display(orb: Option(Orb), message: Option(String)) -> Element(
           info_panel(orb_message, "text-blue-700", "bg-blue-50 border-blue-200")
         types.BombSurvivorOrb ->
           info_panel(orb_message, "text-orange-700", "bg-orange-50 border-orange-200")
+        types.MultiplierOrb ->
+          info_panel(orb_message, "text-yellow-700", "bg-yellow-50 border-yellow-200")
       }
     }
     Some(orb_value), None -> {
@@ -113,6 +115,8 @@ pub fn orb_result_display(orb: Option(Orb), message: Option(String)) -> Element(
           info_panel(fallback_message, "text-blue-700", "bg-blue-50 border-blue-200")
         types.BombSurvivorOrb ->
           info_panel(fallback_message, "text-orange-700", "bg-orange-50 border-orange-200")
+        types.MultiplierOrb ->
+          info_panel(fallback_message, "text-yellow-700", "bg-yellow-50 border-yellow-200")
       }
     }
   }

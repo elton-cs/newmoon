@@ -6,7 +6,7 @@ import types.{
   type Model, type Msg, type OrbType, AllCollectorSample, BackToMainMenu,
   BackToOrbTesting, BombSurvivorSample, ConfirmOrbValue, DataSample, Defeat,
   ExitTesting, Failure, Game, Gameplay, GoToOrbTesting, HazardSample,
-  HealthSample, Main, Menu, NextLevel, OrbSelection, Playing,
+  HealthSample, Main, Menu, MultiplierSample, NextLevel, OrbSelection, Playing,
   PointCollectorSample, ResetTesting, RestartGame, SelectOrbType, StartGame,
   Success, Testing, ValueConfiguration, Victory,
 }
@@ -208,6 +208,7 @@ fn render_orb_testing_view() -> Element(Msg) {
     ui.orb_selection_button("Data Sample", SelectOrbType(DataSample)),
     ui.orb_selection_button("Hazard Sample", SelectOrbType(HazardSample)),
     ui.orb_selection_button("Health Sample", SelectOrbType(HealthSample)),
+    ui.orb_selection_button("Multiplier Sample", SelectOrbType(MultiplierSample)),
     ui.orb_selection_button("All Collector Sample", SelectOrbType(AllCollectorSample)),
     ui.orb_selection_button("Point Collector Sample", SelectOrbType(PointCollectorSample)),
     ui.orb_selection_button("Bomb Survivor Sample", SelectOrbType(BombSurvivorSample)),
@@ -224,6 +225,7 @@ fn render_orb_value_selection_view(
     DataSample -> "Data Sample"
     HazardSample -> "Hazard Sample"
     HealthSample -> "Health Sample"
+    MultiplierSample -> "Multiplier Sample"
     AllCollectorSample -> "All Collector Sample"
     PointCollectorSample -> "Point Collector Sample"
     BombSurvivorSample -> "Bomb Survivor Sample"
@@ -232,6 +234,7 @@ fn render_orb_value_selection_view(
     DataSample -> "Enter the data points this sample will provide"
     HazardSample -> "Enter the system damage this sample will cause"
     HealthSample -> "Enter the health points this sample will restore"
+    MultiplierSample -> "Doubles the current point multiplier for all point-awarding samples"
     AllCollectorSample -> "Awards points equal to remaining samples in container"
     PointCollectorSample -> "Awards points equal to number of data samples left in container"
     BombSurvivorSample -> "Awards points equal to number of hazard samples encountered so far"
@@ -249,7 +252,7 @@ fn render_orb_value_selection_view(
         ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
         ui.secondary_button("Back to Selection", BackToOrbTesting),
       ])
-    AllCollectorSample | PointCollectorSample | BombSurvivorSample ->
+    MultiplierSample | AllCollectorSample | PointCollectorSample | BombSurvivorSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",

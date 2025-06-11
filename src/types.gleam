@@ -7,6 +7,7 @@ pub type Orb {
   AllCollectorOrb
   PointCollectorOrb
   BombSurvivorOrb
+  MultiplierOrb
 }
 
 pub type MenuScreen {
@@ -37,6 +38,7 @@ pub type OrbType {
   DataSample
   HazardSample
   HealthSample
+  MultiplierSample
   AllCollectorSample
   PointCollectorSample
   BombSurvivorSample
@@ -54,6 +56,7 @@ pub type Model {
     last_orb_message: Option(String),
     input_value: String,
     pulled_orbs: List(Orb),
+    point_multiplier: Int,
   )
 }
 
