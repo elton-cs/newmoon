@@ -4916,19 +4916,19 @@ function collector_result_message(orb, bonus_points) {
   }
 }
 function data_target_message(milestone) {
-  return "Data target achieved: " + to_string(milestone) + " units";
+  return "DATA TARGET ACHIEVED: " + to_string(milestone) + " UNITS";
 }
 function multiplier_status_text(multiplier) {
   return "\u25C8 SIGNAL AMPLIFIER \xD7" + to_string(multiplier);
 }
 var container_label = "SAMPLE CONTAINER";
 var extract_button_text = "EXTRACT SAMPLE";
-var specimens_suffix = " specimens";
+var specimens_suffix = " SPECIMENS";
 var start_game_button_text = "START MISSION";
 var orb_testing_button_text = "SAMPLE TESTING";
-var main_menu_subtitle = "Prepare for deep space exploration";
+var main_menu_subtitle = "PREPARE FOR DEEP SPACE EXPLORATION";
 var orb_testing_title = "SAMPLE TESTING PROTOCOL";
-var orb_testing_subtitle = "Select a sample type for controlled testing";
+var orb_testing_subtitle = "SELECT A SAMPLE TYPE FOR CONTROLLED TESTING";
 var back_to_menu_text = "BACK TO MENU";
 var testing_mode_indicator = "TESTING MODE ACTIVE";
 var reset_testing_text = "RESET TEST";
@@ -4936,12 +4936,12 @@ var exit_testing_text = "EXIT TO MENU";
 var sector_complete_title = "SECTOR COMPLETE";
 var mission_failed_title = "MISSION FAILED";
 var advance_button_text = "ADVANCE TO NEXT SECTOR";
-var play_again_text = "\u{1F504} Play Again";
+var play_again_text = "PLAY AGAIN";
 var systems_label = "SYSTEMS";
 var data_label = "DATA";
 var target_label = "TARGET";
 var sector_label = "SECTOR";
-var mission_failed_message = "All systems compromised. Initiating reset protocol.";
+var mission_failed_message = "ALL SYSTEMS COMPROMISED. INITIATING RESET PROTOCOL.";
 var status_effects_title = "ACTIVE ENHANCEMENTS";
 
 // build/dev/javascript/newmoon/update.mjs
@@ -6018,6 +6018,28 @@ function secondary_button(text4, msg) {
     toList([text3(text4)])
   );
 }
+function success_button(text4, msg) {
+  return button(
+    toList([
+      class$(
+        "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider border-2 border-green-500 hover:border-green-600"
+      ),
+      on_click(msg)
+    ]),
+    toList([text3(text4)])
+  );
+}
+function failure_button(text4, msg) {
+  return button(
+    toList([
+      class$(
+        "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider border-2 border-red-500 hover:border-red-600"
+      ),
+      on_click(msg)
+    ]),
+    toList([text3(text4)])
+  );
+}
 function status_panel(title, message, bg_class) {
   return div(
     toList([class$("p-6 " + bg_class + " rounded border")]),
@@ -6037,16 +6059,18 @@ function status_panel(title, message, bg_class) {
 }
 function failure_panel(title, message) {
   return div(
-    toList([class$("p-6 bg-gray-100 border border-gray-300 rounded")]),
+    toList([class$("p-6 bg-red-50 border border-red-200 rounded")]),
     toList([
       h2(
         toList([
-          class$("text-xl font-light text-black mb-2 tracking-wide")
+          class$(
+            "text-xl font-light text-red-800 mb-2 tracking-wide"
+          )
         ]),
         toList([text3(title)])
       ),
       p(
-        toList([class$("text-gray-700 text-sm font-light")]),
+        toList([class$("text-red-700 text-sm font-light")]),
         toList([text3(message)])
       )
     ])
@@ -6172,30 +6196,6 @@ function render_game_stats(health, points, milestone, level) {
         to_string(level),
         "text-gray-500"
       )
-    ])
-  );
-}
-function render_won_view(milestone) {
-  let message = data_target_message(milestone);
-  return fragment2(
-    toList([
-      status_panel(
-        sector_complete_title,
-        message,
-        "bg-gray-50 border-gray-200"
-      ),
-      primary_button(advance_button_text, new NextLevel())
-    ])
-  );
-}
-function render_lost_view() {
-  return fragment2(
-    toList([
-      failure_panel(
-        mission_failed_title,
-        mission_failed_message
-      ),
-      secondary_button(play_again_text, new RestartGame())
     ])
   );
 }
@@ -6422,6 +6422,40 @@ function render_playing_view(last_orb, last_orb_message, bag, point_multiplier) 
     ])
   );
 }
+function render_won_view(last_orb, last_orb_message, bag, point_multiplier, milestone) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(point_multiplier);
+  let message = data_target_message(milestone);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      success_button(advance_button_text, new NextLevel()),
+      status_panel(
+        sector_complete_title,
+        message,
+        "bg-green-50 border-green-200"
+      )
+    ])
+  );
+}
+function render_lost_view(last_orb, last_orb_message, bag, point_multiplier) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(point_multiplier);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      failure_button(play_again_text, new RestartGame()),
+      failure_panel(
+        mission_failed_title,
+        mission_failed_message
+      )
+    ])
+  );
+}
 function render_testing_mode_view(last_orb, last_orb_message, bag, point_multiplier) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
@@ -6544,7 +6578,13 @@ function view(model) {
               model.milestone,
               model.level
             ),
-            render_won_view(model.milestone)
+            render_won_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.point_multiplier,
+              model.milestone
+            )
           ])
         )
       );
@@ -6559,7 +6599,12 @@ function view(model) {
               model.milestone,
               model.level
             ),
-            render_lost_view()
+            render_lost_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.point_multiplier
+            )
           ])
         )
       );

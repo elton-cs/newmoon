@@ -51,27 +51,27 @@ pub const container_label = "SAMPLE CONTAINER"
 
 pub const extract_button_text = "EXTRACT SAMPLE"
 
-pub const specimens_suffix = " specimens"
+pub const specimens_suffix = " SPECIMENS"
 
 // Main Menu Messages
 pub const start_game_button_text = "START MISSION"
 
 pub const orb_testing_button_text = "SAMPLE TESTING"
 
-pub const main_menu_subtitle = "Prepare for deep space exploration"
+pub const main_menu_subtitle = "PREPARE FOR DEEP SPACE EXPLORATION"
 
 // Orb Testing Messages
 pub const orb_testing_title = "SAMPLE TESTING PROTOCOL"
 
-pub const orb_testing_subtitle = "Select a sample type for controlled testing"
+pub const orb_testing_subtitle = "SELECT A SAMPLE TYPE FOR CONTROLLED TESTING"
 
 pub const back_to_menu_text = "BACK TO MENU"
 
 pub const testing_mode_indicator = "TESTING MODE ACTIVE"
 
-pub const test_data_sample_text = "Test Data Sample"
+pub const test_data_sample_text = "TEST DATA SAMPLE"
 
-pub const test_hazard_sample_text = "Test Hazard Sample"
+pub const test_hazard_sample_text = "TEST HAZARD SAMPLE"
 
 pub const reset_testing_text = "RESET TEST"
 
@@ -84,7 +84,7 @@ pub const mission_failed_title = "MISSION FAILED"
 
 pub const advance_button_text = "ADVANCE TO NEXT SECTOR"
 
-pub const play_again_text = "🔄 Play Again"
+pub const play_again_text = "PLAY AGAIN"
 
 // Game Stats Labels
 pub const systems_label = "SYSTEMS"
@@ -97,10 +97,10 @@ pub const sector_label = "SECTOR"
 
 // Status Messages
 pub fn data_target_message(milestone: Int) -> String {
-  "Data target achieved: " <> int.to_string(milestone) <> " units"
+  "DATA TARGET ACHIEVED: " <> int.to_string(milestone) <> " UNITS"
 }
 
-pub const mission_failed_message = "All systems compromised. Initiating reset protocol."
+pub const mission_failed_message = "ALL SYSTEMS COMPROMISED. INITIATING RESET PROTOCOL."
 
 // Status Effects Display
 pub const status_effects_title = "ACTIVE ENHANCEMENTS"

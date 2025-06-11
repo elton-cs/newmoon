@@ -77,7 +77,13 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_won_view(model.milestone),
+          render_won_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.point_multiplier,
+            model.milestone,
+          ),
         ]),
       )
     Game(Defeat) ->
@@ -90,7 +96,12 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_lost_view(),
+          render_lost_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.point_multiplier,
+          ),
         ]),
       )
     Testing(Success) ->
@@ -176,28 +187,50 @@ fn render_playing_view(
   ])
 }
 
-// Won View - takes specific milestone value
-fn render_won_view(milestone: Int) -> Element(Msg) {
+// Won View - shows all game elements like playing view but with completion message
+fn render_won_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  point_multiplier: Int,
+  milestone: Int,
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(point_multiplier)
   let message = display.data_target_message(milestone)
 
   element.fragment([
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
+    ui.container_display(orbs_left),
+    ui.success_button(display.advance_button_text, NextLevel),
     ui.status_panel(
       display.sector_complete_title,
       message,
-      "bg-gray-50 border-gray-200",
+      "bg-green-50 border-green-200",
     ),
-    ui.primary_button(display.advance_button_text, NextLevel),
   ])
 }
 
-// Lost View - no model data needed
-fn render_lost_view() -> Element(Msg) {
+// Lost View - shows all game elements like playing view but with failure message
+fn render_lost_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  point_multiplier: Int,
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(point_multiplier)
+
   element.fragment([
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
+    ui.container_display(orbs_left),
+    ui.failure_button(display.play_again_text, RestartGame),
     ui.failure_panel(
       display.mission_failed_title,
       display.mission_failed_message,
     ),
-    ui.secondary_button(display.play_again_text, RestartGame),
   ])
 }
 

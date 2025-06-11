@@ -249,6 +249,30 @@ pub fn secondary_button(text: String, msg: Msg) -> Element(Msg) {
   )
 }
 
+pub fn success_button(text: String, msg: Msg) -> Element(Msg) {
+  html.button(
+    [
+      attribute.class(
+        "w-full bg-green-600 hover:bg-green-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider border-2 border-green-500 hover:border-green-600",
+      ),
+      event.on_click(msg),
+    ],
+    [html.text(text)],
+  )
+}
+
+pub fn failure_button(text: String, msg: Msg) -> Element(Msg) {
+  html.button(
+    [
+      attribute.class(
+        "w-full bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider border-2 border-red-500 hover:border-red-600",
+      ),
+      event.on_click(msg),
+    ],
+    [html.text(text)],
+  )
+}
+
 // Status Display Components
 
 pub fn status_panel(
@@ -268,12 +292,12 @@ pub fn status_panel(
 }
 
 pub fn failure_panel(title: String, message: String) -> Element(Msg) {
-  html.div([attribute.class("p-6 bg-gray-100 border border-gray-300 rounded")], [
+  html.div([attribute.class("p-6 bg-red-50 border border-red-200 rounded")], [
     html.h2(
-      [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+      [attribute.class("text-xl font-light text-red-800 mb-2 tracking-wide")],
       [html.text(title)],
     ),
-    html.p([attribute.class("text-gray-700 text-sm font-light")], [
+    html.p([attribute.class("text-red-700 text-sm font-light")], [
       html.text(message),
     ]),
   ])
