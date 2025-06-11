@@ -1,4 +1,7 @@
-import types.{type Orb, AllCollectorOrb, BombOrb, BombSurvivorOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb}
+import types.{
+  type Orb, AllCollectorOrb, BombOrb, BombSurvivorOrb, HealthOrb, MultiplierOrb,
+  PointCollectorOrb, PointOrb,
+}
 
 // Import int for string conversion
 import gleam/int
@@ -98,3 +101,10 @@ pub fn data_target_message(milestone: Int) -> String {
 }
 
 pub const mission_failed_message = "All systems compromised. Initiating reset protocol."
+
+// Status Effects Display
+pub const status_effects_title = "ACTIVE ENHANCEMENTS"
+
+pub fn multiplier_status_text(multiplier: Int) -> String {
+  "◈ SIGNAL AMPLIFIER ×" <> int.to_string(multiplier)
+}

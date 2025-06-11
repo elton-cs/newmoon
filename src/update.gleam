@@ -7,9 +7,9 @@ import types.{
   AllCollectorSample, BackToMainMenu, BackToOrbTesting, BombOrb, BombSurvivorOrb,
   BombSurvivorSample, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure,
   Game, Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main,
-  Menu, Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorOrb,
-  PointCollectorSample, PointOrb, PullOrb, ResetTesting, RestartGame,
-  SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
+  Menu, Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing,
+  PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb, ResetTesting,
+  RestartGame, SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
   ValueConfiguration, Victory,
 }
 
@@ -40,7 +40,12 @@ fn starter_orbs() -> List(Orb) {
   ]
   let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
   let health_orbs = [HealthOrb(1), HealthOrb(2)]
-  let collector_orbs = [AllCollectorOrb, PointCollectorOrb, BombSurvivorOrb, MultiplierOrb]
+  let collector_orbs = [
+    AllCollectorOrb,
+    PointCollectorOrb,
+    BombSurvivorOrb,
+    MultiplierOrb,
+  ]
   list.append(point_orbs, bomb_orbs)
   |> list.append(health_orbs)
   |> list.append(collector_orbs)
@@ -196,7 +201,9 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message)
             }
             BombSurvivorOrb -> {
-              let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * model.point_multiplier
+              let bonus_points =
+                count_pulled_bomb_orbs(model.pulled_orbs)
+                * model.point_multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =

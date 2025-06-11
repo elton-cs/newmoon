@@ -1,5 +1,6 @@
 import display
 import gleam/int
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 import lustre/attribute
@@ -78,7 +79,10 @@ pub fn stat_card(
 
 // Feedback Components
 
-pub fn orb_result_display(orb: Option(Orb), message: Option(String)) -> Element(Msg) {
+pub fn orb_result_display(
+  orb: Option(Orb),
+  message: Option(String),
+) -> Element(Msg) {
   case orb, message {
     None, _ -> html.div([attribute.class("h-8")], [])
     Some(orb_value), Some(orb_message) -> {
@@ -86,17 +90,37 @@ pub fn orb_result_display(orb: Option(Orb), message: Option(String)) -> Element(
         types.PointOrb(_) ->
           info_panel(orb_message, "text-gray-700", "bg-gray-50 border-gray-200")
         types.BombOrb(_) ->
-          info_panel(orb_message, "text-gray-800", "bg-gray-100 border-gray-300")
+          info_panel(
+            orb_message,
+            "text-gray-800",
+            "bg-gray-100 border-gray-300",
+          )
         types.HealthOrb(_) ->
-          info_panel(orb_message, "text-green-700", "bg-green-50 border-green-200")
+          info_panel(
+            orb_message,
+            "text-green-700",
+            "bg-green-50 border-green-200",
+          )
         types.AllCollectorOrb ->
-          info_panel(orb_message, "text-purple-700", "bg-purple-50 border-purple-200")
+          info_panel(
+            orb_message,
+            "text-purple-700",
+            "bg-purple-50 border-purple-200",
+          )
         types.PointCollectorOrb ->
           info_panel(orb_message, "text-blue-700", "bg-blue-50 border-blue-200")
         types.BombSurvivorOrb ->
-          info_panel(orb_message, "text-orange-700", "bg-orange-50 border-orange-200")
+          info_panel(
+            orb_message,
+            "text-orange-700",
+            "bg-orange-50 border-orange-200",
+          )
         types.MultiplierOrb ->
-          info_panel(orb_message, "text-yellow-700", "bg-yellow-50 border-yellow-200")
+          info_panel(
+            orb_message,
+            "text-yellow-700",
+            "bg-yellow-50 border-yellow-200",
+          )
       }
     }
     Some(orb_value), None -> {
@@ -104,19 +128,47 @@ pub fn orb_result_display(orb: Option(Orb), message: Option(String)) -> Element(
       let fallback_message = display.orb_result_message(orb_value)
       case orb_value {
         types.PointOrb(_) ->
-          info_panel(fallback_message, "text-gray-700", "bg-gray-50 border-gray-200")
+          info_panel(
+            fallback_message,
+            "text-gray-700",
+            "bg-gray-50 border-gray-200",
+          )
         types.BombOrb(_) ->
-          info_panel(fallback_message, "text-gray-800", "bg-gray-100 border-gray-300")
+          info_panel(
+            fallback_message,
+            "text-gray-800",
+            "bg-gray-100 border-gray-300",
+          )
         types.HealthOrb(_) ->
-          info_panel(fallback_message, "text-green-700", "bg-green-50 border-green-200")
+          info_panel(
+            fallback_message,
+            "text-green-700",
+            "bg-green-50 border-green-200",
+          )
         types.AllCollectorOrb ->
-          info_panel(fallback_message, "text-purple-700", "bg-purple-50 border-purple-200")
+          info_panel(
+            fallback_message,
+            "text-purple-700",
+            "bg-purple-50 border-purple-200",
+          )
         types.PointCollectorOrb ->
-          info_panel(fallback_message, "text-blue-700", "bg-blue-50 border-blue-200")
+          info_panel(
+            fallback_message,
+            "text-blue-700",
+            "bg-blue-50 border-blue-200",
+          )
         types.BombSurvivorOrb ->
-          info_panel(fallback_message, "text-orange-700", "bg-orange-50 border-orange-200")
+          info_panel(
+            fallback_message,
+            "text-orange-700",
+            "bg-orange-50 border-orange-200",
+          )
         types.MultiplierOrb ->
-          info_panel(fallback_message, "text-yellow-700", "bg-yellow-50 border-yellow-200")
+          info_panel(
+            fallback_message,
+            "text-yellow-700",
+            "bg-yellow-50 border-yellow-200",
+          )
       }
     }
   }
@@ -276,4 +328,34 @@ pub fn testing_mode_indicator() -> Element(Msg) {
       ),
     ],
   )
+}
+
+// Status Effects Components
+
+pub fn status_effects_display(status_effects: List(String)) -> Element(Msg) {
+  case status_effects {
+    [] -> html.div([attribute.class("h-0")], [])
+    effects ->
+      html.div(
+        [attribute.class("p-3 bg-blue-50 border border-blue-200 rounded")],
+        [
+          html.div(
+            [
+              attribute.class(
+                "text-xs text-blue-500 uppercase tracking-wider mb-2 font-light",
+              ),
+            ],
+            [html.text(display.status_effects_title)],
+          ),
+          html.div(
+            [attribute.class("space-y-1")],
+            list.map(effects, fn(effect_text) {
+              html.p([attribute.class("text-blue-700 text-sm font-light")], [
+                html.text(effect_text),
+              ])
+            }),
+          ),
+        ],
+      )
+  }
 }

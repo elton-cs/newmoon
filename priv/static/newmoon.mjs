@@ -4918,6 +4918,9 @@ function collector_result_message(orb, bonus_points) {
 function data_target_message(milestone) {
   return "Data target achieved: " + to_string(milestone) + " units";
 }
+function multiplier_status_text(multiplier) {
+  return "\u25C8 SIGNAL AMPLIFIER \xD7" + to_string(multiplier);
+}
 var container_label = "SAMPLE CONTAINER";
 var extract_button_text = "EXTRACT SAMPLE";
 var specimens_suffix = " specimens";
@@ -4939,6 +4942,7 @@ var data_label = "DATA";
 var target_label = "TARGET";
 var sector_label = "SECTOR";
 var mission_failed_message = "All systems compromised. Initiating reset protocol.";
+var status_effects_title = "ACTIVE ENHANCEMENTS";
 
 // build/dev/javascript/newmoon/update.mjs
 function starter_orbs() {
@@ -6105,6 +6109,40 @@ function testing_mode_indicator2() {
     ])
   );
 }
+function status_effects_display(status_effects) {
+  if (status_effects instanceof Empty) {
+    return div(toList([class$("h-0")]), toList([]));
+  } else {
+    let effects = status_effects;
+    return div(
+      toList([
+        class$("p-3 bg-blue-50 border border-blue-200 rounded")
+      ]),
+      toList([
+        div(
+          toList([
+            class$(
+              "text-xs text-blue-500 uppercase tracking-wider mb-2 font-light"
+            )
+          ]),
+          toList([text3(status_effects_title)])
+        ),
+        div(
+          toList([class$("space-y-1")]),
+          map(
+            effects,
+            (effect_text) => {
+              return p(
+                toList([class$("text-blue-700 text-sm font-light")]),
+                toList([text3(effect_text)])
+              );
+            }
+          )
+        )
+      ])
+    );
+  }
+}
 
 // build/dev/javascript/newmoon/view.mjs
 function render_game_stats(health, points, milestone, level) {
@@ -6134,17 +6172,6 @@ function render_game_stats(health, points, milestone, level) {
         to_string(level),
         "text-gray-500"
       )
-    ])
-  );
-}
-function render_playing_view(last_orb, last_orb_message, bag) {
-  let orbs_left = length(bag);
-  let is_disabled = is_empty(bag);
-  return fragment2(
-    toList([
-      orb_result_display(last_orb, last_orb_message),
-      container_display(orbs_left),
-      extract_button(is_disabled)
     ])
   );
 }
@@ -6352,19 +6379,6 @@ function render_orb_value_selection_view(orb_type, input_value) {
     );
   }
 }
-function render_testing_mode_view(last_orb, last_orb_message, bag) {
-  let orbs_left = length(bag);
-  let is_disabled = is_empty(bag);
-  return fragment2(
-    toList([
-      orb_result_display(last_orb, last_orb_message),
-      container_display(orbs_left),
-      extract_button(is_disabled),
-      secondary_button(reset_testing_text, new ResetTesting()),
-      secondary_button(exit_testing_text, new ExitTesting())
-    ])
-  );
-}
 function render_testing_won_view(milestone) {
   let message = data_target_message(milestone);
   return fragment2(
@@ -6383,6 +6397,42 @@ function render_testing_lost_view() {
         "All systems compromised during testing. Analyze results and retry."
       ),
       secondary_button("Restart Testing", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting())
+    ])
+  );
+}
+function extract_active_status_effects(point_multiplier) {
+  let $ = point_multiplier > 1;
+  if ($) {
+    return toList([multiplier_status_text(point_multiplier)]);
+  } else {
+    return toList([]);
+  }
+}
+function render_playing_view(last_orb, last_orb_message, bag, point_multiplier) {
+  let orbs_left = length(bag);
+  let is_disabled = is_empty(bag);
+  let status_effects = extract_active_status_effects(point_multiplier);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      extract_button(is_disabled)
+    ])
+  );
+}
+function render_testing_mode_view(last_orb, last_orb_message, bag, point_multiplier) {
+  let orbs_left = length(bag);
+  let is_disabled = is_empty(bag);
+  let status_effects = extract_active_status_effects(point_multiplier);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      extract_button(is_disabled),
+      secondary_button(reset_testing_text, new ResetTesting()),
       secondary_button(exit_testing_text, new ExitTesting())
     ])
   );
@@ -6424,7 +6474,8 @@ function view(model) {
             render_testing_mode_view(
               model.last_orb,
               model.last_orb_message,
-              model.bag
+              model.bag,
+              model.point_multiplier
             )
           ])
         )
@@ -6476,7 +6527,8 @@ function view(model) {
             render_playing_view(
               model.last_orb,
               model.last_orb_message,
-              model.bag
+              model.bag,
+              model.point_multiplier
             )
           ])
         )

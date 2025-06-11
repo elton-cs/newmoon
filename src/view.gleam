@@ -41,7 +41,12 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_testing_mode_view(model.last_orb, model.last_orb_message, model.bag),
+          render_testing_mode_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.point_multiplier,
+          ),
         ]),
       )
     Game(Playing) ->
@@ -54,7 +59,12 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
           ),
-          render_playing_view(model.last_orb, model.last_orb_message, model.bag),
+          render_playing_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.point_multiplier,
+          ),
         ]),
       )
     Game(Victory) ->
@@ -148,12 +158,19 @@ fn render_game_stats(
 }
 
 // Playing View - takes specific fields needed
-fn render_playing_view(last_orb, last_orb_message, bag) -> Element(Msg) {
+fn render_playing_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  point_multiplier: Int,
+) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
+  let status_effects = extract_active_status_effects(point_multiplier)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
   ])
@@ -208,10 +225,22 @@ fn render_orb_testing_view() -> Element(Msg) {
     ui.orb_selection_button("Data Sample", SelectOrbType(DataSample)),
     ui.orb_selection_button("Hazard Sample", SelectOrbType(HazardSample)),
     ui.orb_selection_button("Health Sample", SelectOrbType(HealthSample)),
-    ui.orb_selection_button("Multiplier Sample", SelectOrbType(MultiplierSample)),
-    ui.orb_selection_button("All Collector Sample", SelectOrbType(AllCollectorSample)),
-    ui.orb_selection_button("Point Collector Sample", SelectOrbType(PointCollectorSample)),
-    ui.orb_selection_button("Bomb Survivor Sample", SelectOrbType(BombSurvivorSample)),
+    ui.orb_selection_button(
+      "Multiplier Sample",
+      SelectOrbType(MultiplierSample),
+    ),
+    ui.orb_selection_button(
+      "All Collector Sample",
+      SelectOrbType(AllCollectorSample),
+    ),
+    ui.orb_selection_button(
+      "Point Collector Sample",
+      SelectOrbType(PointCollectorSample),
+    ),
+    ui.orb_selection_button(
+      "Bomb Survivor Sample",
+      SelectOrbType(BombSurvivorSample),
+    ),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }
@@ -234,14 +263,18 @@ fn render_orb_value_selection_view(
     DataSample -> "Enter the data points this sample will provide"
     HazardSample -> "Enter the system damage this sample will cause"
     HealthSample -> "Enter the health points this sample will restore"
-    MultiplierSample -> "Doubles the current point multiplier for all point-awarding samples"
-    AllCollectorSample -> "Awards points equal to remaining samples in container"
-    PointCollectorSample -> "Awards points equal to number of data samples left in container"
-    BombSurvivorSample -> "Awards points equal to number of hazard samples encountered so far"
+    MultiplierSample ->
+      "Doubles the current point multiplier for all point-awarding samples"
+    AllCollectorSample ->
+      "Awards points equal to remaining samples in container"
+    PointCollectorSample ->
+      "Awards points equal to number of data samples left in container"
+    BombSurvivorSample ->
+      "Awards points equal to number of hazard samples encountered so far"
   }
 
   case orb_type {
-    DataSample | HazardSample | HealthSample -> 
+    DataSample | HazardSample | HealthSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",
@@ -252,7 +285,10 @@ fn render_orb_value_selection_view(
         ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
         ui.secondary_button("Back to Selection", BackToOrbTesting),
       ])
-    MultiplierSample | AllCollectorSample | PointCollectorSample | BombSurvivorSample ->
+    MultiplierSample
+    | AllCollectorSample
+    | PointCollectorSample
+    | BombSurvivorSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",
@@ -266,12 +302,19 @@ fn render_orb_value_selection_view(
 }
 
 // Testing Mode View - includes reset and exit buttons
-fn render_testing_mode_view(last_orb, last_orb_message, bag) -> Element(Msg) {
+fn render_testing_mode_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  point_multiplier: Int,
+) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
+  let status_effects = extract_active_status_effects(point_multiplier)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
     ui.secondary_button(display.reset_testing_text, ResetTesting),
@@ -300,4 +343,12 @@ fn render_testing_lost_view() -> Element(Msg) {
     ui.secondary_button("Restart Testing", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
   ])
+}
+
+// Status Effects Extraction - extracts active status effects from model
+fn extract_active_status_effects(point_multiplier: Int) -> List(String) {
+  case point_multiplier > 1 {
+    True -> [display.multiplier_status_text(point_multiplier)]
+    False -> []
+  }
 }
