@@ -108,26 +108,39 @@ pub fn view(model: Model) -> Element(Msg) {
       ui.app_container(
         ui.game_card([
           ui.game_header(),
+          ui.testing_mode_indicator(),
           render_game_stats(
             model.health,
             model.points,
             model.milestone,
             model.level,
           ),
-          render_testing_won_view(model.milestone),
+          render_testing_won_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.point_multiplier,
+            model.milestone,
+          ),
         ]),
       )
     Testing(Failure) ->
       ui.app_container(
         ui.game_card([
           ui.game_header(),
+          ui.testing_mode_indicator(),
           render_game_stats(
             model.health,
             model.points,
             model.milestone,
             model.level,
           ),
-          render_testing_lost_view(),
+          render_testing_lost_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.point_multiplier,
+          ),
         ]),
       )
   }
@@ -355,26 +368,48 @@ fn render_testing_mode_view(
   ])
 }
 
-// Testing Won View - only restart testing or main menu options
-fn render_testing_won_view(milestone: Int) -> Element(Msg) {
+// Testing Won View - shows all game elements like main game victory
+fn render_testing_won_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  point_multiplier: Int,
+  milestone: Int,
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(point_multiplier)
   let message = display.data_target_message(milestone)
 
   element.fragment([
-    ui.status_panel("TEST COMPLETE", message, "bg-green-50 border-green-200"),
-    ui.secondary_button("Restart Testing", ResetTesting),
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
+    ui.container_display(orbs_left),
+    ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
+    ui.status_panel("TEST COMPLETE", message, "bg-green-50 border-green-200"),
   ])
 }
 
-// Testing Lost View - only restart testing or main menu options
-fn render_testing_lost_view() -> Element(Msg) {
+// Testing Lost View - shows all game elements like main game defeat
+fn render_testing_lost_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  point_multiplier: Int,
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(point_multiplier)
+
   element.fragment([
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
+    ui.container_display(orbs_left),
+    ui.secondary_button("RESTART TESTING", ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
     ui.failure_panel(
       "TEST FAILED",
-      "All systems compromised during testing. Analyze results and retry.",
+      "ALL SYSTEMS COMPROMISED DURING TESTING. ANALYZE RESULTS AND RETRY.",
     ),
-    ui.secondary_button("Restart Testing", ResetTesting),
-    ui.secondary_button(display.exit_testing_text, ExitTesting),
   ])
 }
 

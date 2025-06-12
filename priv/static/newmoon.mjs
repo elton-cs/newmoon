@@ -6379,28 +6379,6 @@ function render_orb_value_selection_view(orb_type, input_value) {
     );
   }
 }
-function render_testing_won_view(milestone) {
-  let message = data_target_message(milestone);
-  return fragment2(
-    toList([
-      status_panel("TEST COMPLETE", message, "bg-green-50 border-green-200"),
-      secondary_button("Restart Testing", new ResetTesting()),
-      secondary_button(exit_testing_text, new ExitTesting())
-    ])
-  );
-}
-function render_testing_lost_view() {
-  return fragment2(
-    toList([
-      failure_panel(
-        "TEST FAILED",
-        "All systems compromised during testing. Analyze results and retry."
-      ),
-      secondary_button("Restart Testing", new ResetTesting()),
-      secondary_button(exit_testing_text, new ExitTesting())
-    ])
-  );
-}
 function extract_active_status_effects(point_multiplier) {
   let $ = point_multiplier > 1;
   if ($) {
@@ -6471,6 +6449,38 @@ function render_testing_mode_view(last_orb, last_orb_message, bag, point_multipl
     ])
   );
 }
+function render_testing_won_view(last_orb, last_orb_message, bag, point_multiplier, milestone) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(point_multiplier);
+  let message = data_target_message(milestone);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      secondary_button("RESTART TESTING", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting()),
+      status_panel("TEST COMPLETE", message, "bg-green-50 border-green-200")
+    ])
+  );
+}
+function render_testing_lost_view(last_orb, last_orb_message, bag, point_multiplier) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(point_multiplier);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      secondary_button("RESTART TESTING", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting()),
+      failure_panel(
+        "TEST FAILED",
+        "ALL SYSTEMS COMPROMISED DURING TESTING. ANALYZE RESULTS AND RETRY."
+      )
+    ])
+  );
+}
 function view(model) {
   let $ = model.screen;
   if ($ instanceof Menu) {
@@ -6519,13 +6529,20 @@ function view(model) {
         game_card(
           toList([
             game_header(),
+            testing_mode_indicator2(),
             render_game_stats(
               model.health,
               model.points,
               model.milestone,
               model.level
             ),
-            render_testing_won_view(model.milestone)
+            render_testing_won_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.point_multiplier,
+              model.milestone
+            )
           ])
         )
       );
@@ -6534,13 +6551,19 @@ function view(model) {
         game_card(
           toList([
             game_header(),
+            testing_mode_indicator2(),
             render_game_stats(
               model.health,
               model.points,
               model.milestone,
               model.level
             ),
-            render_testing_lost_view()
+            render_testing_lost_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.point_multiplier
+            )
           ])
         )
       );
