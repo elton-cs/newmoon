@@ -1,5 +1,22 @@
 import gleam/option.{type Option}
 
+pub type StatusDuration {
+  Permanent
+  Countdown(Int)
+  Triggered(Int)
+}
+
+pub type StatusEffect {
+  PointMultiplier(multiplier: Int, duration: StatusDuration)
+  BombImmunity(duration: StatusDuration)
+}
+
+pub type StatusPersistence {
+  ClearOnLevel
+  ClearOnGame
+  Persistent
+}
+
 pub type Orb {
   PointOrb(Int)
   BombOrb(Int)
@@ -60,6 +77,7 @@ pub type Model {
     pulled_orbs: List(Orb),
     point_multiplier: Int,
     bomb_immunity: Int,
+    active_statuses: List(StatusEffect),
   )
 }
 

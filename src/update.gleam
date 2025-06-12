@@ -2,13 +2,14 @@ import display
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
+import status
 import types.{
   type Model, type Msg, type Orb, type OrbType, AllCollectorOrb,
   AllCollectorSample, BackToMainMenu, BackToOrbTesting, BombImmunityOrb,
-  BombImmunitySample, BombOrb, BombSurvivorOrb, BombSurvivorSample,
-  ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game, Gameplay,
-  GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Menu, Model,
-  MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing,
+  BombImmunitySample, BombOrb, BombSurvivorOrb, BombSurvivorSample, ClearOnGame,
+  ClearOnLevel, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game,
+  Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Menu,
+  Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing,
   PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb, ResetTesting,
   RestartGame, SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
   ValueConfiguration, Victory,
@@ -28,6 +29,7 @@ pub fn init(_) -> Model {
     pulled_orbs: [],
     point_multiplier: 1,
     bomb_immunity: 0,
+    active_statuses: [],
   )
 }
 
@@ -99,8 +101,9 @@ pub fn update(model: Model, msg: Msg) -> Model {
 }
 
 fn handle_start_game(model: Model) -> Model {
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
   Model(
-    ..model,
+    ..clean_model,
     screen: Game(Playing),
     bag: starter_orbs(),
     health: 5,
@@ -142,8 +145,9 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         BombSurvivorSample -> BombSurvivorOrb
         BombImmunitySample -> BombImmunityOrb
       }
+      let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
       Model(
-        ..model,
+        ..clean_model,
         screen: Testing(Gameplay),
         bag: create_test_bag(test_orb),
         health: 5,
@@ -176,13 +180,15 @@ fn handle_pull_orb(model: Model) -> Model {
         [first_orb, ..rest] -> {
           let #(new_model, orb_message, return_orb_to_bag) = case first_orb {
             PointOrb(value) -> {
-              let points = value * model.point_multiplier
+              let multiplier =
+                status.get_point_multiplier(model.active_statuses)
+              let points = value * multiplier
               let new_model = Model(..model, points: model.points + points)
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
             BombOrb(value) -> {
-              case model.bomb_immunity > 0 {
+              case status.has_bomb_immunity(model.active_statuses) {
                 True -> {
                   let new_model = model
                   let message =
@@ -203,7 +209,9 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message, False)
             }
             AllCollectorOrb -> {
-              let bonus_points = list.length(rest) * model.point_multiplier
+              let multiplier =
+                status.get_point_multiplier(model.active_statuses)
+              let bonus_points = list.length(rest) * multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -211,7 +219,9 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message, False)
             }
             PointCollectorOrb -> {
-              let bonus_points = count_point_orbs(rest) * model.point_multiplier
+              let multiplier =
+                status.get_point_multiplier(model.active_statuses)
+              let bonus_points = count_point_orbs(rest) * multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -219,9 +229,10 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message, False)
             }
             BombSurvivorOrb -> {
+              let multiplier =
+                status.get_point_multiplier(model.active_statuses)
               let bonus_points =
-                count_pulled_bomb_orbs(model.pulled_orbs)
-                * model.point_multiplier
+                count_pulled_bomb_orbs(model.pulled_orbs) * multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -230,12 +241,20 @@ fn handle_pull_orb(model: Model) -> Model {
             }
             MultiplierOrb -> {
               let new_multiplier = model.point_multiplier * 2
-              let new_model = Model(..model, point_multiplier: new_multiplier)
+              let new_model =
+                model
+                |> status.add_status(status.create_point_multiplier(
+                  new_multiplier,
+                ))
+                |> fn(m) { Model(..m, point_multiplier: new_multiplier) }
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
             BombImmunityOrb -> {
-              let new_model = Model(..model, bomb_immunity: 3)
+              let new_model =
+                model
+                |> status.add_status(status.create_bomb_immunity(3))
+                |> fn(m) { Model(..m, bomb_immunity: 3) }
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
@@ -255,7 +274,7 @@ fn handle_pull_orb(model: Model) -> Model {
               }
           }
 
-          let updated_model =
+          let model_with_bag_and_pulls =
             Model(
               ..new_model,
               bag: new_bag,
@@ -268,6 +287,11 @@ fn handle_pull_orb(model: Model) -> Model {
               bomb_immunity: new_immunity,
             )
 
+          let updated_model = case first_orb {
+            BombImmunityOrb -> model_with_bag_and_pulls
+            _ -> status.tick_statuses(model_with_bag_and_pulls)
+          }
+
           check_game_status(updated_model)
         }
       }
@@ -277,7 +301,9 @@ fn handle_pull_orb(model: Model) -> Model {
 }
 
 fn handle_next_level(model: Model) -> Model {
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnLevel)
   Model(
+    ..clean_model,
     health: 5,
     points: 0,
     level: model.level + 1,
@@ -286,7 +312,6 @@ fn handle_next_level(model: Model) -> Model {
     screen: Game(Playing),
     last_orb: None,
     last_orb_message: None,
-    input_value: model.input_value,
     pulled_orbs: [],
     point_multiplier: 1,
     bomb_immunity: 0,

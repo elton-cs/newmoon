@@ -2,6 +2,7 @@ import display
 import gleam/int
 import gleam/list
 import lustre/element.{type Element}
+import status
 import types.{
   type Model, type Msg, type OrbType, AllCollectorSample, BackToMainMenu,
   BackToOrbTesting, BombImmunitySample, BombSurvivorSample, ConfirmOrbValue,
@@ -45,8 +46,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.bag,
-            model.point_multiplier,
-            model.bomb_immunity,
+            model.active_statuses,
           ),
         ]),
       )
@@ -64,8 +64,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.bag,
-            model.point_multiplier,
-            model.bomb_immunity,
+            model.active_statuses,
           ),
         ]),
       )
@@ -83,8 +82,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.bag,
-            model.point_multiplier,
-            model.bomb_immunity,
+            model.active_statuses,
             model.milestone,
           ),
         ]),
@@ -103,8 +101,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.bag,
-            model.point_multiplier,
-            model.bomb_immunity,
+            model.active_statuses,
           ),
         ]),
       )
@@ -123,8 +120,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.bag,
-            model.point_multiplier,
-            model.bomb_immunity,
+            model.active_statuses,
             model.milestone,
           ),
         ]),
@@ -144,8 +140,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.bag,
-            model.point_multiplier,
-            model.bomb_immunity,
+            model.active_statuses,
           ),
         ]),
       )
@@ -192,13 +187,11 @@ fn render_playing_view(
   last_orb,
   last_orb_message,
   bag,
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
-  let status_effects =
-    extract_active_status_effects(point_multiplier, bomb_immunity)
+  let status_effects = extract_active_status_effects(active_statuses)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
@@ -213,13 +206,11 @@ fn render_won_view(
   last_orb,
   last_orb_message,
   bag,
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
   milestone: Int,
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
-  let status_effects =
-    extract_active_status_effects(point_multiplier, bomb_immunity)
+  let status_effects = extract_active_status_effects(active_statuses)
   let message = display.data_target_message(milestone)
 
   element.fragment([
@@ -240,12 +231,10 @@ fn render_lost_view(
   last_orb,
   last_orb_message,
   bag,
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
-  let status_effects =
-    extract_active_status_effects(point_multiplier, bomb_immunity)
+  let status_effects = extract_active_status_effects(active_statuses)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
@@ -372,13 +361,11 @@ fn render_testing_mode_view(
   last_orb,
   last_orb_message,
   bag,
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
-  let status_effects =
-    extract_active_status_effects(point_multiplier, bomb_immunity)
+  let status_effects = extract_active_status_effects(active_statuses)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
@@ -395,13 +382,11 @@ fn render_testing_won_view(
   last_orb,
   last_orb_message,
   bag,
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
   milestone: Int,
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
-  let status_effects =
-    extract_active_status_effects(point_multiplier, bomb_immunity)
+  let status_effects = extract_active_status_effects(active_statuses)
   let message = display.data_target_message(milestone)
 
   element.fragment([
@@ -419,12 +404,10 @@ fn render_testing_lost_view(
   last_orb,
   last_orb_message,
   bag,
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
-  let status_effects =
-    extract_active_status_effects(point_multiplier, bomb_immunity)
+  let status_effects = extract_active_status_effects(active_statuses)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
@@ -441,18 +424,7 @@ fn render_testing_lost_view(
 
 // Status Effects Extraction - extracts active status effects from model
 fn extract_active_status_effects(
-  point_multiplier: Int,
-  bomb_immunity: Int,
+  active_statuses: List(types.StatusEffect),
 ) -> List(String) {
-  let multiplier_effects = case point_multiplier > 1 {
-    True -> [display.multiplier_status_text(point_multiplier)]
-    False -> []
-  }
-
-  let immunity_effects = case bomb_immunity > 0 {
-    True -> [display.immunity_status_text(bomb_immunity)]
-    False -> []
-  }
-
-  list.append(multiplier_effects, immunity_effects)
+  list.map(active_statuses, status.status_to_display_text)
 }
