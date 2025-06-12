@@ -8,6 +8,7 @@ pub type Orb {
   PointCollectorOrb
   BombSurvivorOrb
   MultiplierOrb
+  BombImmunityOrb
 }
 
 pub type MenuScreen {
@@ -42,6 +43,7 @@ pub type OrbType {
   AllCollectorSample
   PointCollectorSample
   BombSurvivorSample
+  BombImmunitySample
 }
 
 pub type Model {
@@ -57,6 +59,7 @@ pub type Model {
     input_value: String,
     pulled_orbs: List(Orb),
     point_multiplier: Int,
+    bomb_immunity: Int,
   )
 }
 

@@ -1,6 +1,6 @@
 import types.{
-  type Orb, AllCollectorOrb, BombOrb, BombSurvivorOrb, HealthOrb, MultiplierOrb,
-  PointCollectorOrb, PointOrb,
+  type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
+  HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb,
 }
 
 // Import int for string conversion
@@ -20,6 +20,7 @@ pub fn orb_display_name(orb: Orb) -> String {
     PointCollectorOrb -> "Point Collector Sample"
     BombSurvivorOrb -> "Bomb Survivor Sample"
     MultiplierOrb -> "Multiplier Sample"
+    BombImmunityOrb -> "Shield Generator Sample"
   }
 }
 
@@ -33,6 +34,7 @@ pub fn orb_result_message(orb: Orb) -> String {
     PointCollectorOrb -> "◉ DATA COLLECTION +?"
     BombSurvivorOrb -> "◆ SURVIVAL BONUS +?"
     MultiplierOrb -> "◈ MULTIPLIER ACTIVATED ×2"
+    BombImmunityOrb -> "◈ SHIELD GENERATOR ACTIVATED"
   }
 }
 
@@ -107,4 +109,8 @@ pub const status_effects_title = "ACTIVE ENHANCEMENTS"
 
 pub fn multiplier_status_text(multiplier: Int) -> String {
   "◈ SIGNAL AMPLIFIER ×" <> int.to_string(multiplier)
+}
+
+pub fn immunity_status_text(remaining: Int) -> String {
+  "◈ HAZARD SHIELD ACTIVE (" <> int.to_string(remaining) <> " remaining)"
 }

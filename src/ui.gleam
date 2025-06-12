@@ -121,6 +121,8 @@ pub fn orb_result_display(
             "text-yellow-700",
             "bg-yellow-50 border-yellow-200",
           )
+        types.BombImmunityOrb ->
+          info_panel(orb_message, "text-cyan-700", "bg-cyan-50 border-cyan-200")
       }
     }
     Some(orb_value), None -> {
@@ -168,6 +170,12 @@ pub fn orb_result_display(
             fallback_message,
             "text-yellow-700",
             "bg-yellow-50 border-yellow-200",
+          )
+        types.BombImmunityOrb ->
+          info_panel(
+            fallback_message,
+            "text-cyan-700",
+            "bg-cyan-50 border-cyan-200",
           )
       }
     }
