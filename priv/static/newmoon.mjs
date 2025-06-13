@@ -1184,6 +1184,28 @@ function map_loop(loop$list, loop$fun, loop$acc) {
 function map(list4, fun) {
   return map_loop(list4, fun, toList([]));
 }
+function index_map_loop(loop$list, loop$fun, loop$index, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let fun = loop$fun;
+    let index4 = loop$index;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return reverse(acc);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let acc$1 = prepend(fun(first$1, index4), acc);
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$index = index4 + 1;
+      loop$acc = acc$1;
+    }
+  }
+}
+function index_map(list4, fun) {
+  return index_map_loop(list4, fun, 0, toList([]));
+}
 function append_loop(loop$first, loop$second) {
   while (true) {
     let first = loop$first;
@@ -4963,7 +4985,7 @@ var BombImmunitySample = class extends CustomType {
 var ChoiceSample = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2) {
+  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode) {
     super();
     this.health = health;
     this.points = points;
@@ -4980,6 +5002,7 @@ var Model = class extends CustomType {
     this.active_statuses = active_statuses;
     this.choice_orb_1 = choice_orb_1;
     this.choice_orb_2 = choice_orb_2;
+    this.dev_mode = dev_mode;
   }
 };
 var StartGame = class extends CustomType {
@@ -5027,6 +5050,8 @@ var ChooseOrb = class extends CustomType {
     super();
     this[0] = $0;
   }
+};
+var ToggleDevMode = class extends CustomType {
 };
 
 // build/dev/javascript/newmoon/display.mjs
@@ -5225,7 +5250,8 @@ function clear_statuses_by_persistence(model, persistence) {
     _record.bomb_immunity,
     remaining_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function decrement_duration(duration) {
@@ -5296,7 +5322,8 @@ function tick_statuses(model) {
     _record.bomb_immunity,
     updated_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function status_to_display_text(status) {
@@ -5430,7 +5457,8 @@ function add_status(model, new_status) {
     _record.bomb_immunity,
     updated_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 
@@ -5480,7 +5508,8 @@ function init(_) {
     0,
     toList([]),
     new None(),
-    new None()
+    new None(),
+    false
   );
 }
 function create_test_bag(test_orb) {
@@ -5534,7 +5563,8 @@ function handle_start_game(model) {
     0,
     _record.active_statuses,
     new None(),
-    new None()
+    new None(),
+    _record.dev_mode
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -5554,7 +5584,8 @@ function handle_go_to_orb_testing(model) {
     _record.bomb_immunity,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_select_orb_type(model, orb_type) {
@@ -5574,7 +5605,8 @@ function handle_select_orb_type(model, orb_type) {
     _record.bomb_immunity,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_update_input_value(model, value2) {
@@ -5594,7 +5626,8 @@ function handle_update_input_value(model, value2) {
     _record.bomb_immunity,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
@@ -5643,7 +5676,8 @@ function handle_confirm_orb_value(model, orb_type) {
         0,
         _record.active_statuses,
         new None(),
-        new None()
+        new None(),
+        _record.dev_mode
       );
     } else {
       return model;
@@ -5669,7 +5703,8 @@ function handle_back_to_orb_testing(model) {
     _record.bomb_immunity,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_start_testing_with_both_statuses(model) {
@@ -5697,7 +5732,8 @@ function handle_start_testing_with_both_statuses(model) {
     0,
     _record.active_statuses,
     new None(),
-    new None()
+    new None(),
+    _record.dev_mode
   );
 }
 function handle_start_testing_with_triple_choice(model) {
@@ -5725,7 +5761,8 @@ function handle_start_testing_with_triple_choice(model) {
     0,
     _record.active_statuses,
     new None(),
-    new None()
+    new None(),
+    _record.dev_mode
   );
 }
 function handle_back_to_main_menu(model) {
@@ -5745,7 +5782,8 @@ function handle_back_to_main_menu(model) {
     _record.bomb_immunity,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_next_level(model) {
@@ -5769,7 +5807,8 @@ function handle_next_level(model) {
     0,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_reset_testing(model) {
@@ -5789,7 +5828,8 @@ function handle_reset_testing(model) {
     _record.bomb_immunity,
     _record.active_statuses,
     _record.choice_orb_1,
-    _record.choice_orb_2
+    _record.choice_orb_2,
+    _record.dev_mode
   );
 }
 function handle_exit_testing(_) {
@@ -5820,7 +5860,8 @@ function check_game_status(model) {
           _record.bomb_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
       } else if ($3) {
         let _record = model;
@@ -5839,7 +5880,8 @@ function check_game_status(model) {
           _record.bomb_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
       } else if ($4) {
         let _record = model;
@@ -5858,7 +5900,8 @@ function check_game_status(model) {
           _record.bomb_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
       } else {
         return model;
@@ -5889,7 +5932,8 @@ function check_game_status(model) {
           _record.bomb_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
       } else if ($3) {
         let _record = model;
@@ -5908,7 +5952,8 @@ function check_game_status(model) {
           _record.bomb_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
       } else if ($4) {
         let _record = model;
@@ -5927,7 +5972,8 @@ function check_game_status(model) {
           _record.bomb_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
       } else {
         return model;
@@ -5938,6 +5984,27 @@ function check_game_status(model) {
   } else {
     return model;
   }
+}
+function handle_toggle_dev_mode(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    !model.dev_mode
+  );
 }
 function handle_choice_orb_activation(model) {
   let $ = model.bag;
@@ -5964,7 +6031,8 @@ function handle_choice_orb_activation(model) {
         _record.bomb_immunity,
         _record.active_statuses,
         _record.choice_orb_1,
-        _record.choice_orb_2
+        _record.choice_orb_2,
+        _record.dev_mode
       );
       let temp_model = _block;
       return handle_pull_orb(temp_model);
@@ -6009,7 +6077,8 @@ function handle_choice_orb_activation(model) {
         _record.bomb_immunity,
         _record.active_statuses,
         new Some(first_choice),
-        new Some(second_choice)
+        new Some(second_choice),
+        _record.dev_mode
       );
       let choice_model = _block$1;
       return choice_model;
@@ -6049,7 +6118,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6079,7 +6149,8 @@ function handle_pull_orb(model) {
               _record2.bomb_immunity,
               _record2.active_statuses,
               _record2.choice_orb_1,
-              _record2.choice_orb_2
+              _record2.choice_orb_2,
+              _record2.dev_mode
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -6105,7 +6176,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6130,7 +6202,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6158,7 +6231,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6186,7 +6260,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6219,7 +6294,8 @@ function handle_pull_orb(model) {
               _record2.bomb_immunity,
               _record2.active_statuses,
               _record2.choice_orb_1,
-              _record2.choice_orb_2
+              _record2.choice_orb_2,
+              _record2.dev_mode
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -6249,7 +6325,8 @@ function handle_pull_orb(model) {
               3,
               _record2.active_statuses,
               _record2.choice_orb_1,
-              _record2.choice_orb_2
+              _record2.choice_orb_2,
+              _record2.dev_mode
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -6305,7 +6382,8 @@ function handle_pull_orb(model) {
           new_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -6355,7 +6433,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6385,7 +6464,8 @@ function handle_pull_orb(model) {
               _record2.bomb_immunity,
               _record2.active_statuses,
               _record2.choice_orb_1,
-              _record2.choice_orb_2
+              _record2.choice_orb_2,
+              _record2.dev_mode
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -6411,7 +6491,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6436,7 +6517,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6464,7 +6546,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6492,7 +6575,8 @@ function handle_pull_orb(model) {
             _record2.bomb_immunity,
             _record2.active_statuses,
             _record2.choice_orb_1,
-            _record2.choice_orb_2
+            _record2.choice_orb_2,
+            _record2.dev_mode
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6525,7 +6609,8 @@ function handle_pull_orb(model) {
               _record2.bomb_immunity,
               _record2.active_statuses,
               _record2.choice_orb_1,
-              _record2.choice_orb_2
+              _record2.choice_orb_2,
+              _record2.dev_mode
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -6555,7 +6640,8 @@ function handle_pull_orb(model) {
               3,
               _record2.active_statuses,
               _record2.choice_orb_1,
-              _record2.choice_orb_2
+              _record2.choice_orb_2,
+              _record2.dev_mode
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -6611,7 +6697,8 @@ function handle_pull_orb(model) {
           new_immunity,
           _record.active_statuses,
           _record.choice_orb_1,
-          _record.choice_orb_2
+          _record.choice_orb_2,
+          _record.dev_mode
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -6677,7 +6764,8 @@ function handle_choose_orb(model, choice_index) {
             _record.bomb_immunity,
             _record.active_statuses,
             new None(),
-            new None()
+            new None(),
+            _record.dev_mode
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -6721,7 +6809,8 @@ function handle_choose_orb(model, choice_index) {
             _record.bomb_immunity,
             _record.active_statuses,
             new None(),
-            new None()
+            new None(),
+            _record.dev_mode
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -6770,9 +6859,11 @@ function update2(model, msg) {
     return handle_reset_testing(model);
   } else if (msg instanceof ExitTesting) {
     return handle_exit_testing(model);
-  } else {
+  } else if (msg instanceof ChooseOrb) {
     let choice_index = msg[0];
     return handle_choose_orb(model, choice_index);
+  } else {
+    return handle_toggle_dev_mode(model);
   }
 }
 
@@ -7347,6 +7438,317 @@ function choice_panel(title, first_option, second_option, first_msg, second_msg)
     ])
   );
 }
+function format_duration_for_dev(duration) {
+  if (duration instanceof Permanent) {
+    return "Permanent";
+  } else if (duration instanceof Countdown) {
+    let n = duration[0];
+    return "Countdown(" + to_string(n) + ")";
+  } else {
+    let n = duration[0];
+    return "Triggered(" + to_string(n) + ")";
+  }
+}
+function format_status_for_dev_display(status) {
+  if (status instanceof PointMultiplier) {
+    let multiplier = status.multiplier;
+    let duration = status.duration;
+    return "PointMultiplier(\xD7" + to_string(multiplier) + ", " + format_duration_for_dev(
+      duration
+    ) + ")";
+  } else {
+    let duration = status.duration;
+    return "BombImmunity(" + format_duration_for_dev(duration) + ")";
+  }
+}
+function render_active_statuses(active_statuses) {
+  return div(
+    toList([]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light"
+          )
+        ]),
+        toList([text3("ACTIVE STATUS EFFECTS")])
+      ),
+      div(
+        toList([class$("space-y-1")]),
+        (() => {
+          let $ = is_empty(active_statuses);
+          if ($) {
+            return toList([
+              div(
+                toList([class$("text-yellow-600 text-xs")]),
+                toList([text3("No active effects")])
+              )
+            ]);
+          } else {
+            return map(
+              active_statuses,
+              (status) => {
+                return div(
+                  toList([
+                    class$("flex items-center text-yellow-800")
+                  ]),
+                  toList([
+                    span(
+                      toList([class$("mr-2")]),
+                      toList([text3("\u2022")])
+                    ),
+                    span(
+                      toList([class$("font-medium")]),
+                      toList([text3(format_status_for_dev_display(status))])
+                    )
+                  ])
+                );
+              }
+            );
+          }
+        })()
+      )
+    ])
+  );
+}
+function format_orb_for_dev_display(orb) {
+  if (orb instanceof PointOrb) {
+    let value2 = orb[0];
+    return "Point(" + to_string(value2) + ")";
+  } else if (orb instanceof BombOrb) {
+    let value2 = orb[0];
+    return "Bomb(" + to_string(value2) + ")";
+  } else if (orb instanceof HealthOrb) {
+    let value2 = orb[0];
+    return "Health(" + to_string(value2) + ")";
+  } else if (orb instanceof AllCollectorOrb) {
+    return "AllCollector";
+  } else if (orb instanceof PointCollectorOrb) {
+    return "PointCollector";
+  } else if (orb instanceof BombSurvivorOrb) {
+    return "BombSurvivor";
+  } else if (orb instanceof MultiplierOrb) {
+    return "Multiplier";
+  } else if (orb instanceof BombImmunityOrb) {
+    return "BombImmunity";
+  } else {
+    return "Choice";
+  }
+}
+function render_choice_mode_info(choice_orb_1, choice_orb_2) {
+  return div(
+    toList([]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light"
+          )
+        ]),
+        toList([text3("CHOICE MODE ACTIVE")])
+      ),
+      div(
+        toList([class$("space-y-1")]),
+        toList([
+          (() => {
+            if (choice_orb_1 instanceof Some) {
+              let orb = choice_orb_1[0];
+              return div(
+                toList([class$("flex items-center text-yellow-800")]),
+                toList([
+                  span(
+                    toList([class$("mr-2 font-medium")]),
+                    toList([text3("A:")])
+                  ),
+                  span(
+                    toList([class$("font-medium")]),
+                    toList([text3(format_orb_for_dev_display(orb))])
+                  )
+                ])
+              );
+            } else {
+              return div(
+                toList([class$("text-yellow-600")]),
+                toList([text3("A: No orb")])
+              );
+            }
+          })(),
+          (() => {
+            if (choice_orb_2 instanceof Some) {
+              let orb = choice_orb_2[0];
+              return div(
+                toList([class$("flex items-center text-yellow-800")]),
+                toList([
+                  span(
+                    toList([class$("mr-2 font-medium")]),
+                    toList([text3("B:")])
+                  ),
+                  span(
+                    toList([class$("font-medium")]),
+                    toList([text3(format_orb_for_dev_display(orb))])
+                  )
+                ])
+              );
+            } else {
+              return div(
+                toList([class$("text-yellow-600")]),
+                toList([text3("B: No orb")])
+              );
+            }
+          })()
+        ])
+      )
+    ])
+  );
+}
+function render_container_contents(bag) {
+  return div(
+    toList([]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light"
+          )
+        ]),
+        toList([text3("CONTAINER CONTENTS")])
+      ),
+      div(
+        toList([class$("space-y-1 max-h-32 overflow-y-auto")]),
+        index_map(
+          bag,
+          (orb, index4) => {
+            return div(
+              toList([class$("flex items-center text-yellow-800")]),
+              toList([
+                span(
+                  toList([class$("mr-2 w-6 text-right")]),
+                  toList([text3(to_string(index4 + 1) + ".")])
+                ),
+                span(
+                  toList([class$("font-medium")]),
+                  toList([text3(format_orb_for_dev_display(orb))])
+                )
+              ])
+            );
+          }
+        )
+      )
+    ])
+  );
+}
+function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active_statuses) {
+  let _block;
+  let $ = is_empty(active_statuses);
+  if ($) {
+    _block = toList([]);
+  } else {
+    _block = toList([
+      render_active_statuses(active_statuses),
+      div(
+        toList([class$("mt-3 pt-3 border-t border-yellow-300")]),
+        toList([])
+      )
+    ]);
+  }
+  let status_section = _block;
+  let _block$1;
+  if (screen instanceof Testing) {
+    let $1 = screen[0];
+    if ($1 instanceof TestingChoosing) {
+      _block$1 = toList([
+        render_choice_mode_info(choice_orb_1, choice_orb_2),
+        div(
+          toList([class$("mt-3 pt-3 border-t border-yellow-300")]),
+          toList([])
+        )
+      ]);
+    } else {
+      _block$1 = toList([]);
+    }
+  } else if (screen instanceof Game) {
+    let $1 = screen[0];
+    if ($1 instanceof Choosing) {
+      _block$1 = toList([
+        render_choice_mode_info(choice_orb_1, choice_orb_2),
+        div(
+          toList([class$("mt-3 pt-3 border-t border-yellow-300")]),
+          toList([])
+        )
+      ]);
+    } else {
+      _block$1 = toList([]);
+    }
+  } else {
+    _block$1 = toList([]);
+  }
+  let choice_section = _block$1;
+  let container_section = toList([render_container_contents(bag)]);
+  return fragment2(
+    (() => {
+      let _pipe = status_section;
+      let _pipe$1 = append(_pipe, choice_section);
+      return append(_pipe$1, container_section);
+    })()
+  );
+}
+function dev_mode_panel(enabled, bag, screen, choice_orb_1, choice_orb_2, active_statuses) {
+  let _block;
+  if (enabled) {
+    _block = toList([
+      div(
+        toList([
+          class$(
+            "mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded font-mono text-xs w-64"
+          )
+        ]),
+        toList([
+          render_dev_mode_content(
+            screen,
+            bag,
+            choice_orb_1,
+            choice_orb_2,
+            active_statuses
+          )
+        ])
+      )
+    ]);
+  } else {
+    _block = toList([]);
+  }
+  let dev_display = _block;
+  return div(
+    toList([class$("fixed top-4 right-4 z-50")]),
+    prepend(
+      button(
+        toList([
+          class$(
+            (() => {
+              if (enabled) {
+                return "bg-yellow-600 hover:bg-yellow-700 text-white font-mono text-xs py-2 px-3 rounded border-2 border-yellow-500";
+              } else {
+                return "bg-gray-600 hover:bg-gray-700 text-white font-mono text-xs py-2 px-3 rounded border-2 border-gray-500";
+              }
+            })()
+          ),
+          on_click(new ToggleDevMode())
+        ]),
+        toList([
+          text3(
+            (() => {
+              if (enabled) {
+                return "DEV ON";
+              } else {
+                return "DEV OFF";
+              }
+            })()
+          )
+        ])
+      ),
+      dev_display
+    )
+  );
+}
 
 // build/dev/javascript/newmoon/view.mjs
 function render_game_stats(health, points, milestone, level) {
@@ -7807,20 +8209,21 @@ function render_testing_choosing_view(last_orb, last_orb_message, bag, active_st
   }
 }
 function view(model) {
+  let _block;
   let $ = model.screen;
   if ($ instanceof Menu) {
-    return app_container(
+    _block = app_container(
       game_card(toList([game_header(), render_main_menu_view()]))
     );
   } else if ($ instanceof Testing) {
     let $1 = $[0];
     if ($1 instanceof OrbSelection) {
-      return app_container(
+      _block = app_container(
         game_card(toList([game_header(), render_orb_testing_view()]))
       );
     } else if ($1 instanceof ValueConfiguration) {
       let orb_type = $1[0];
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7829,7 +8232,7 @@ function view(model) {
         )
       );
     } else if ($1 instanceof Gameplay) {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7851,7 +8254,7 @@ function view(model) {
         )
       );
     } else if ($1 instanceof Success) {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7874,7 +8277,7 @@ function view(model) {
         )
       );
     } else if ($1 instanceof Failure) {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7896,7 +8299,7 @@ function view(model) {
         )
       );
     } else {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7923,7 +8326,7 @@ function view(model) {
   } else {
     let $1 = $[0];
     if ($1 instanceof Playing) {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7944,7 +8347,7 @@ function view(model) {
         )
       );
     } else if ($1 instanceof Victory) {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7966,7 +8369,7 @@ function view(model) {
         )
       );
     } else if ($1 instanceof Defeat) {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -7987,7 +8390,7 @@ function view(model) {
         )
       );
     } else {
-      return app_container(
+      _block = app_container(
         game_card(
           toList([
             game_header(),
@@ -8011,6 +8414,20 @@ function view(model) {
       );
     }
   }
+  let main_content = _block;
+  return fragment2(
+    toList([
+      main_content,
+      dev_mode_panel(
+        model.dev_mode,
+        model.bag,
+        model.screen,
+        model.choice_orb_1,
+        model.choice_orb_2,
+        model.active_statuses
+      )
+    ])
+  );
 }
 
 // build/dev/javascript/newmoon/newmoon.mjs

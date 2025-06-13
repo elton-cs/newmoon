@@ -18,7 +18,7 @@ import ui
 
 pub fn view(model: Model) -> Element(Msg) {
   // Clear pattern matching on model fields to determine view
-  case model.screen {
+  let main_content = case model.screen {
     Menu(Main) ->
       ui.app_container(
         ui.game_card([ui.game_header(), render_main_menu_view()]),
@@ -197,6 +197,19 @@ pub fn view(model: Model) -> Element(Msg) {
         ]),
       )
   }
+
+  // Wrap main content with dev mode components
+  element.fragment([
+    main_content,
+    ui.dev_mode_panel(
+      model.dev_mode,
+      model.bag,
+      model.screen,
+      model.choice_orb_1,
+      model.choice_orb_2,
+      model.active_statuses,
+    ),
+  ])
 }
 
 // Game Stats - takes explicit values instead of full model

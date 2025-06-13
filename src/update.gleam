@@ -13,7 +13,7 @@ import types.{
   MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorOrb,
   PointCollectorSample, PointOrb, PullOrb, ResetTesting, RestartGame,
   SelectOrbType, StartGame, StartTestingWithBothStatuses,
-  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
+  StartTestingWithTripleChoice, Success, Testing, TestingChoosing, ToggleDevMode,
   UpdateInputValue, ValueConfiguration, Victory,
 }
 
@@ -34,6 +34,7 @@ pub fn init(_) -> Model {
     active_statuses: [],
     choice_orb_1: None,
     choice_orb_2: None,
+    dev_mode: False,
   )
 }
 
@@ -107,6 +108,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
     RestartGame -> init(Nil)
     ResetTesting -> handle_reset_testing(model)
     ExitTesting -> handle_exit_testing(model)
+    ToggleDevMode -> handle_toggle_dev_mode(model)
   }
 }
 
@@ -504,4 +506,8 @@ fn handle_choose_orb(model: Model, choice_index: Int) -> Model {
     }
     _, _, _ -> model
   }
+}
+
+fn handle_toggle_dev_mode(model: Model) -> Model {
+  Model(..model, dev_mode: !model.dev_mode)
 }

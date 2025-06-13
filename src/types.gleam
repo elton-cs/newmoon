@@ -84,6 +84,7 @@ pub type Model {
     active_statuses: List(StatusEffect),
     choice_orb_1: Option(Orb),
     choice_orb_2: Option(Orb),
+    dev_mode: Bool,
   )
 }
 
@@ -103,4 +104,5 @@ pub type Msg {
   ResetTesting
   ExitTesting
   ChooseOrb(Int)
+  ToggleDevMode
 }

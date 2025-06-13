@@ -8,9 +8,11 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import types.{
-  type Msg, type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  ChoiceOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb, PullOrb,
-  UpdateInputValue,
+  type Msg, type Orb, type Screen, type StatusDuration, type StatusEffect,
+  AllCollectorOrb, BombImmunity, BombImmunityOrb, BombOrb, BombSurvivorOrb,
+  ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb, Permanent,
+  PointCollectorOrb, PointMultiplier, PointOrb, PullOrb, Testing,
+  TestingChoosing, ToggleDevMode, Triggered, UpdateInputValue,
 }
 
 // Layout Components
@@ -501,4 +503,228 @@ pub fn choice_panel(
       ),
     ]),
   ])
+}
+
+// Dev Mode Components
+
+pub fn dev_mode_panel(
+  enabled: Bool,
+  bag: List(Orb),
+  screen: Screen,
+  choice_orb_1: Option(Orb),
+  choice_orb_2: Option(Orb),
+  active_statuses: List(StatusEffect),
+) -> Element(Msg) {
+  let dev_display = case enabled {
+    True -> [
+      html.div(
+        [
+          attribute.class(
+            "mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded font-mono text-xs w-64",
+          ),
+        ],
+        [
+          render_dev_mode_content(
+            screen,
+            bag,
+            choice_orb_1,
+            choice_orb_2,
+            active_statuses,
+          ),
+        ],
+      ),
+    ]
+    False -> []
+  }
+
+  html.div([attribute.class("fixed top-4 right-4 z-50")], [
+    html.button(
+      [
+        attribute.class(case enabled {
+          True ->
+            "bg-yellow-600 hover:bg-yellow-700 text-white font-mono text-xs py-2 px-3 rounded border-2 border-yellow-500"
+          False ->
+            "bg-gray-600 hover:bg-gray-700 text-white font-mono text-xs py-2 px-3 rounded border-2 border-gray-500"
+        }),
+        event.on_click(ToggleDevMode),
+      ],
+      [
+        html.text(case enabled {
+          True -> "DEV ON"
+          False -> "DEV OFF"
+        }),
+      ],
+    ),
+    ..dev_display
+  ])
+}
+
+fn render_dev_mode_content(
+  screen: Screen,
+  bag: List(Orb),
+  choice_orb_1: Option(Orb),
+  choice_orb_2: Option(Orb),
+  active_statuses: List(StatusEffect),
+) -> Element(Msg) {
+  let status_section = case list.is_empty(active_statuses) {
+    False -> [
+      render_active_statuses(active_statuses),
+      html.div([attribute.class("mt-3 pt-3 border-t border-yellow-300")], []),
+    ]
+    True -> []
+  }
+
+  let choice_section = case screen {
+    Game(Choosing) | Testing(TestingChoosing) -> [
+      render_choice_mode_info(choice_orb_1, choice_orb_2),
+      html.div([attribute.class("mt-3 pt-3 border-t border-yellow-300")], []),
+    ]
+    _ -> []
+  }
+
+  let container_section = [render_container_contents(bag)]
+
+  element.fragment(
+    status_section
+    |> list.append(choice_section)
+    |> list.append(container_section),
+  )
+}
+
+fn render_choice_mode_info(
+  choice_orb_1: Option(Orb),
+  choice_orb_2: Option(Orb),
+) -> Element(Msg) {
+  html.div([], [
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light",
+        ),
+      ],
+      [html.text("CHOICE MODE ACTIVE")],
+    ),
+    html.div([attribute.class("space-y-1")], [
+      case choice_orb_1 {
+        Some(orb) ->
+          html.div([attribute.class("flex items-center text-yellow-800")], [
+            html.span([attribute.class("mr-2 font-medium")], [html.text("A:")]),
+            html.span([attribute.class("font-medium")], [
+              html.text(format_orb_for_dev_display(orb)),
+            ]),
+          ])
+        None ->
+          html.div([attribute.class("text-yellow-600")], [
+            html.text("A: No orb"),
+          ])
+      },
+      case choice_orb_2 {
+        Some(orb) ->
+          html.div([attribute.class("flex items-center text-yellow-800")], [
+            html.span([attribute.class("mr-2 font-medium")], [html.text("B:")]),
+            html.span([attribute.class("font-medium")], [
+              html.text(format_orb_for_dev_display(orb)),
+            ]),
+          ])
+        None ->
+          html.div([attribute.class("text-yellow-600")], [
+            html.text("B: No orb"),
+          ])
+      },
+    ]),
+  ])
+}
+
+fn render_container_contents(bag: List(Orb)) -> Element(Msg) {
+  html.div([], [
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light",
+        ),
+      ],
+      [html.text("CONTAINER CONTENTS")],
+    ),
+    html.div(
+      [attribute.class("space-y-1 max-h-32 overflow-y-auto")],
+      list.index_map(bag, fn(orb, index) {
+        html.div([attribute.class("flex items-center text-yellow-800")], [
+          html.span([attribute.class("mr-2 w-6 text-right")], [
+            html.text(int.to_string(index + 1) <> "."),
+          ]),
+          html.span([attribute.class("font-medium")], [
+            html.text(format_orb_for_dev_display(orb)),
+          ]),
+        ])
+      }),
+    ),
+  ])
+}
+
+fn render_active_statuses(active_statuses: List(StatusEffect)) -> Element(Msg) {
+  html.div([], [
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light",
+        ),
+      ],
+      [html.text("ACTIVE STATUS EFFECTS")],
+    ),
+    html.div(
+      [attribute.class("space-y-1")],
+      case list.is_empty(active_statuses) {
+        True -> [
+          html.div([attribute.class("text-yellow-600 text-xs")], [
+            html.text("No active effects"),
+          ]),
+        ]
+        False ->
+          list.map(active_statuses, fn(status) {
+            html.div([attribute.class("flex items-center text-yellow-800")], [
+              html.span([attribute.class("mr-2")], [html.text("•")]),
+              html.span([attribute.class("font-medium")], [
+                html.text(format_status_for_dev_display(status)),
+              ]),
+            ])
+          })
+      },
+    ),
+  ])
+}
+
+fn format_status_for_dev_display(status: StatusEffect) -> String {
+  // Technical format for dev display
+  case status {
+    PointMultiplier(multiplier, duration) ->
+      "PointMultiplier(×"
+      <> int.to_string(multiplier)
+      <> ", "
+      <> format_duration_for_dev(duration)
+      <> ")"
+    BombImmunity(duration) ->
+      "BombImmunity(" <> format_duration_for_dev(duration) <> ")"
+  }
+}
+
+fn format_duration_for_dev(duration: StatusDuration) -> String {
+  case duration {
+    Permanent -> "Permanent"
+    Countdown(n) -> "Countdown(" <> int.to_string(n) <> ")"
+    Triggered(n) -> "Triggered(" <> int.to_string(n) <> ")"
+  }
+}
+
+fn format_orb_for_dev_display(orb: Orb) -> String {
+  case orb {
+    PointOrb(value) -> "Point(" <> int.to_string(value) <> ")"
+    BombOrb(value) -> "Bomb(" <> int.to_string(value) <> ")"
+    HealthOrb(value) -> "Health(" <> int.to_string(value) <> ")"
+    AllCollectorOrb -> "AllCollector"
+    PointCollectorOrb -> "PointCollector"
+    BombSurvivorOrb -> "BombSurvivor"
+    MultiplierOrb -> "Multiplier"
+    BombImmunityOrb -> "BombImmunity"
+    ChoiceOrb -> "Choice"
+  }
 }
