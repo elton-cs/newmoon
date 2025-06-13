@@ -5,14 +5,17 @@ import gleam/option.{type Option, None, Some}
 import lustre/element.{type Element}
 import status
 import types.{
-  type Model, type Msg, type OrbType, AllCollectorSample, BackToMainMenu,
-  BackToOrbTesting, BombImmunitySample, BombSurvivorSample, ChoiceSample,
-  ChooseOrb, Choosing, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure,
-  Game, Gameplay, GoToOrbTesting, HazardSample, HealthSample, Main, Menu,
-  MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
-  ResetTesting, RestartGame, SelectOrbType, StartGame,
+  type Model, type Msg, type OrbType, AcceptFate, AcceptRisk, AllCollectorSample,
+  ApplyRiskEffects, BackToMainMenu, BackToOrbTesting, BombImmunitySample,
+  BombSurvivorSample, ChoiceSample, ChooseOrb, Choosing, ConfirmOrbValue,
+  DataSample, Defeat, ExitRisk, ExitTesting, Failure, Game, Gameplay,
+  GoToOrbTesting, HazardSample, HealthSample, Main, Menu, MultiplierSample,
+  NextLevel, OrbSelection, Playing, PointCollectorSample, PullRiskOrb,
+  ResetTesting, RestartGame, RiskAccept, RiskDied, RiskPlaying, RiskReveal,
+  RiskSample, RiskSurvived, SelectOrbType, StartGame,
   StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, ValueConfiguration, Victory,
+  TestingChoosing, TestingRiskAccept, TestingRiskDied, TestingRiskPlaying,
+  TestingRiskReveal, TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
 
@@ -174,6 +177,51 @@ pub fn view(model: Model) -> Element(Msg) {
           ),
         ]),
       )
+    Game(RiskAccept) ->
+      ui.app_container(
+        ui.game_card([ui.game_header(), render_risk_accept_view()]),
+      )
+    Game(RiskReveal) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_risk_reveal_view(model.risk_orbs),
+        ]),
+      )
+    Game(RiskPlaying) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_risk_playing_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.risk_orbs,
+            model.risk_health,
+            model.risk_pulled_orbs,
+          ),
+        ]),
+      )
+    Game(RiskSurvived) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_risk_survived_view(
+            model.risk_accumulated_effects,
+            model.risk_pulled_orbs,
+          ),
+        ]),
+      )
+    Game(RiskDied) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_risk_died_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.risk_pulled_orbs,
+          ),
+        ]),
+      )
     Testing(TestingChoosing) ->
       ui.app_container(
         ui.game_card([
@@ -193,6 +241,59 @@ pub fn view(model: Model) -> Element(Msg) {
             model.choice_orb_1,
             model.choice_orb_2,
             model.pulled_orbs,
+          ),
+        ]),
+      )
+    Testing(TestingRiskAccept) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_testing_risk_accept_view(),
+        ]),
+      )
+    Testing(TestingRiskReveal) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_testing_risk_reveal_view(model.risk_orbs),
+        ]),
+      )
+    Testing(TestingRiskPlaying) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_testing_risk_playing_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.risk_orbs,
+            model.risk_health,
+            model.risk_pulled_orbs,
+          ),
+        ]),
+      )
+    Testing(TestingRiskSurvived) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_testing_risk_survived_view(
+            model.risk_accumulated_effects,
+            model.risk_pulled_orbs,
+          ),
+        ]),
+      )
+    Testing(TestingRiskDied) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_testing_risk_died_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.risk_pulled_orbs,
           ),
         ]),
       )
@@ -364,6 +465,7 @@ fn render_orb_testing_view() -> Element(Msg) {
       SelectOrbType(BombImmunitySample),
     ),
     ui.orb_selection_button("Choice Portal Sample", SelectOrbType(ChoiceSample)),
+    ui.orb_selection_button("Fate Sample", SelectOrbType(RiskSample)),
     ui.orb_selection_button("Both Status Effects", StartTestingWithBothStatuses),
     ui.orb_selection_button("Triple Choice Test", StartTestingWithTripleChoice),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
@@ -385,6 +487,7 @@ fn render_orb_value_selection_view(
     BombSurvivorSample -> "Bomb Survivor Sample"
     BombImmunitySample -> "Shield Generator Sample"
     ChoiceSample -> "Choice Portal Sample"
+    RiskSample -> "Fate Sample"
   }
   let description = case orb_type {
     DataSample -> "Enter the data points this sample will provide"
@@ -401,6 +504,8 @@ fn render_orb_value_selection_view(
     BombImmunitySample ->
       "Activates hazard shield for 3 extractions, returning hazards to container"
     ChoiceSample -> "Presents a choice between two samples from the container"
+    RiskSample ->
+      "High-risk sample that extracts 5 samples at once with 2× point bonus if survived"
   }
 
   case orb_type {
@@ -420,7 +525,8 @@ fn render_orb_value_selection_view(
     | PointCollectorSample
     | BombSurvivorSample
     | BombImmunitySample
-    | ChoiceSample ->
+    | ChoiceSample
+    | RiskSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",
@@ -592,4 +698,175 @@ fn render_testing_choosing_view(
         ui.secondary_button(display.exit_testing_text, ExitTesting),
       ])
   }
+}
+
+// Risk Mode Views
+
+fn render_risk_accept_view() -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      "THE FATES HAVE SPOKEN",
+      "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
+      "bg-red-50 border-red-200",
+    ),
+    ui.primary_button("ACCEPT FATE", AcceptRisk(True)),
+    ui.secondary_button("DECLINE RISK", AcceptRisk(False)),
+  ])
+}
+
+fn render_risk_reveal_view(risk_orbs: List(types.Orb)) -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      "BEHOLD YOUR DESTINY",
+      "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
+      "bg-orange-50 border-orange-200",
+    ),
+    ui.risk_orbs_display(risk_orbs),
+    ui.primary_button("FACE THE UNKNOWN", AcceptFate),
+  ])
+}
+
+fn render_risk_playing_view(
+  last_orb: Option(types.Orb),
+  last_orb_message: Option(String),
+  risk_orbs: List(types.Orb),
+  risk_health: Int,
+  risk_pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  let orbs_left = list.length(risk_orbs)
+  let is_disabled = list.is_empty(risk_orbs)
+
+  element.fragment([
+    ui.status_panel(
+      "RISK MODE ACTIVE",
+      "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
+      "bg-red-50 border-red-200",
+    ),
+    ui.risk_health_display(risk_health),
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.pulled_orbs_log(risk_pulled_orbs),
+    ui.risk_container_display(orbs_left),
+    ui.risk_extract_button(is_disabled),
+  ])
+}
+
+fn render_risk_survived_view(
+  risk_accumulated_effects: types.RiskEffects,
+  risk_pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      "YOU SURVIVED THE VOID",
+      "The fates smiled upon you. Your enhanced rewards await application.",
+      "bg-green-50 border-green-200",
+    ),
+    ui.risk_effects_summary(risk_accumulated_effects),
+    ui.pulled_orbs_log(risk_pulled_orbs),
+    ui.primary_button("CLAIM REWARDS", ApplyRiskEffects),
+  ])
+}
+
+fn render_risk_died_view(
+  last_orb: Option(types.Orb),
+  last_orb_message: Option(String),
+  risk_pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  element.fragment([
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.pulled_orbs_log(risk_pulled_orbs),
+    ui.failure_button("RESTART MISSION", RestartGame),
+    ui.failure_panel(
+      "YOU RISKED OUT",
+      "THE VOID CONSUMED YOU. YOUR GAMBLE HAS ENDED IN DARKNESS.",
+    ),
+  ])
+}
+
+// Testing Risk Mode Views
+
+fn render_testing_risk_accept_view() -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      "THE FATES HAVE SPOKEN",
+      "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
+      "bg-red-50 border-red-200",
+    ),
+    ui.primary_button("ACCEPT FATE", AcceptRisk(True)),
+    ui.secondary_button("DECLINE RISK", AcceptRisk(False)),
+    ui.secondary_button("RESTART TESTING", ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
+  ])
+}
+
+fn render_testing_risk_reveal_view(risk_orbs: List(types.Orb)) -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      "BEHOLD YOUR DESTINY",
+      "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
+      "bg-orange-50 border-orange-200",
+    ),
+    ui.risk_orbs_display(risk_orbs),
+    ui.primary_button("FACE THE UNKNOWN", AcceptFate),
+    ui.secondary_button("RESTART TESTING", ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
+  ])
+}
+
+fn render_testing_risk_playing_view(
+  last_orb: Option(types.Orb),
+  last_orb_message: Option(String),
+  risk_orbs: List(types.Orb),
+  risk_health: Int,
+  risk_pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  let orbs_left = list.length(risk_orbs)
+  let is_disabled = list.is_empty(risk_orbs)
+
+  element.fragment([
+    ui.status_panel(
+      "RISK MODE ACTIVE",
+      "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
+      "bg-red-50 border-red-200",
+    ),
+    ui.risk_health_display(risk_health),
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.pulled_orbs_log(risk_pulled_orbs),
+    ui.risk_container_display(orbs_left),
+    ui.risk_extract_button(is_disabled),
+  ])
+}
+
+fn render_testing_risk_survived_view(
+  risk_accumulated_effects: types.RiskEffects,
+  risk_pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      "YOU SURVIVED THE VOID",
+      "The fates smiled upon you. Your enhanced rewards await application.",
+      "bg-green-50 border-green-200",
+    ),
+    ui.risk_effects_summary(risk_accumulated_effects),
+    ui.pulled_orbs_log(risk_pulled_orbs),
+    ui.primary_button("CLAIM REWARDS", ApplyRiskEffects),
+    ui.secondary_button("RESTART TESTING", ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
+  ])
+}
+
+fn render_testing_risk_died_view(
+  last_orb: Option(types.Orb),
+  last_orb_message: Option(String),
+  risk_pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  element.fragment([
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.pulled_orbs_log(risk_pulled_orbs),
+    ui.secondary_button("RESTART TESTING", ResetTesting),
+    ui.secondary_button(display.exit_testing_text, ExitTesting),
+    ui.failure_panel(
+      "YOU RISKED OUT",
+      "THE VOID CONSUMED YOU. YOUR GAMBLE HAS ENDED IN DARKNESS.",
+    ),
+  ])
 }

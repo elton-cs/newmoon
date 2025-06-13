@@ -17,6 +17,10 @@ pub type StatusPersistence {
   Persistent
 }
 
+pub type RiskEffects {
+  RiskEffects(health_gained: Int, points_gained: Int, special_orbs: List(Orb))
+}
+
 pub type Orb {
   PointOrb(Int)
   BombOrb(Int)
@@ -27,6 +31,7 @@ pub type Orb {
   MultiplierOrb
   BombImmunityOrb
   ChoiceOrb
+  RiskOrb
 }
 
 pub type MenuScreen {
@@ -40,6 +45,11 @@ pub type TestingScreen {
   Success
   Failure
   TestingChoosing
+  TestingRiskAccept
+  TestingRiskReveal
+  TestingRiskPlaying
+  TestingRiskSurvived
+  TestingRiskDied
 }
 
 pub type GameScreen {
@@ -47,6 +57,11 @@ pub type GameScreen {
   Victory
   Defeat
   Choosing
+  RiskAccept
+  RiskReveal
+  RiskPlaying
+  RiskSurvived
+  RiskDied
 }
 
 pub type Screen {
@@ -65,6 +80,7 @@ pub type OrbType {
   BombSurvivorSample
   BombImmunitySample
   ChoiceSample
+  RiskSample
 }
 
 pub type Model {
@@ -85,6 +101,10 @@ pub type Model {
     choice_orb_1: Option(Orb),
     choice_orb_2: Option(Orb),
     dev_mode: Bool,
+    risk_orbs: List(Orb),
+    risk_pulled_orbs: List(Orb),
+    risk_accumulated_effects: RiskEffects,
+    risk_health: Int,
   )
 }
 
@@ -105,4 +125,9 @@ pub type Msg {
   ExitTesting
   ChooseOrb(Int)
   ToggleDevMode
+  AcceptRisk(Bool)
+  AcceptFate
+  PullRiskOrb
+  ApplyRiskEffects
+  ExitRisk
 }

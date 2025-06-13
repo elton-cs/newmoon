@@ -1206,6 +1206,48 @@ function index_map_loop(loop$list, loop$fun, loop$index, loop$acc) {
 function index_map(list4, fun) {
   return index_map_loop(list4, fun, 0, toList([]));
 }
+function drop(loop$list, loop$n) {
+  while (true) {
+    let list4 = loop$list;
+    let n = loop$n;
+    let $ = n <= 0;
+    if ($) {
+      return list4;
+    } else {
+      if (list4 instanceof Empty) {
+        return toList([]);
+      } else {
+        let rest$1 = list4.tail;
+        loop$list = rest$1;
+        loop$n = n - 1;
+      }
+    }
+  }
+}
+function take_loop(loop$list, loop$n, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let n = loop$n;
+    let acc = loop$acc;
+    let $ = n <= 0;
+    if ($) {
+      return reverse(acc);
+    } else {
+      if (list4 instanceof Empty) {
+        return reverse(acc);
+      } else {
+        let first$1 = list4.head;
+        let rest$1 = list4.tail;
+        loop$list = rest$1;
+        loop$n = n - 1;
+        loop$acc = prepend(first$1, acc);
+      }
+    }
+  }
+}
+function take(list4, n) {
+  return take_loop(list4, n, toList([]));
+}
 function append_loop(loop$first, loop$second) {
   while (true) {
     let first = loop$first;
@@ -1996,6 +2038,16 @@ function is_ok(result) {
   }
 }
 
+// build/dev/javascript/gleam_json/gleam_json_ffi.mjs
+function identity3(x) {
+  return x;
+}
+
+// build/dev/javascript/gleam_json/gleam/json.mjs
+function bool(input2) {
+  return identity3(input2);
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/set.mjs
 var Set2 = class extends CustomType {
   constructor(dict2) {
@@ -2211,6 +2263,9 @@ function attribute(name, value2) {
   return new Attribute(attribute_kind, name, value2);
 }
 var property_kind = 1;
+function property(name, value2) {
+  return new Property(property_kind, name, value2);
+}
 var event_kind = 2;
 function event(name, handler, include, prevent_default, stop_propagation, immediate2, debounce, throttle) {
   return new Event2(
@@ -2230,11 +2285,24 @@ function event(name, handler, include, prevent_default, stop_propagation, immedi
 function attribute2(name, value2) {
   return attribute(name, value2);
 }
+function property2(name, value2) {
+  return property(name, value2);
+}
+function boolean_attribute(name, value2) {
+  if (value2) {
+    return attribute2(name, "");
+  } else {
+    return property2(name, bool(false));
+  }
+}
 function class$(name) {
   return attribute2("class", name);
 }
 function id(value2) {
   return attribute2("id", value2);
+}
+function disabled(is_disabled) {
+  return boolean_attribute("disabled", is_disabled);
 }
 function for$(id2) {
   return attribute2("for", id2);
@@ -4892,6 +4960,14 @@ var ClearOnLevel = class extends CustomType {
 };
 var ClearOnGame = class extends CustomType {
 };
+var RiskEffects = class extends CustomType {
+  constructor(health_gained, points_gained, special_orbs) {
+    super();
+    this.health_gained = health_gained;
+    this.points_gained = points_gained;
+    this.special_orbs = special_orbs;
+  }
+};
 var PointOrb = class extends CustomType {
   constructor($0) {
     super();
@@ -4922,6 +4998,8 @@ var BombImmunityOrb = class extends CustomType {
 };
 var ChoiceOrb = class extends CustomType {
 };
+var RiskOrb = class extends CustomType {
+};
 var Main = class extends CustomType {
 };
 var OrbSelection = class extends CustomType {
@@ -4940,6 +5018,16 @@ var Failure = class extends CustomType {
 };
 var TestingChoosing = class extends CustomType {
 };
+var TestingRiskAccept = class extends CustomType {
+};
+var TestingRiskReveal = class extends CustomType {
+};
+var TestingRiskPlaying = class extends CustomType {
+};
+var TestingRiskSurvived = class extends CustomType {
+};
+var TestingRiskDied = class extends CustomType {
+};
 var Playing = class extends CustomType {
 };
 var Victory = class extends CustomType {
@@ -4947,6 +5035,16 @@ var Victory = class extends CustomType {
 var Defeat = class extends CustomType {
 };
 var Choosing = class extends CustomType {
+};
+var RiskAccept = class extends CustomType {
+};
+var RiskReveal = class extends CustomType {
+};
+var RiskPlaying = class extends CustomType {
+};
+var RiskSurvived = class extends CustomType {
+};
+var RiskDied = class extends CustomType {
 };
 var Menu = class extends CustomType {
   constructor($0) {
@@ -4984,8 +5082,10 @@ var BombImmunitySample = class extends CustomType {
 };
 var ChoiceSample = class extends CustomType {
 };
+var RiskSample = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode) {
+  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health) {
     super();
     this.health = health;
     this.points = points;
@@ -5003,6 +5103,10 @@ var Model = class extends CustomType {
     this.choice_orb_1 = choice_orb_1;
     this.choice_orb_2 = choice_orb_2;
     this.dev_mode = dev_mode;
+    this.risk_orbs = risk_orbs;
+    this.risk_pulled_orbs = risk_pulled_orbs;
+    this.risk_accumulated_effects = risk_accumulated_effects;
+    this.risk_health = risk_health;
   }
 };
 var StartGame = class extends CustomType {
@@ -5053,6 +5157,18 @@ var ChooseOrb = class extends CustomType {
 };
 var ToggleDevMode = class extends CustomType {
 };
+var AcceptRisk = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var AcceptFate = class extends CustomType {
+};
+var PullRiskOrb = class extends CustomType {
+};
+var ApplyRiskEffects = class extends CustomType {
+};
 
 // build/dev/javascript/newmoon/display.mjs
 function orb_display_name(orb) {
@@ -5072,8 +5188,10 @@ function orb_display_name(orb) {
     return "Multiplier Sample";
   } else if (orb instanceof BombImmunityOrb) {
     return "Shield Generator Sample";
-  } else {
+  } else if (orb instanceof ChoiceOrb) {
     return "Choice Portal Sample";
+  } else {
+    return "Fate Sample";
   }
 }
 function orb_result_message(orb) {
@@ -5096,8 +5214,10 @@ function orb_result_message(orb) {
     return "\u25C8 MULTIPLIER ACTIVATED \xD72";
   } else if (orb instanceof BombImmunityOrb) {
     return "\u25C8 SHIELD GENERATOR ACTIVATED";
-  } else {
+  } else if (orb instanceof ChoiceOrb) {
     return "\u25C8 CHOICE PORTAL ACTIVATED";
+  } else {
+    return "\u26A0 FATE SAMPLE DETECTED";
   }
 }
 function collector_result_message(orb, bonus_points) {
@@ -5251,7 +5371,11 @@ function clear_statuses_by_persistence(model, persistence) {
     remaining_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function decrement_duration(duration) {
@@ -5323,7 +5447,11 @@ function tick_statuses(model) {
     updated_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function status_to_display_text(status) {
@@ -5458,7 +5586,11 @@ function add_status(model, new_status) {
     updated_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 
@@ -5485,7 +5617,8 @@ function starter_orbs() {
     new BombSurvivorOrb(),
     new MultiplierOrb(),
     new BombImmunityOrb(),
-    new ChoiceOrb()
+    new ChoiceOrb(),
+    new RiskOrb()
   ]);
   let _pipe = point_orbs;
   let _pipe$1 = append(_pipe, bomb_orbs);
@@ -5509,7 +5642,11 @@ function init(_) {
     toList([]),
     new None(),
     new None(),
-    false
+    false,
+    toList([]),
+    toList([]),
+    new RiskEffects(0, 0, toList([])),
+    5
   );
 }
 function create_test_bag(test_orb) {
@@ -5564,7 +5701,11 @@ function handle_start_game(model) {
     _record.active_statuses,
     new None(),
     new None(),
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -5585,7 +5726,11 @@ function handle_go_to_orb_testing(model) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_select_orb_type(model, orb_type) {
@@ -5606,7 +5751,11 @@ function handle_select_orb_type(model, orb_type) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_update_input_value(model, value2) {
@@ -5627,7 +5776,11 @@ function handle_update_input_value(model, value2) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
@@ -5652,8 +5805,10 @@ function handle_confirm_orb_value(model, orb_type) {
         _block = new BombSurvivorOrb();
       } else if (orb_type instanceof BombImmunitySample) {
         _block = new BombImmunityOrb();
-      } else {
+      } else if (orb_type instanceof ChoiceSample) {
         _block = new ChoiceOrb();
+      } else {
+        _block = new RiskOrb();
       }
       let test_orb = _block;
       let clean_model = clear_statuses_by_persistence(
@@ -5677,7 +5832,11 @@ function handle_confirm_orb_value(model, orb_type) {
         _record.active_statuses,
         new None(),
         new None(),
-        _record.dev_mode
+        _record.dev_mode,
+        _record.risk_orbs,
+        _record.risk_pulled_orbs,
+        _record.risk_accumulated_effects,
+        _record.risk_health
       );
     } else {
       return model;
@@ -5704,7 +5863,11 @@ function handle_back_to_orb_testing(model) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_start_testing_with_both_statuses(model) {
@@ -5733,7 +5896,11 @@ function handle_start_testing_with_both_statuses(model) {
     _record.active_statuses,
     new None(),
     new None(),
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_start_testing_with_triple_choice(model) {
@@ -5762,7 +5929,11 @@ function handle_start_testing_with_triple_choice(model) {
     _record.active_statuses,
     new None(),
     new None(),
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_back_to_main_menu(model) {
@@ -5783,7 +5954,11 @@ function handle_back_to_main_menu(model) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_next_level(model) {
@@ -5808,7 +5983,11 @@ function handle_next_level(model) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_reset_testing(model) {
@@ -5829,7 +6008,11 @@ function handle_reset_testing(model) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    _record.dev_mode
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
 }
 function handle_exit_testing(_) {
@@ -5861,7 +6044,11 @@ function check_game_status(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
       } else if ($3) {
         let _record = model;
@@ -5881,7 +6068,11 @@ function check_game_status(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
       } else if ($4) {
         let _record = model;
@@ -5901,7 +6092,11 @@ function check_game_status(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
       } else {
         return model;
@@ -5933,7 +6128,11 @@ function check_game_status(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
       } else if ($3) {
         let _record = model;
@@ -5953,7 +6152,11 @@ function check_game_status(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
       } else if ($4) {
         let _record = model;
@@ -5973,7 +6176,11 @@ function check_game_status(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
       } else {
         return model;
@@ -6003,8 +6210,576 @@ function handle_toggle_dev_mode(model) {
     _record.active_statuses,
     _record.choice_orb_1,
     _record.choice_orb_2,
-    !model.dev_mode
+    !model.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
   );
+}
+function handle_risk_orb_activation(model) {
+  let _block;
+  let $ = model.screen;
+  if ($ instanceof Testing) {
+    let $1 = $[0];
+    if ($1 instanceof Gameplay) {
+      _block = new Testing(new TestingRiskAccept());
+    } else {
+      _block = model.screen;
+    }
+  } else if ($ instanceof Game) {
+    let $1 = $[0];
+    if ($1 instanceof Playing) {
+      _block = new Game(new RiskAccept());
+    } else {
+      _block = model.screen;
+    }
+  } else {
+    _block = model.screen;
+  }
+  let screen = _block;
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
+  );
+}
+function handle_accept_risk(loop$model, loop$accept) {
+  while (true) {
+    let model = loop$model;
+    let accept = loop$accept;
+    if (accept) {
+      let $ = length(model.bag) >= 5;
+      if ($) {
+        let risk_orbs = take(model.bag, 5);
+        let remaining_bag = drop(model.bag, 5);
+        let _block;
+        let $1 = model.screen;
+        if ($1 instanceof Testing) {
+          let $2 = $1[0];
+          if ($2 instanceof TestingRiskAccept) {
+            _block = new Testing(new TestingRiskReveal());
+          } else {
+            _block = model.screen;
+          }
+        } else if ($1 instanceof Game) {
+          let $2 = $1[0];
+          if ($2 instanceof RiskAccept) {
+            _block = new Game(new RiskReveal());
+          } else {
+            _block = model.screen;
+          }
+        } else {
+          _block = model.screen;
+        }
+        let screen = _block;
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          _record.level,
+          _record.milestone,
+          remaining_bag,
+          screen,
+          _record.last_orb,
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs,
+          _record.point_multiplier,
+          _record.bomb_immunity,
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2,
+          _record.dev_mode,
+          risk_orbs,
+          toList([]),
+          new RiskEffects(0, 0, toList([])),
+          model.health
+        );
+      } else {
+        loop$model = model;
+        loop$accept = false;
+      }
+    } else {
+      let $ = model.screen;
+      if ($ instanceof Testing) {
+        let $1 = $[0];
+        if ($1 instanceof TestingRiskAccept) {
+          return check_game_status(
+            (() => {
+              let _record = model;
+              return new Model(
+                _record.health,
+                _record.points,
+                _record.level,
+                _record.milestone,
+                _record.bag,
+                new Testing(new Gameplay()),
+                _record.last_orb,
+                _record.last_orb_message,
+                _record.input_value,
+                _record.pulled_orbs,
+                _record.point_multiplier,
+                _record.bomb_immunity,
+                _record.active_statuses,
+                _record.choice_orb_1,
+                _record.choice_orb_2,
+                _record.dev_mode,
+                _record.risk_orbs,
+                _record.risk_pulled_orbs,
+                _record.risk_accumulated_effects,
+                _record.risk_health
+              );
+            })()
+          );
+        } else {
+          return model;
+        }
+      } else if ($ instanceof Game) {
+        let $1 = $[0];
+        if ($1 instanceof RiskAccept) {
+          return check_game_status(
+            (() => {
+              let _record = model;
+              return new Model(
+                _record.health,
+                _record.points,
+                _record.level,
+                _record.milestone,
+                _record.bag,
+                new Game(new Playing()),
+                _record.last_orb,
+                _record.last_orb_message,
+                _record.input_value,
+                _record.pulled_orbs,
+                _record.point_multiplier,
+                _record.bomb_immunity,
+                _record.active_statuses,
+                _record.choice_orb_1,
+                _record.choice_orb_2,
+                _record.dev_mode,
+                _record.risk_orbs,
+                _record.risk_pulled_orbs,
+                _record.risk_accumulated_effects,
+                _record.risk_health
+              );
+            })()
+          );
+        } else {
+          return model;
+        }
+      } else {
+        return model;
+      }
+    }
+  }
+}
+function handle_accept_fate(model) {
+  let _block;
+  let $ = model.screen;
+  if ($ instanceof Testing) {
+    let $1 = $[0];
+    if ($1 instanceof TestingRiskReveal) {
+      _block = new Testing(new TestingRiskPlaying());
+    } else {
+      _block = model.screen;
+    }
+  } else if ($ instanceof Game) {
+    let $1 = $[0];
+    if ($1 instanceof RiskReveal) {
+      _block = new Game(new RiskPlaying());
+    } else {
+      _block = model.screen;
+    }
+  } else {
+    _block = model.screen;
+  }
+  let screen = _block;
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
+  );
+}
+function handle_apply_risk_effects(model) {
+  let effects = model.risk_accumulated_effects;
+  let new_health = min(model.health + effects.health_gained, 5);
+  let new_points = model.points + effects.points_gained;
+  let model_with_special = fold(
+    effects.special_orbs,
+    model,
+    (acc_model, special_orb) => {
+      if (special_orb instanceof MultiplierOrb) {
+        let new_multiplier = acc_model.point_multiplier * 2;
+        let _pipe = acc_model;
+        let _pipe$1 = add_status(
+          _pipe,
+          create_point_multiplier(new_multiplier)
+        );
+        return ((m) => {
+          let _record2 = m;
+          return new Model(
+            _record2.health,
+            _record2.points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs,
+            new_multiplier,
+            _record2.bomb_immunity,
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2,
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
+          );
+        })(_pipe$1);
+      } else if (special_orb instanceof BombImmunityOrb) {
+        let _pipe = acc_model;
+        let _pipe$1 = add_status(_pipe, create_bomb_immunity(3));
+        return ((m) => {
+          let _record2 = m;
+          return new Model(
+            _record2.health,
+            _record2.points,
+            _record2.level,
+            _record2.milestone,
+            _record2.bag,
+            _record2.screen,
+            _record2.last_orb,
+            _record2.last_orb_message,
+            _record2.input_value,
+            _record2.pulled_orbs,
+            _record2.point_multiplier,
+            3,
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2,
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
+          );
+        })(_pipe$1);
+      } else {
+        return acc_model;
+      }
+    }
+  );
+  let _block;
+  let $ = model.screen;
+  if ($ instanceof Testing) {
+    let $1 = $[0];
+    if ($1 instanceof TestingRiskSurvived) {
+      _block = new Testing(new Gameplay());
+    } else {
+      _block = model.screen;
+    }
+  } else if ($ instanceof Game) {
+    let $1 = $[0];
+    if ($1 instanceof RiskSurvived) {
+      _block = new Game(new Playing());
+    } else {
+      _block = model.screen;
+    }
+  } else {
+    _block = model.screen;
+  }
+  let return_screen = _block;
+  let _record = model_with_special;
+  return new Model(
+    new_health,
+    new_points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    return_screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    toList([]),
+    toList([]),
+    new RiskEffects(0, 0, toList([])),
+    5
+  );
+}
+function handle_exit_risk(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    new Game(new Playing()),
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    toList([]),
+    toList([]),
+    new RiskEffects(0, 0, toList([])),
+    5
+  );
+}
+function process_risk_orb(orb, current_health, current_effects, active_statuses) {
+  if (orb instanceof PointOrb) {
+    let value2 = orb[0];
+    let multiplier = get_point_multiplier(active_statuses);
+    let risk_bonus_points = value2 * 2 * multiplier;
+    let _block;
+    let _record = current_effects;
+    _block = new RiskEffects(
+      _record.health_gained,
+      current_effects.points_gained + risk_bonus_points,
+      _record.special_orbs
+    );
+    let new_effects = _block;
+    return [
+      current_health,
+      new_effects,
+      "\u25CF RISK DATA ACQUIRED +" + to_string(risk_bonus_points)
+    ];
+  } else if (orb instanceof BombOrb) {
+    let value2 = orb[0];
+    let $ = has_bomb_immunity(active_statuses);
+    if ($) {
+      return [current_health, current_effects, "\u25C8 SHIELD PROTECTED FROM HAZARD"];
+    } else {
+      let new_health = current_health - value2;
+      return [
+        new_health,
+        current_effects,
+        "\u25CB HAZARD DAMAGE -" + to_string(value2)
+      ];
+    }
+  } else if (orb instanceof HealthOrb) {
+    let value2 = orb[0];
+    let health_to_add = min(value2, 5 - current_health);
+    let new_health = current_health + health_to_add;
+    let _block;
+    let _record = current_effects;
+    _block = new RiskEffects(
+      current_effects.health_gained + health_to_add,
+      _record.points_gained,
+      _record.special_orbs
+    );
+    let new_effects = _block;
+    return [
+      new_health,
+      new_effects,
+      "\u25C7 EMERGENCY SYSTEMS +" + to_string(health_to_add)
+    ];
+  } else {
+    let special_orb = orb;
+    let _block;
+    let _record = current_effects;
+    _block = new RiskEffects(
+      _record.health_gained,
+      _record.points_gained,
+      prepend(special_orb, current_effects.special_orbs)
+    );
+    let new_effects = _block;
+    return [
+      current_health,
+      new_effects,
+      orb_result_message(special_orb)
+    ];
+  }
+}
+function handle_pull_risk_orb(model) {
+  let $ = model.risk_orbs;
+  if ($ instanceof Empty) {
+    return model;
+  } else {
+    let first_orb = $.head;
+    let rest = $.tail;
+    let $1 = process_risk_orb(
+      first_orb,
+      model.risk_health,
+      model.risk_accumulated_effects,
+      model.active_statuses
+    );
+    let new_risk_health = $1[0];
+    let new_effects = $1[1];
+    let orb_message = $1[2];
+    let $2 = new_risk_health <= 0;
+    if ($2) {
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        (() => {
+          let $3 = model.screen;
+          if ($3 instanceof Testing) {
+            let $4 = $3[0];
+            if ($4 instanceof TestingRiskPlaying) {
+              return new Testing(new TestingRiskDied());
+            } else {
+              return model.screen;
+            }
+          } else if ($3 instanceof Game) {
+            let $4 = $3[0];
+            if ($4 instanceof RiskPlaying) {
+              return new Game(new RiskDied());
+            } else {
+              return model.screen;
+            }
+          } else {
+            return model.screen;
+          }
+        })(),
+        new Some(first_orb),
+        new Some(orb_message),
+        _record.input_value,
+        _record.pulled_orbs,
+        _record.point_multiplier,
+        _record.bomb_immunity,
+        _record.active_statuses,
+        _record.choice_orb_1,
+        _record.choice_orb_2,
+        _record.dev_mode,
+        _record.risk_orbs,
+        _record.risk_pulled_orbs,
+        _record.risk_accumulated_effects,
+        new_risk_health
+      );
+    } else {
+      let _block;
+      let _record = model;
+      _block = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        _record.screen,
+        new Some(first_orb),
+        new Some(orb_message),
+        _record.input_value,
+        _record.pulled_orbs,
+        _record.point_multiplier,
+        _record.bomb_immunity,
+        _record.active_statuses,
+        _record.choice_orb_1,
+        _record.choice_orb_2,
+        _record.dev_mode,
+        rest,
+        prepend(first_orb, model.risk_pulled_orbs),
+        new_effects,
+        new_risk_health
+      );
+      let updated_model = _block;
+      let $3 = is_empty(rest);
+      if ($3) {
+        let _block$1;
+        let $4 = model.screen;
+        if ($4 instanceof Testing) {
+          let $5 = $4[0];
+          if ($5 instanceof TestingRiskPlaying) {
+            _block$1 = new Testing(new TestingRiskSurvived());
+          } else {
+            _block$1 = model.screen;
+          }
+        } else if ($4 instanceof Game) {
+          let $5 = $4[0];
+          if ($5 instanceof RiskPlaying) {
+            _block$1 = new Game(new RiskSurvived());
+          } else {
+            _block$1 = model.screen;
+          }
+        } else {
+          _block$1 = model.screen;
+        }
+        let screen = _block$1;
+        let _record$1 = updated_model;
+        return new Model(
+          _record$1.health,
+          _record$1.points,
+          _record$1.level,
+          _record$1.milestone,
+          _record$1.bag,
+          screen,
+          _record$1.last_orb,
+          _record$1.last_orb_message,
+          _record$1.input_value,
+          _record$1.pulled_orbs,
+          _record$1.point_multiplier,
+          _record$1.bomb_immunity,
+          _record$1.active_statuses,
+          _record$1.choice_orb_1,
+          _record$1.choice_orb_2,
+          _record$1.dev_mode,
+          _record$1.risk_orbs,
+          _record$1.risk_pulled_orbs,
+          _record$1.risk_accumulated_effects,
+          _record$1.risk_health
+        );
+      } else {
+        return updated_model;
+      }
+    }
+  }
 }
 function handle_choice_orb_activation(model) {
   let $ = model.bag;
@@ -6032,7 +6807,11 @@ function handle_choice_orb_activation(model) {
         _record.active_statuses,
         _record.choice_orb_1,
         _record.choice_orb_2,
-        _record.dev_mode
+        _record.dev_mode,
+        _record.risk_orbs,
+        _record.risk_pulled_orbs,
+        _record.risk_accumulated_effects,
+        _record.risk_health
       );
       let temp_model = _block;
       return handle_pull_orb(temp_model);
@@ -6078,7 +6857,11 @@ function handle_choice_orb_activation(model) {
         _record.active_statuses,
         new Some(first_choice),
         new Some(second_choice),
-        _record.dev_mode
+        _record.dev_mode,
+        _record.risk_orbs,
+        _record.risk_pulled_orbs,
+        _record.risk_accumulated_effects,
+        _record.risk_health
       );
       let choice_model = _block$1;
       return choice_model;
@@ -6119,7 +6902,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6150,7 +6937,11 @@ function handle_pull_orb(model) {
               _record2.active_statuses,
               _record2.choice_orb_1,
               _record2.choice_orb_2,
-              _record2.dev_mode
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -6177,7 +6968,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6203,7 +6998,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6232,7 +7031,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6261,7 +7064,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6295,7 +7102,11 @@ function handle_pull_orb(model) {
               _record2.active_statuses,
               _record2.choice_orb_1,
               _record2.choice_orb_2,
-              _record2.dev_mode
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -6326,12 +7137,19 @@ function handle_pull_orb(model) {
               _record2.active_statuses,
               _record2.choice_orb_1,
               _record2.choice_orb_2,
-              _record2.dev_mode
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
             );
           })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
+        } else if (first_orb instanceof ChoiceOrb) {
+          let message = orb_result_message(first_orb);
+          _block = [model, message, false];
         } else {
           let message = orb_result_message(first_orb);
           _block = [model, message, false];
@@ -6383,7 +7201,11 @@ function handle_pull_orb(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -6395,6 +7217,8 @@ function handle_pull_orb(model) {
         let updated_model = _block$4;
         if (first_orb instanceof ChoiceOrb) {
           return handle_choice_orb_activation(updated_model);
+        } else if (first_orb instanceof RiskOrb) {
+          return handle_risk_orb_activation(updated_model);
         } else {
           return check_game_status(updated_model);
         }
@@ -6434,7 +7258,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6465,7 +7293,11 @@ function handle_pull_orb(model) {
               _record2.active_statuses,
               _record2.choice_orb_1,
               _record2.choice_orb_2,
-              _record2.dev_mode
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -6492,7 +7324,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6518,7 +7354,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6547,7 +7387,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6576,7 +7420,11 @@ function handle_pull_orb(model) {
             _record2.active_statuses,
             _record2.choice_orb_1,
             _record2.choice_orb_2,
-            _record2.dev_mode
+            _record2.dev_mode,
+            _record2.risk_orbs,
+            _record2.risk_pulled_orbs,
+            _record2.risk_accumulated_effects,
+            _record2.risk_health
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6610,7 +7458,11 @@ function handle_pull_orb(model) {
               _record2.active_statuses,
               _record2.choice_orb_1,
               _record2.choice_orb_2,
-              _record2.dev_mode
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -6641,12 +7493,19 @@ function handle_pull_orb(model) {
               _record2.active_statuses,
               _record2.choice_orb_1,
               _record2.choice_orb_2,
-              _record2.dev_mode
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
             );
           })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
+        } else if (first_orb instanceof ChoiceOrb) {
+          let message = orb_result_message(first_orb);
+          _block = [model, message, false];
         } else {
           let message = orb_result_message(first_orb);
           _block = [model, message, false];
@@ -6698,7 +7557,11 @@ function handle_pull_orb(model) {
           _record.active_statuses,
           _record.choice_orb_1,
           _record.choice_orb_2,
-          _record.dev_mode
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -6710,6 +7573,8 @@ function handle_pull_orb(model) {
         let updated_model = _block$4;
         if (first_orb instanceof ChoiceOrb) {
           return handle_choice_orb_activation(updated_model);
+        } else if (first_orb instanceof RiskOrb) {
+          return handle_risk_orb_activation(updated_model);
         } else {
           return check_game_status(updated_model);
         }
@@ -6765,7 +7630,11 @@ function handle_choose_orb(model, choice_index) {
             _record.active_statuses,
             new None(),
             new None(),
-            _record.dev_mode
+            _record.dev_mode,
+            _record.risk_orbs,
+            _record.risk_pulled_orbs,
+            _record.risk_accumulated_effects,
+            _record.risk_health
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -6810,7 +7679,11 @@ function handle_choose_orb(model, choice_index) {
             _record.active_statuses,
             new None(),
             new None(),
-            _record.dev_mode
+            _record.dev_mode,
+            _record.risk_orbs,
+            _record.risk_pulled_orbs,
+            _record.risk_accumulated_effects,
+            _record.risk_health
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -6862,8 +7735,19 @@ function update2(model, msg) {
   } else if (msg instanceof ChooseOrb) {
     let choice_index = msg[0];
     return handle_choose_orb(model, choice_index);
-  } else {
+  } else if (msg instanceof ToggleDevMode) {
     return handle_toggle_dev_mode(model);
+  } else if (msg instanceof AcceptRisk) {
+    let accept = msg[0];
+    return handle_accept_risk(model, accept);
+  } else if (msg instanceof AcceptFate) {
+    return handle_accept_fate(model);
+  } else if (msg instanceof PullRiskOrb) {
+    return handle_pull_risk_orb(model);
+  } else if (msg instanceof ApplyRiskEffects) {
+    return handle_apply_risk_effects(model);
+  } else {
+    return handle_exit_risk(model);
   }
 }
 
@@ -7051,11 +7935,17 @@ function orb_result_display(orb, message) {
           "text-cyan-700",
           "bg-cyan-50 border-cyan-200"
         );
-      } else {
+      } else if (orb_value instanceof ChoiceOrb) {
         return info_panel(
           orb_message,
           "text-indigo-700",
           "bg-indigo-50 border-indigo-200"
+        );
+      } else {
+        return info_panel(
+          orb_message,
+          "text-orange-700",
+          "bg-orange-50 border-orange-200"
         );
       }
     } else {
@@ -7109,11 +7999,17 @@ function orb_result_display(orb, message) {
           "text-cyan-700",
           "bg-cyan-50 border-cyan-200"
         );
-      } else {
+      } else if (orb_value instanceof ChoiceOrb) {
         return info_panel(
           fallback_message,
           "text-indigo-700",
           "bg-indigo-50 border-indigo-200"
+        );
+      } else {
+        return info_panel(
+          fallback_message,
+          "text-orange-700",
+          "bg-orange-50 border-orange-200"
         );
       }
     }
@@ -7346,8 +8242,10 @@ function get_orb_style_classes(orb) {
     return ["bg-yellow-50", "text-yellow-700", "border-yellow-200"];
   } else if (orb instanceof BombImmunityOrb) {
     return ["bg-cyan-50", "text-cyan-700", "border-cyan-200"];
-  } else {
+  } else if (orb instanceof ChoiceOrb) {
     return ["bg-indigo-50", "text-indigo-700", "border-indigo-200"];
+  } else {
+    return ["bg-red-100", "text-red-800", "border-red-300"];
   }
 }
 function pulled_orbs_log(pulled_orbs) {
@@ -7531,8 +8429,10 @@ function format_orb_for_dev_display(orb) {
     return "Multiplier";
   } else if (orb instanceof BombImmunityOrb) {
     return "BombImmunity";
-  } else {
+  } else if (orb instanceof ChoiceOrb) {
     return "Choice";
+  } else {
+    return "Risk";
   }
 }
 function render_choice_mode_info(choice_orb_1, choice_orb_2) {
@@ -7749,6 +8649,191 @@ function dev_mode_panel(enabled, bag, screen, choice_orb_1, choice_orb_2, active
     )
   );
 }
+function risk_orbs_display(risk_orbs) {
+  return div(
+    toList([
+      class$(
+        "p-4 bg-red-50 border border-red-200 rounded text-center"
+      )
+    ]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light"
+          )
+        ]),
+        toList([text3("YOUR DESTINY AWAITS")])
+      ),
+      div(
+        toList([class$("grid grid-cols-5 gap-2")]),
+        index_map(
+          risk_orbs,
+          (orb, index4) => {
+            let $ = get_orb_style_classes(orb);
+            let bg_class = $[0];
+            let text_class = $[1];
+            let border_class = $[2];
+            return div(
+              toList([
+                class$(
+                  "p-2 rounded text-xs text-center " + bg_class + " " + text_class + " border " + border_class
+                )
+              ]),
+              toList([
+                div(
+                  toList([class$("font-bold mb-1")]),
+                  toList([text3(to_string(index4 + 1))])
+                ),
+                div(
+                  toList([class$("text-xs")]),
+                  toList([text3(orb_display_name(orb))])
+                )
+              ])
+            );
+          }
+        )
+      )
+    ])
+  );
+}
+function risk_health_display(risk_health) {
+  return div(
+    toList([
+      class$(
+        "p-3 bg-red-100 border border-red-300 rounded text-center"
+      )
+    ]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-sm text-red-800 uppercase tracking-wider mb-2 font-light"
+          )
+        ]),
+        toList([text3("VOID PROTECTION")])
+      ),
+      div(
+        toList([class$("text-2xl font-bold text-red-900")]),
+        toList([text3(to_string(risk_health))])
+      )
+    ])
+  );
+}
+function risk_container_display(orbs_left) {
+  return div(
+    toList([
+      class$(
+        "p-3 bg-red-50 border border-red-200 rounded text-center"
+      )
+    ]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-sm text-red-700 uppercase tracking-wider mb-2 font-light"
+          )
+        ]),
+        toList([text3("VOID SPECIMENS REMAINING")])
+      ),
+      div(
+        toList([class$("text-2xl font-bold text-red-800")]),
+        toList([text3(to_string(orbs_left))])
+      )
+    ])
+  );
+}
+function risk_extract_button(is_disabled) {
+  return button(
+    toList([
+      class$(
+        (() => {
+          if (is_disabled) {
+            return "bg-gray-400 text-gray-600 font-light py-4 px-6 rounded-lg w-full cursor-not-allowed";
+          } else {
+            return "bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide w-full";
+          }
+        })()
+      ),
+      disabled(is_disabled),
+      on_click(new PullRiskOrb())
+    ]),
+    toList([text3("EXTRACT FROM VOID")])
+  );
+}
+function risk_effects_summary(risk_effects) {
+  return div(
+    toList([
+      class$("p-4 bg-green-50 border border-green-200 rounded")
+    ]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-sm text-green-700 uppercase tracking-wider mb-3 font-light"
+          )
+        ]),
+        toList([text3("ENHANCED REWARDS")])
+      ),
+      div(
+        toList([class$("space-y-2")]),
+        toList([
+          (() => {
+            let $ = risk_effects.health_gained > 0;
+            if ($) {
+              return div(
+                toList([class$("text-green-800")]),
+                toList([
+                  text3(
+                    "\u25C7 SYSTEMS RESTORED: +" + to_string(
+                      risk_effects.health_gained
+                    )
+                  )
+                ])
+              );
+            } else {
+              return div(toList([]), toList([]));
+            }
+          })(),
+          (() => {
+            let $ = risk_effects.points_gained > 0;
+            if ($) {
+              return div(
+                toList([class$("text-green-800")]),
+                toList([
+                  text3(
+                    "\u25CF ENHANCED DATA: +" + to_string(
+                      risk_effects.points_gained
+                    )
+                  )
+                ])
+              );
+            } else {
+              return div(toList([]), toList([]));
+            }
+          })(),
+          (() => {
+            let $ = is_empty(risk_effects.special_orbs);
+            if ($) {
+              return div(toList([]), toList([]));
+            } else {
+              return div(
+                toList([class$("text-green-800")]),
+                toList([
+                  text3(
+                    "\u25C8 SPECIAL EFFECTS: " + to_string(
+                      length(risk_effects.special_orbs)
+                    ) + " activated"
+                  )
+                ])
+              );
+            }
+          })()
+        ])
+      )
+    ])
+  );
+}
 
 // build/dev/javascript/newmoon/view.mjs
 function render_game_stats(health, points, milestone, level) {
@@ -7842,6 +8927,10 @@ function render_orb_testing_view() {
         new SelectOrbType(new ChoiceSample())
       ),
       orb_selection_button(
+        "Fate Sample",
+        new SelectOrbType(new RiskSample())
+      ),
+      orb_selection_button(
         "Both Status Effects",
         new StartTestingWithBothStatuses()
       ),
@@ -7871,8 +8960,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block = "Bomb Survivor Sample";
   } else if (orb_type instanceof BombImmunitySample) {
     _block = "Shield Generator Sample";
-  } else {
+  } else if (orb_type instanceof ChoiceSample) {
     _block = "Choice Portal Sample";
+  } else {
+    _block = "Fate Sample";
   }
   let orb_name = _block;
   let _block$1;
@@ -7892,8 +8983,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block$1 = "Awards points equal to number of hazard samples encountered so far";
   } else if (orb_type instanceof BombImmunitySample) {
     _block$1 = "Activates hazard shield for 3 extractions, returning hazards to container";
-  } else {
+  } else if (orb_type instanceof ChoiceSample) {
     _block$1 = "Presents a choice between two samples from the container";
+  } else {
+    _block$1 = "High-risk sample that extracts 5 samples at once with 2\xD7 point bonus if survived";
   }
   let description = _block$1;
   if (orb_type instanceof DataSample) {
@@ -7984,6 +9077,18 @@ function render_orb_value_selection_view(orb_type, input_value) {
       ])
     );
   } else if (orb_type instanceof BombImmunitySample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-purple-50 border-purple-200"
+        ),
+        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof ChoiceSample) {
     return fragment2(
       toList([
         status_panel(
@@ -8208,6 +9313,155 @@ function render_testing_choosing_view(last_orb, last_orb_message, bag, active_st
     );
   }
 }
+function render_risk_accept_view() {
+  return fragment2(
+    toList([
+      status_panel(
+        "THE FATES HAVE SPOKEN",
+        "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
+        "bg-red-50 border-red-200"
+      ),
+      primary_button("ACCEPT FATE", new AcceptRisk(true)),
+      secondary_button("DECLINE RISK", new AcceptRisk(false))
+    ])
+  );
+}
+function render_risk_reveal_view(risk_orbs) {
+  return fragment2(
+    toList([
+      status_panel(
+        "BEHOLD YOUR DESTINY",
+        "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
+        "bg-orange-50 border-orange-200"
+      ),
+      risk_orbs_display(risk_orbs),
+      primary_button("FACE THE UNKNOWN", new AcceptFate())
+    ])
+  );
+}
+function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_health, risk_pulled_orbs) {
+  let orbs_left = length(risk_orbs);
+  let is_disabled = is_empty(risk_orbs);
+  return fragment2(
+    toList([
+      status_panel(
+        "RISK MODE ACTIVE",
+        "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
+        "bg-red-50 border-red-200"
+      ),
+      risk_health_display(risk_health),
+      orb_result_display(last_orb, last_orb_message),
+      pulled_orbs_log(risk_pulled_orbs),
+      risk_container_display(orbs_left),
+      risk_extract_button(is_disabled)
+    ])
+  );
+}
+function render_risk_survived_view(risk_accumulated_effects, risk_pulled_orbs) {
+  return fragment2(
+    toList([
+      status_panel(
+        "YOU SURVIVED THE VOID",
+        "The fates smiled upon you. Your enhanced rewards await application.",
+        "bg-green-50 border-green-200"
+      ),
+      risk_effects_summary(risk_accumulated_effects),
+      pulled_orbs_log(risk_pulled_orbs),
+      primary_button("CLAIM REWARDS", new ApplyRiskEffects())
+    ])
+  );
+}
+function render_risk_died_view(last_orb, last_orb_message, risk_pulled_orbs) {
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      pulled_orbs_log(risk_pulled_orbs),
+      failure_button("RESTART MISSION", new RestartGame()),
+      failure_panel(
+        "YOU RISKED OUT",
+        "THE VOID CONSUMED YOU. YOUR GAMBLE HAS ENDED IN DARKNESS."
+      )
+    ])
+  );
+}
+function render_testing_risk_accept_view() {
+  return fragment2(
+    toList([
+      status_panel(
+        "THE FATES HAVE SPOKEN",
+        "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
+        "bg-red-50 border-red-200"
+      ),
+      primary_button("ACCEPT FATE", new AcceptRisk(true)),
+      secondary_button("DECLINE RISK", new AcceptRisk(false)),
+      secondary_button("RESTART TESTING", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting())
+    ])
+  );
+}
+function render_testing_risk_reveal_view(risk_orbs) {
+  return fragment2(
+    toList([
+      status_panel(
+        "BEHOLD YOUR DESTINY",
+        "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
+        "bg-orange-50 border-orange-200"
+      ),
+      risk_orbs_display(risk_orbs),
+      primary_button("FACE THE UNKNOWN", new AcceptFate()),
+      secondary_button("RESTART TESTING", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting())
+    ])
+  );
+}
+function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_health, risk_pulled_orbs) {
+  let orbs_left = length(risk_orbs);
+  let is_disabled = is_empty(risk_orbs);
+  return fragment2(
+    toList([
+      status_panel(
+        "RISK MODE ACTIVE",
+        "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
+        "bg-red-50 border-red-200"
+      ),
+      risk_health_display(risk_health),
+      orb_result_display(last_orb, last_orb_message),
+      pulled_orbs_log(risk_pulled_orbs),
+      risk_container_display(orbs_left),
+      risk_extract_button(is_disabled)
+    ])
+  );
+}
+function render_testing_risk_survived_view(risk_accumulated_effects, risk_pulled_orbs) {
+  return fragment2(
+    toList([
+      status_panel(
+        "YOU SURVIVED THE VOID",
+        "The fates smiled upon you. Your enhanced rewards await application.",
+        "bg-green-50 border-green-200"
+      ),
+      risk_effects_summary(risk_accumulated_effects),
+      pulled_orbs_log(risk_pulled_orbs),
+      primary_button("CLAIM REWARDS", new ApplyRiskEffects()),
+      secondary_button("RESTART TESTING", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting())
+    ])
+  );
+}
+function render_testing_risk_died_view(last_orb, last_orb_message, risk_pulled_orbs) {
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      pulled_orbs_log(risk_pulled_orbs),
+      secondary_button("RESTART TESTING", new ResetTesting()),
+      secondary_button(exit_testing_text, new ExitTesting()),
+      failure_panel(
+        "YOU RISKED OUT",
+        "THE VOID CONSUMED YOU. YOUR GAMBLE HAS ENDED IN DARKNESS."
+      )
+    ])
+  );
+}
 function view(model) {
   let _block;
   let $ = model.screen;
@@ -8298,7 +9552,7 @@ function view(model) {
           ])
         )
       );
-    } else {
+    } else if ($1 instanceof TestingChoosing) {
       _block = app_container(
         game_card(
           toList([
@@ -8318,6 +9572,69 @@ function view(model) {
               model.choice_orb_1,
               model.choice_orb_2,
               model.pulled_orbs
+            )
+          ])
+        )
+      );
+    } else if ($1 instanceof TestingRiskAccept) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            testing_mode_indicator2(),
+            render_testing_risk_accept_view()
+          ])
+        )
+      );
+    } else if ($1 instanceof TestingRiskReveal) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            testing_mode_indicator2(),
+            render_testing_risk_reveal_view(model.risk_orbs)
+          ])
+        )
+      );
+    } else if ($1 instanceof TestingRiskPlaying) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            testing_mode_indicator2(),
+            render_testing_risk_playing_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.risk_orbs,
+              model.risk_health,
+              model.risk_pulled_orbs
+            )
+          ])
+        )
+      );
+    } else if ($1 instanceof TestingRiskSurvived) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            testing_mode_indicator2(),
+            render_testing_risk_survived_view(
+              model.risk_accumulated_effects,
+              model.risk_pulled_orbs
+            )
+          ])
+        )
+      );
+    } else {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            testing_mode_indicator2(),
+            render_testing_risk_died_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.risk_pulled_orbs
             )
           ])
         )
@@ -8389,7 +9706,7 @@ function view(model) {
           ])
         )
       );
-    } else {
+    } else if ($1 instanceof Choosing) {
       _block = app_container(
         game_card(
           toList([
@@ -8408,6 +9725,56 @@ function view(model) {
               model.choice_orb_1,
               model.choice_orb_2,
               model.pulled_orbs
+            )
+          ])
+        )
+      );
+    } else if ($1 instanceof RiskAccept) {
+      _block = app_container(
+        game_card(toList([game_header(), render_risk_accept_view()]))
+      );
+    } else if ($1 instanceof RiskReveal) {
+      _block = app_container(
+        game_card(
+          toList([game_header(), render_risk_reveal_view(model.risk_orbs)])
+        )
+      );
+    } else if ($1 instanceof RiskPlaying) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            render_risk_playing_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.risk_orbs,
+              model.risk_health,
+              model.risk_pulled_orbs
+            )
+          ])
+        )
+      );
+    } else if ($1 instanceof RiskSurvived) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            render_risk_survived_view(
+              model.risk_accumulated_effects,
+              model.risk_pulled_orbs
+            )
+          ])
+        )
+      );
+    } else {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            render_risk_died_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.risk_pulled_orbs
             )
           ])
         )

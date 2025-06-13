@@ -11,8 +11,8 @@ import types.{
   type Msg, type Orb, type Screen, type StatusDuration, type StatusEffect,
   AllCollectorOrb, BombImmunity, BombImmunityOrb, BombOrb, BombSurvivorOrb,
   ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb, Permanent,
-  PointCollectorOrb, PointMultiplier, PointOrb, PullOrb, Testing,
-  TestingChoosing, ToggleDevMode, Triggered, UpdateInputValue,
+  PointCollectorOrb, PointMultiplier, PointOrb, PullOrb, PullRiskOrb, RiskOrb,
+  Testing, TestingChoosing, ToggleDevMode, Triggered, UpdateInputValue,
 }
 
 // Layout Components
@@ -135,6 +135,12 @@ pub fn orb_result_display(
             "text-indigo-700",
             "bg-indigo-50 border-indigo-200",
           )
+        types.RiskOrb ->
+          info_panel(
+            orb_message,
+            "text-orange-700",
+            "bg-orange-50 border-orange-200",
+          )
       }
     }
     Some(orb_value), None -> {
@@ -194,6 +200,12 @@ pub fn orb_result_display(
             fallback_message,
             "text-indigo-700",
             "bg-indigo-50 border-indigo-200",
+          )
+        types.RiskOrb ->
+          info_panel(
+            fallback_message,
+            "text-orange-700",
+            "bg-orange-50 border-orange-200",
           )
       }
     }
@@ -461,6 +473,7 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
     MultiplierOrb -> #("bg-yellow-50", "text-yellow-700", "border-yellow-200")
     BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
     ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
+    RiskOrb -> #("bg-red-100", "text-red-800", "border-red-300")
   }
 }
 
@@ -726,5 +739,157 @@ fn format_orb_for_dev_display(orb: Orb) -> String {
     MultiplierOrb -> "Multiplier"
     BombImmunityOrb -> "BombImmunity"
     ChoiceOrb -> "Choice"
+    RiskOrb -> "Risk"
   }
+}
+
+// Risk Mode UI Components
+
+pub fn risk_orbs_display(risk_orbs: List(Orb)) -> Element(Msg) {
+  html.div(
+    [attribute.class("p-4 bg-red-50 border border-red-200 rounded text-center")],
+    [
+      html.div(
+        [
+          attribute.class(
+            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light",
+          ),
+        ],
+        [html.text("YOUR DESTINY AWAITS")],
+      ),
+      html.div(
+        [attribute.class("grid grid-cols-5 gap-2")],
+        list.index_map(risk_orbs, fn(orb, index) {
+          let #(bg_class, text_class, border_class) = get_orb_style_classes(orb)
+          html.div(
+            [
+              attribute.class(
+                "p-2 rounded text-xs text-center "
+                <> bg_class
+                <> " "
+                <> text_class
+                <> " border "
+                <> border_class,
+              ),
+            ],
+            [
+              html.div([attribute.class("font-bold mb-1")], [
+                html.text(int.to_string(index + 1)),
+              ]),
+              html.div([attribute.class("text-xs")], [
+                html.text(display.orb_display_name(orb)),
+              ]),
+            ],
+          )
+        }),
+      ),
+    ],
+  )
+}
+
+pub fn risk_health_display(risk_health: Int) -> Element(Msg) {
+  html.div(
+    [
+      attribute.class(
+        "p-3 bg-red-100 border border-red-300 rounded text-center",
+      ),
+    ],
+    [
+      html.div(
+        [
+          attribute.class(
+            "text-sm text-red-800 uppercase tracking-wider mb-2 font-light",
+          ),
+        ],
+        [html.text("VOID PROTECTION")],
+      ),
+      html.div([attribute.class("text-2xl font-bold text-red-900")], [
+        html.text(int.to_string(risk_health)),
+      ]),
+    ],
+  )
+}
+
+pub fn risk_container_display(orbs_left: Int) -> Element(Msg) {
+  html.div(
+    [attribute.class("p-3 bg-red-50 border border-red-200 rounded text-center")],
+    [
+      html.div(
+        [
+          attribute.class(
+            "text-sm text-red-700 uppercase tracking-wider mb-2 font-light",
+          ),
+        ],
+        [html.text("VOID SPECIMENS REMAINING")],
+      ),
+      html.div([attribute.class("text-2xl font-bold text-red-800")], [
+        html.text(int.to_string(orbs_left)),
+      ]),
+    ],
+  )
+}
+
+pub fn risk_extract_button(is_disabled: Bool) -> Element(Msg) {
+  html.button(
+    [
+      attribute.class(case is_disabled {
+        True ->
+          "bg-gray-400 text-gray-600 font-light py-4 px-6 rounded-lg w-full cursor-not-allowed"
+        False ->
+          "bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide w-full"
+      }),
+      attribute.disabled(is_disabled),
+      event.on_click(PullRiskOrb),
+    ],
+    [html.text("EXTRACT FROM VOID")],
+  )
+}
+
+pub fn risk_effects_summary(risk_effects: types.RiskEffects) -> Element(Msg) {
+  html.div(
+    [attribute.class("p-4 bg-green-50 border border-green-200 rounded")],
+    [
+      html.div(
+        [
+          attribute.class(
+            "text-sm text-green-700 uppercase tracking-wider mb-3 font-light",
+          ),
+        ],
+        [html.text("ENHANCED REWARDS")],
+      ),
+      html.div([attribute.class("space-y-2")], [
+        case risk_effects.health_gained > 0 {
+          True ->
+            html.div([attribute.class("text-green-800")], [
+              html.text(
+                "◇ SYSTEMS RESTORED: +"
+                <> int.to_string(risk_effects.health_gained),
+              ),
+            ])
+          False -> html.div([], [])
+        },
+        case risk_effects.points_gained > 0 {
+          True ->
+            html.div([attribute.class("text-green-800")], [
+              html.text(
+                "● ENHANCED DATA: +"
+                <> int.to_string(risk_effects.points_gained),
+              ),
+            ])
+          False -> html.div([], [])
+        },
+        case list.is_empty(risk_effects.special_orbs) {
+          True -> html.div([], [])
+          False ->
+            html.div([attribute.class("text-green-800")], [
+              html.text(
+                "◈ SPECIAL EFFECTS: "
+                <> int.to_string(list.length(risk_effects.special_orbs))
+                <> " activated",
+              ),
+            ])
+        },
+      ]),
+    ],
+  )
 }
