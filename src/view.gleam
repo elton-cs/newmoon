@@ -48,6 +48,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb_message,
             model.bag,
             model.active_statuses,
+            model.pulled_orbs,
           ),
         ]),
       )
@@ -66,6 +67,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb_message,
             model.bag,
             model.active_statuses,
+            model.pulled_orbs,
           ),
         ]),
       )
@@ -85,6 +87,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.bag,
             model.active_statuses,
             model.milestone,
+            model.pulled_orbs,
           ),
         ]),
       )
@@ -103,6 +106,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb_message,
             model.bag,
             model.active_statuses,
+            model.pulled_orbs,
           ),
         ]),
       )
@@ -123,6 +127,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.bag,
             model.active_statuses,
             model.milestone,
+            model.pulled_orbs,
           ),
         ]),
       )
@@ -142,6 +147,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb_message,
             model.bag,
             model.active_statuses,
+            model.pulled_orbs,
           ),
         ]),
       )
@@ -189,6 +195,7 @@ fn render_playing_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
+  pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
@@ -197,6 +204,7 @@ fn render_playing_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
+    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
   ])
@@ -209,6 +217,7 @@ fn render_won_view(
   bag,
   active_statuses: List(types.StatusEffect),
   milestone: Int,
+  pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -217,6 +226,7 @@ fn render_won_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
+    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.success_button(display.advance_button_text, NextLevel),
     ui.status_panel(
@@ -233,6 +243,7 @@ fn render_lost_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
+  pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -240,6 +251,7 @@ fn render_lost_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
+    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.failure_button(display.play_again_text, RestartGame),
     ui.failure_panel(
@@ -364,6 +376,7 @@ fn render_testing_mode_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
+  pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
@@ -372,6 +385,7 @@ fn render_testing_mode_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
+    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
     ui.secondary_button(display.reset_testing_text, ResetTesting),
@@ -386,6 +400,7 @@ fn render_testing_won_view(
   bag,
   active_statuses: List(types.StatusEffect),
   milestone: Int,
+  pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -394,6 +409,7 @@ fn render_testing_won_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
+    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
@@ -407,6 +423,7 @@ fn render_testing_lost_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
+  pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -414,6 +431,7 @@ fn render_testing_lost_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
+    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),

@@ -7,7 +7,11 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import types.{type Msg, type Orb, PullOrb, UpdateInputValue}
+import types.{
+  type Msg, type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
+  HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb, PullOrb,
+  UpdateInputValue,
+}
 
 // Layout Components
 
@@ -381,5 +385,66 @@ pub fn status_effects_display(status_effects: List(String)) -> Element(Msg) {
           )
         }),
       )
+  }
+}
+
+// Pulled Orbs Log Components
+
+pub fn pulled_orbs_log(pulled_orbs: List(Orb)) -> Element(Msg) {
+  case pulled_orbs {
+    [] -> html.div([attribute.class("h-0")], [])
+    _orbs ->
+      html.div(
+        [attribute.class("p-3 bg-gray-50 border border-gray-200 rounded")],
+        [
+          html.div(
+            [
+              attribute.class(
+                "text-xs text-gray-500 uppercase tracking-wider mb-3 font-light",
+              ),
+            ],
+            [html.text("EXTRACTION LOG")],
+          ),
+          html.div(
+            [attribute.class("space-y-2 max-h-32 overflow-y-auto")],
+            list.map(pulled_orbs, fn(orb) {
+              let #(bg_class, text_class, border_class) =
+                get_orb_style_classes(orb)
+              html.div(
+                [
+                  attribute.class(
+                    "flex items-center px-2 py-1 "
+                    <> bg_class
+                    <> " border "
+                    <> border_class
+                    <> " rounded text-xs",
+                  ),
+                ],
+                [
+                  html.span([attribute.class("mr-2 text-gray-400")], [
+                    html.text("●"),
+                  ]),
+                  html.span([attribute.class(text_class <> " font-medium")], [
+                    html.text(display.orb_display_name(orb)),
+                  ]),
+                ],
+              )
+            }),
+          ),
+        ],
+      )
+  }
+}
+
+fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
+  case orb {
+    PointOrb(_) -> #("bg-gray-50", "text-gray-700", "border-gray-200")
+    BombOrb(_) -> #("bg-red-50", "text-red-700", "border-red-200")
+    HealthOrb(_) -> #("bg-green-50", "text-green-700", "border-green-200")
+    AllCollectorOrb -> #("bg-purple-50", "text-purple-700", "border-purple-200")
+    PointCollectorOrb -> #("bg-blue-50", "text-blue-700", "border-blue-200")
+    BombSurvivorOrb -> #("bg-orange-50", "text-orange-700", "border-orange-200")
+    MultiplierOrb -> #("bg-yellow-50", "text-yellow-700", "border-yellow-200")
+    BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
   }
 }
