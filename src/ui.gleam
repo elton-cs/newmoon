@@ -369,25 +369,17 @@ pub fn status_effects_display(status_effects: List(String)) -> Element(Msg) {
     [] -> html.div([attribute.class("h-0")], [])
     effects ->
       html.div(
-        [attribute.class("p-3 bg-blue-50 border border-blue-200 rounded")],
-        [
+        [attribute.class("flex flex-wrap gap-2")],
+        list.map(effects, fn(effect_text) {
           html.div(
             [
               attribute.class(
-                "text-xs text-blue-500 uppercase tracking-wider mb-2 font-light",
+                "px-3 py-2 bg-blue-100 border border-blue-300 rounded-lg text-blue-800 text-xs font-medium shadow-sm",
               ),
             ],
-            [html.text(display.status_effects_title)],
-          ),
-          html.div(
-            [attribute.class("space-y-1")],
-            list.map(effects, fn(effect_text) {
-              html.p([attribute.class("text-blue-700 text-sm font-light")], [
-                html.text(effect_text),
-              ])
-            }),
-          ),
-        ],
+            [html.text(effect_text)],
+          )
+        }),
       )
   }
 }

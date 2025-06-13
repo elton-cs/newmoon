@@ -5066,7 +5066,6 @@ var data_label = "DATA";
 var target_label = "TARGET";
 var sector_label = "SECTOR";
 var mission_failed_message = "ALL SYSTEMS COMPROMISED. INITIATING RESET PROTOCOL.";
-var status_effects_title = "ACTIVE ENHANCEMENTS";
 
 // build/dev/javascript/newmoon/status.mjs
 var Replace2 = class extends CustomType {
@@ -6859,31 +6858,20 @@ function status_effects_display(status_effects) {
   } else {
     let effects = status_effects;
     return div(
-      toList([
-        class$("p-3 bg-blue-50 border border-blue-200 rounded")
-      ]),
-      toList([
-        div(
-          toList([
-            class$(
-              "text-xs text-blue-500 uppercase tracking-wider mb-2 font-light"
-            )
-          ]),
-          toList([text3(status_effects_title)])
-        ),
-        div(
-          toList([class$("space-y-1")]),
-          map(
-            effects,
-            (effect_text) => {
-              return p(
-                toList([class$("text-blue-700 text-sm font-light")]),
-                toList([text3(effect_text)])
-              );
-            }
-          )
-        )
-      ])
+      toList([class$("flex flex-wrap gap-2")]),
+      map(
+        effects,
+        (effect_text) => {
+          return div(
+            toList([
+              class$(
+                "px-3 py-2 bg-blue-100 border border-blue-300 rounded-lg text-blue-800 text-xs font-medium shadow-sm"
+              )
+            ]),
+            toList([text3(effect_text)])
+          );
+        }
+      )
     );
   }
 }
