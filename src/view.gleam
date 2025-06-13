@@ -9,7 +9,8 @@ import types.{
   DataSample, Defeat, ExitTesting, Failure, Game, Gameplay, GoToOrbTesting,
   HazardSample, HealthSample, Main, Menu, MultiplierSample, NextLevel,
   OrbSelection, Playing, PointCollectorSample, ResetTesting, RestartGame,
-  SelectOrbType, StartGame, Success, Testing, ValueConfiguration, Victory,
+  SelectOrbType, StartGame, StartTestingWithBothStatuses, Success, Testing,
+  ValueConfiguration, Victory,
 }
 import ui
 
@@ -292,6 +293,7 @@ fn render_orb_testing_view() -> Element(Msg) {
       "Shield Generator Sample",
       SelectOrbType(BombImmunitySample),
     ),
+    ui.orb_selection_button("Both Status Effects", StartTestingWithBothStatuses),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }

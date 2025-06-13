@@ -11,8 +11,8 @@ import types.{
   Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Menu,
   Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing,
   PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb, ResetTesting,
-  RestartGame, SelectOrbType, StartGame, Success, Testing, UpdateInputValue,
-  ValueConfiguration, Victory,
+  RestartGame, SelectOrbType, StartGame, StartTestingWithBothStatuses, Success,
+  Testing, UpdateInputValue, ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -92,6 +92,8 @@ pub fn update(model: Model, msg: Msg) -> Model {
     ConfirmOrbValue(orb_type) -> handle_confirm_orb_value(model, orb_type)
     BackToMainMenu -> handle_back_to_main_menu(model)
     BackToOrbTesting -> handle_back_to_orb_testing(model)
+    StartTestingWithBothStatuses ->
+      handle_start_testing_with_both_statuses(model)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> init(Nil)
@@ -166,6 +168,23 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
 
 fn handle_back_to_orb_testing(model: Model) -> Model {
   Model(..model, screen: Testing(OrbSelection))
+}
+
+fn handle_start_testing_with_both_statuses(model: Model) -> Model {
+  let test_bag = [MultiplierOrb, BombImmunityOrb] |> list.append(starter_orbs())
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+  )
 }
 
 fn handle_back_to_main_menu(model: Model) -> Model {

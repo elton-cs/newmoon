@@ -89,6 +89,7 @@ pub type Msg {
   ConfirmOrbValue(OrbType)
   BackToMainMenu
   BackToOrbTesting
+  StartTestingWithBothStatuses
   PullOrb
   NextLevel
   RestartGame

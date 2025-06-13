@@ -4995,6 +4995,8 @@ var BackToMainMenu = class extends CustomType {
 };
 var BackToOrbTesting = class extends CustomType {
 };
+var StartTestingWithBothStatuses = class extends CustomType {
+};
 var PullOrb = class extends CustomType {
 };
 var NextLevel = class extends CustomType {
@@ -5601,6 +5603,32 @@ function handle_back_to_orb_testing(model) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
+    _record.active_statuses
+  );
+}
+function handle_start_testing_with_both_statuses(model) {
+  let _block;
+  let _pipe = toList([new MultiplierOrb(), new BombImmunityOrb()]);
+  _block = append(_pipe, starter_orbs());
+  let test_bag = _block;
+  let clean_model = clear_statuses_by_persistence(
+    model,
+    new ClearOnGame()
+  );
+  let _record = clean_model;
+  return new Model(
+    5,
+    0,
+    _record.level,
+    _record.milestone,
+    test_bag,
+    new Testing(new Gameplay()),
+    new None(),
+    new None(),
+    _record.input_value,
+    toList([]),
+    1,
+    0,
     _record.active_statuses
   );
 }
@@ -6383,6 +6411,8 @@ function update2(model, msg) {
     return handle_back_to_main_menu(model);
   } else if (msg instanceof BackToOrbTesting) {
     return handle_back_to_orb_testing(model);
+  } else if (msg instanceof StartTestingWithBothStatuses) {
+    return handle_start_testing_with_both_statuses(model);
   } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
@@ -6944,6 +6974,10 @@ function render_orb_testing_view() {
       orb_selection_button(
         "Shield Generator Sample",
         new SelectOrbType(new BombImmunitySample())
+      ),
+      orb_selection_button(
+        "Both Status Effects",
+        new StartTestingWithBothStatuses()
       ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])
