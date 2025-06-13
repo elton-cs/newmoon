@@ -26,6 +26,7 @@ pub type Orb {
   BombSurvivorOrb
   MultiplierOrb
   BombImmunityOrb
+  ChoiceOrb
 }
 
 pub type MenuScreen {
@@ -38,12 +39,14 @@ pub type TestingScreen {
   Gameplay
   Success
   Failure
+  TestingChoosing
 }
 
 pub type GameScreen {
   Playing
   Victory
   Defeat
+  Choosing
 }
 
 pub type Screen {
@@ -61,6 +64,7 @@ pub type OrbType {
   PointCollectorSample
   BombSurvivorSample
   BombImmunitySample
+  ChoiceSample
 }
 
 pub type Model {
@@ -78,6 +82,8 @@ pub type Model {
     point_multiplier: Int,
     bomb_immunity: Int,
     active_statuses: List(StatusEffect),
+    choice_orb_1: Option(Orb),
+    choice_orb_2: Option(Orb),
   )
 }
 
@@ -90,9 +96,11 @@ pub type Msg {
   BackToMainMenu
   BackToOrbTesting
   StartTestingWithBothStatuses
+  StartTestingWithTripleChoice
   PullOrb
   NextLevel
   RestartGame
   ResetTesting
   ExitTesting
+  ChooseOrb(Int)
 }

@@ -6,13 +6,15 @@ import status
 import types.{
   type Model, type Msg, type Orb, type OrbType, AllCollectorOrb,
   AllCollectorSample, BackToMainMenu, BackToOrbTesting, BombImmunityOrb,
-  BombImmunitySample, BombOrb, BombSurvivorOrb, BombSurvivorSample, ClearOnGame,
-  ClearOnLevel, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure, Game,
-  Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Menu,
-  Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection, Playing,
-  PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb, ResetTesting,
-  RestartGame, SelectOrbType, StartGame, StartTestingWithBothStatuses, Success,
-  Testing, UpdateInputValue, ValueConfiguration, Victory,
+  BombImmunitySample, BombOrb, BombSurvivorOrb, BombSurvivorSample, ChoiceOrb,
+  ChoiceSample, ChooseOrb, Choosing, ClearOnGame, ClearOnLevel, ConfirmOrbValue,
+  DataSample, Defeat, ExitTesting, Failure, Game, Gameplay, GoToOrbTesting,
+  HazardSample, HealthOrb, HealthSample, Main, Menu, Model, MultiplierOrb,
+  MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorOrb,
+  PointCollectorSample, PointOrb, PullOrb, ResetTesting, RestartGame,
+  SelectOrbType, StartGame, StartTestingWithBothStatuses,
+  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
+  UpdateInputValue, ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -30,6 +32,8 @@ pub fn init(_) -> Model {
     point_multiplier: 1,
     bomb_immunity: 0,
     active_statuses: [],
+    choice_orb_1: None,
+    choice_orb_2: None,
   )
 }
 
@@ -50,6 +54,7 @@ fn starter_orbs() -> List(Orb) {
     BombSurvivorOrb,
     MultiplierOrb,
     BombImmunityOrb,
+    ChoiceOrb,
   ]
 
   point_orbs
@@ -94,6 +99,9 @@ pub fn update(model: Model, msg: Msg) -> Model {
     BackToOrbTesting -> handle_back_to_orb_testing(model)
     StartTestingWithBothStatuses ->
       handle_start_testing_with_both_statuses(model)
+    StartTestingWithTripleChoice ->
+      handle_start_testing_with_triple_choice(model)
+    ChooseOrb(choice_index) -> handle_choose_orb(model, choice_index)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> init(Nil)
@@ -115,6 +123,8 @@ fn handle_start_game(model: Model) -> Model {
     pulled_orbs: [],
     point_multiplier: 1,
     bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
   )
 }
 
@@ -146,6 +156,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         PointCollectorSample -> PointCollectorOrb
         BombSurvivorSample -> BombSurvivorOrb
         BombImmunitySample -> BombImmunityOrb
+        ChoiceSample -> ChoiceOrb
       }
       let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
       Model(
@@ -159,6 +170,8 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         pulled_orbs: [],
         point_multiplier: 1,
         bomb_immunity: 0,
+        choice_orb_1: None,
+        choice_orb_2: None,
       )
     }
     _ -> model
@@ -184,6 +197,28 @@ fn handle_start_testing_with_both_statuses(model: Model) -> Model {
     pulled_orbs: [],
     point_multiplier: 1,
     bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
+  )
+}
+
+fn handle_start_testing_with_triple_choice(model: Model) -> Model {
+  let test_bag =
+    [ChoiceOrb, ChoiceOrb, ChoiceOrb] |> list.append(starter_orbs())
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
   )
 }
 
@@ -277,6 +312,11 @@ fn handle_pull_orb(model: Model) -> Model {
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
+            ChoiceOrb -> {
+              // Choice orb consumes itself and presents choice screen
+              let message = display.orb_result_message(first_orb)
+              #(model, message, False)
+            }
           }
 
           let new_bag = case return_orb_to_bag {
@@ -311,11 +351,46 @@ fn handle_pull_orb(model: Model) -> Model {
             _ -> status.tick_statuses(model_with_bag_and_pulls)
           }
 
-          check_game_status(updated_model)
+          // Handle choice orb special logic after normal consumption
+          case first_orb {
+            ChoiceOrb -> handle_choice_orb_activation(updated_model)
+            _ -> check_game_status(updated_model)
+          }
         }
       }
     }
     _ -> model
+  }
+}
+
+fn handle_choice_orb_activation(model: Model) -> Model {
+  case model.bag {
+    [] -> {
+      // No orbs left to choose from, continue with game status check
+      check_game_status(model)
+    }
+    [single_orb] -> {
+      // Only one orb left, automatically process it
+      let temp_model = Model(..model, bag: [single_orb])
+      handle_pull_orb(temp_model)
+    }
+    [first_choice, second_choice, ..remaining] -> {
+      // Present choice between the next two orbs
+      let screen = case model.screen {
+        Game(Playing) -> Game(Choosing)
+        Testing(Gameplay) -> Testing(TestingChoosing)
+        _ -> model.screen
+      }
+      let choice_model =
+        Model(
+          ..model,
+          screen: screen,
+          bag: remaining,
+          choice_orb_1: Some(first_choice),
+          choice_orb_2: Some(second_choice),
+        )
+      choice_model
+    }
   }
 }
 
@@ -370,5 +445,63 @@ fn check_game_status(model: Model) -> Model {
         False, False, False -> model
       }
     _ -> model
+  }
+}
+
+fn handle_choose_orb(model: Model, choice_index: Int) -> Model {
+  case model.screen, model.choice_orb_1, model.choice_orb_2 {
+    Game(Choosing), Some(first_choice), Some(second_choice) -> {
+      let chosen_orb = case choice_index {
+        0 -> first_choice
+        _ -> second_choice
+      }
+      let unchosen_orb = case choice_index {
+        0 -> second_choice
+        _ -> first_choice
+      }
+
+      // Put the unchosen orb back to the end of the bag
+      let new_bag = list.append(model.bag, [unchosen_orb])
+
+      // Clear choice state and set up to process the chosen orb
+      let temp_model =
+        Model(
+          ..model,
+          bag: [chosen_orb, ..new_bag],
+          screen: Game(Playing),
+          choice_orb_1: None,
+          choice_orb_2: None,
+        )
+
+      // Process the chosen orb (this handles ChoiceOrb -> ChoiceOrb chains naturally)
+      handle_pull_orb(temp_model)
+    }
+    Testing(TestingChoosing), Some(first_choice), Some(second_choice) -> {
+      let chosen_orb = case choice_index {
+        0 -> first_choice
+        _ -> second_choice
+      }
+      let unchosen_orb = case choice_index {
+        0 -> second_choice
+        _ -> first_choice
+      }
+
+      // Put the unchosen orb back to the end of the bag
+      let new_bag = list.append(model.bag, [unchosen_orb])
+
+      // Clear choice state and set up to process the chosen orb
+      let temp_model =
+        Model(
+          ..model,
+          bag: [chosen_orb, ..new_bag],
+          screen: Testing(Gameplay),
+          choice_orb_1: None,
+          choice_orb_2: None,
+        )
+
+      // Process the chosen orb (this handles ChoiceOrb -> ChoiceOrb chains naturally)
+      handle_pull_orb(temp_model)
+    }
+    _, _, _ -> model
   }
 }

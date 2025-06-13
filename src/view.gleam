@@ -1,16 +1,18 @@
 import display
 import gleam/int
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import lustre/element.{type Element}
 import status
 import types.{
   type Model, type Msg, type OrbType, AllCollectorSample, BackToMainMenu,
-  BackToOrbTesting, BombImmunitySample, BombSurvivorSample, ConfirmOrbValue,
-  DataSample, Defeat, ExitTesting, Failure, Game, Gameplay, GoToOrbTesting,
-  HazardSample, HealthSample, Main, Menu, MultiplierSample, NextLevel,
-  OrbSelection, Playing, PointCollectorSample, ResetTesting, RestartGame,
-  SelectOrbType, StartGame, StartTestingWithBothStatuses, Success, Testing,
-  ValueConfiguration, Victory,
+  BackToOrbTesting, BombImmunitySample, BombSurvivorSample, ChoiceSample,
+  ChooseOrb, Choosing, ConfirmOrbValue, DataSample, Defeat, ExitTesting, Failure,
+  Game, Gameplay, GoToOrbTesting, HazardSample, HealthSample, Main, Menu,
+  MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
+  ResetTesting, RestartGame, SelectOrbType, StartGame,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
+  TestingChoosing, ValueConfiguration, Victory,
 }
 import ui
 
@@ -147,6 +149,49 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb_message,
             model.bag,
             model.active_statuses,
+            model.pulled_orbs,
+          ),
+        ]),
+      )
+    Game(Choosing) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level,
+          ),
+          render_choosing_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.active_statuses,
+            model.choice_orb_1,
+            model.choice_orb_2,
+            model.pulled_orbs,
+          ),
+        ]),
+      )
+    Testing(TestingChoosing) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level,
+          ),
+          render_testing_choosing_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.active_statuses,
+            model.choice_orb_1,
+            model.choice_orb_2,
             model.pulled_orbs,
           ),
         ]),
@@ -305,7 +350,9 @@ fn render_orb_testing_view() -> Element(Msg) {
       "Shield Generator Sample",
       SelectOrbType(BombImmunitySample),
     ),
+    ui.orb_selection_button("Choice Portal Sample", SelectOrbType(ChoiceSample)),
     ui.orb_selection_button("Both Status Effects", StartTestingWithBothStatuses),
+    ui.orb_selection_button("Triple Choice Test", StartTestingWithTripleChoice),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }
@@ -324,6 +371,7 @@ fn render_orb_value_selection_view(
     PointCollectorSample -> "Point Collector Sample"
     BombSurvivorSample -> "Bomb Survivor Sample"
     BombImmunitySample -> "Shield Generator Sample"
+    ChoiceSample -> "Choice Portal Sample"
   }
   let description = case orb_type {
     DataSample -> "Enter the data points this sample will provide"
@@ -339,6 +387,7 @@ fn render_orb_value_selection_view(
       "Awards points equal to number of hazard samples encountered so far"
     BombImmunitySample ->
       "Activates hazard shield for 3 extractions, returning hazards to container"
+    ChoiceSample -> "Presents a choice between two samples from the container"
   }
 
   case orb_type {
@@ -357,7 +406,8 @@ fn render_orb_value_selection_view(
     | AllCollectorSample
     | PointCollectorSample
     | BombSurvivorSample
-    | BombImmunitySample ->
+    | BombImmunitySample
+    | ChoiceSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",
@@ -447,4 +497,86 @@ fn extract_active_status_effects(
   active_statuses: List(types.StatusEffect),
 ) -> List(String) {
   list.map(active_statuses, status.status_to_display_text)
+}
+
+// Choosing View - displays two orb options for main game
+fn render_choosing_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  active_statuses: List(types.StatusEffect),
+  choice_orb_1: Option(types.Orb),
+  choice_orb_2: Option(types.Orb),
+  pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(active_statuses)
+
+  case choice_orb_1, choice_orb_2 {
+    Some(first_choice), Some(second_choice) ->
+      element.fragment([
+        ui.orb_result_display(last_orb, last_orb_message),
+        ui.status_effects_display(status_effects),
+        ui.pulled_orbs_log(pulled_orbs),
+        ui.container_display(orbs_left),
+        ui.choice_panel(
+          "SELECT ONE SAMPLE:",
+          display.orb_display_name(first_choice),
+          display.orb_display_name(second_choice),
+          ChooseOrb(0),
+          ChooseOrb(1),
+        ),
+      ])
+    _, _ ->
+      element.fragment([
+        ui.orb_result_display(last_orb, last_orb_message),
+        ui.status_effects_display(status_effects),
+        ui.pulled_orbs_log(pulled_orbs),
+        ui.container_display(orbs_left),
+        ui.failure_panel("CHOICE ERROR", "No choice options available."),
+      ])
+  }
+}
+
+// Testing Choosing View - displays two orb options for testing mode
+fn render_testing_choosing_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  active_statuses: List(types.StatusEffect),
+  choice_orb_1: Option(types.Orb),
+  choice_orb_2: Option(types.Orb),
+  pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(active_statuses)
+
+  case choice_orb_1, choice_orb_2 {
+    Some(first_choice), Some(second_choice) ->
+      element.fragment([
+        ui.orb_result_display(last_orb, last_orb_message),
+        ui.status_effects_display(status_effects),
+        ui.pulled_orbs_log(pulled_orbs),
+        ui.container_display(orbs_left),
+        ui.choice_panel(
+          "SELECT ONE SAMPLE:",
+          display.orb_display_name(first_choice),
+          display.orb_display_name(second_choice),
+          ChooseOrb(0),
+          ChooseOrb(1),
+        ),
+        ui.secondary_button("RESTART TESTING", ResetTesting),
+        ui.secondary_button(display.exit_testing_text, ExitTesting),
+      ])
+    _, _ ->
+      element.fragment([
+        ui.orb_result_display(last_orb, last_orb_message),
+        ui.status_effects_display(status_effects),
+        ui.pulled_orbs_log(pulled_orbs),
+        ui.container_display(orbs_left),
+        ui.failure_panel("CHOICE ERROR", "No choice options available."),
+        ui.secondary_button("RESTART TESTING", ResetTesting),
+        ui.secondary_button(display.exit_testing_text, ExitTesting),
+      ])
+  }
 }

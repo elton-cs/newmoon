@@ -4898,6 +4898,8 @@ var MultiplierOrb = class extends CustomType {
 };
 var BombImmunityOrb = class extends CustomType {
 };
+var ChoiceOrb = class extends CustomType {
+};
 var Main = class extends CustomType {
 };
 var OrbSelection = class extends CustomType {
@@ -4914,11 +4916,15 @@ var Success = class extends CustomType {
 };
 var Failure = class extends CustomType {
 };
+var TestingChoosing = class extends CustomType {
+};
 var Playing = class extends CustomType {
 };
 var Victory = class extends CustomType {
 };
 var Defeat = class extends CustomType {
+};
+var Choosing = class extends CustomType {
 };
 var Menu = class extends CustomType {
   constructor($0) {
@@ -4954,8 +4960,10 @@ var BombSurvivorSample = class extends CustomType {
 };
 var BombImmunitySample = class extends CustomType {
 };
+var ChoiceSample = class extends CustomType {
+};
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses) {
+  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2) {
     super();
     this.health = health;
     this.points = points;
@@ -4970,6 +4978,8 @@ var Model = class extends CustomType {
     this.point_multiplier = point_multiplier;
     this.bomb_immunity = bomb_immunity;
     this.active_statuses = active_statuses;
+    this.choice_orb_1 = choice_orb_1;
+    this.choice_orb_2 = choice_orb_2;
   }
 };
 var StartGame = class extends CustomType {
@@ -5000,6 +5010,8 @@ var BackToOrbTesting = class extends CustomType {
 };
 var StartTestingWithBothStatuses = class extends CustomType {
 };
+var StartTestingWithTripleChoice = class extends CustomType {
+};
 var PullOrb = class extends CustomType {
 };
 var NextLevel = class extends CustomType {
@@ -5009,6 +5021,12 @@ var RestartGame = class extends CustomType {
 var ResetTesting = class extends CustomType {
 };
 var ExitTesting = class extends CustomType {
+};
+var ChooseOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 
 // build/dev/javascript/newmoon/display.mjs
@@ -5027,8 +5045,10 @@ function orb_display_name(orb) {
     return "Bomb Survivor Sample";
   } else if (orb instanceof MultiplierOrb) {
     return "Multiplier Sample";
-  } else {
+  } else if (orb instanceof BombImmunityOrb) {
     return "Shield Generator Sample";
+  } else {
+    return "Choice Portal Sample";
   }
 }
 function orb_result_message(orb) {
@@ -5049,8 +5069,10 @@ function orb_result_message(orb) {
     return "\u25C6 SURVIVAL BONUS +?";
   } else if (orb instanceof MultiplierOrb) {
     return "\u25C8 MULTIPLIER ACTIVATED \xD72";
-  } else {
+  } else if (orb instanceof BombImmunityOrb) {
     return "\u25C8 SHIELD GENERATOR ACTIVATED";
+  } else {
+    return "\u25C8 CHOICE PORTAL ACTIVATED";
   }
 }
 function collector_result_message(orb, bonus_points) {
@@ -5201,7 +5223,9 @@ function clear_statuses_by_persistence(model, persistence) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    remaining_statuses
+    remaining_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function decrement_duration(duration) {
@@ -5270,7 +5294,9 @@ function tick_statuses(model) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    updated_statuses
+    updated_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function status_to_display_text(status) {
@@ -5402,7 +5428,9 @@ function add_status(model, new_status) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    updated_statuses
+    updated_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 
@@ -5428,7 +5456,8 @@ function starter_orbs() {
     new PointCollectorOrb(),
     new BombSurvivorOrb(),
     new MultiplierOrb(),
-    new BombImmunityOrb()
+    new BombImmunityOrb(),
+    new ChoiceOrb()
   ]);
   let _pipe = point_orbs;
   let _pipe$1 = append(_pipe, bomb_orbs);
@@ -5449,7 +5478,9 @@ function init(_) {
     toList([]),
     1,
     0,
-    toList([])
+    toList([]),
+    new None(),
+    new None()
   );
 }
 function create_test_bag(test_orb) {
@@ -5501,7 +5532,9 @@ function handle_start_game(model) {
     toList([]),
     1,
     0,
-    _record.active_statuses
+    _record.active_statuses,
+    new None(),
+    new None()
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -5519,7 +5552,9 @@ function handle_go_to_orb_testing(model) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_select_orb_type(model, orb_type) {
@@ -5537,7 +5572,9 @@ function handle_select_orb_type(model, orb_type) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_update_input_value(model, value2) {
@@ -5555,7 +5592,9 @@ function handle_update_input_value(model, value2) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
@@ -5578,8 +5617,10 @@ function handle_confirm_orb_value(model, orb_type) {
         _block = new PointCollectorOrb();
       } else if (orb_type instanceof BombSurvivorSample) {
         _block = new BombSurvivorOrb();
-      } else {
+      } else if (orb_type instanceof BombImmunitySample) {
         _block = new BombImmunityOrb();
+      } else {
+        _block = new ChoiceOrb();
       }
       let test_orb = _block;
       let clean_model = clear_statuses_by_persistence(
@@ -5600,7 +5641,9 @@ function handle_confirm_orb_value(model, orb_type) {
         toList([]),
         1,
         0,
-        _record.active_statuses
+        _record.active_statuses,
+        new None(),
+        new None()
       );
     } else {
       return model;
@@ -5624,7 +5667,9 @@ function handle_back_to_orb_testing(model) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_start_testing_with_both_statuses(model) {
@@ -5650,7 +5695,37 @@ function handle_start_testing_with_both_statuses(model) {
     toList([]),
     1,
     0,
-    _record.active_statuses
+    _record.active_statuses,
+    new None(),
+    new None()
+  );
+}
+function handle_start_testing_with_triple_choice(model) {
+  let _block;
+  let _pipe = toList([new ChoiceOrb(), new ChoiceOrb(), new ChoiceOrb()]);
+  _block = append(_pipe, starter_orbs());
+  let test_bag = _block;
+  let clean_model = clear_statuses_by_persistence(
+    model,
+    new ClearOnGame()
+  );
+  let _record = clean_model;
+  return new Model(
+    5,
+    0,
+    _record.level,
+    _record.milestone,
+    test_bag,
+    new Testing(new Gameplay()),
+    new None(),
+    new None(),
+    _record.input_value,
+    toList([]),
+    1,
+    0,
+    _record.active_statuses,
+    new None(),
+    new None()
   );
 }
 function handle_back_to_main_menu(model) {
@@ -5668,7 +5743,9 @@ function handle_back_to_main_menu(model) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_next_level(model) {
@@ -5690,7 +5767,9 @@ function handle_next_level(model) {
     toList([]),
     1,
     0,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_reset_testing(model) {
@@ -5708,7 +5787,9 @@ function handle_reset_testing(model) {
     _record.pulled_orbs,
     _record.point_multiplier,
     _record.bomb_immunity,
-    _record.active_statuses
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2
   );
 }
 function handle_exit_testing(_) {
@@ -5737,7 +5818,9 @@ function check_game_status(model) {
           _record.pulled_orbs,
           _record.point_multiplier,
           _record.bomb_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
       } else if ($3) {
         let _record = model;
@@ -5754,7 +5837,9 @@ function check_game_status(model) {
           _record.pulled_orbs,
           _record.point_multiplier,
           _record.bomb_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
       } else if ($4) {
         let _record = model;
@@ -5771,7 +5856,9 @@ function check_game_status(model) {
           _record.pulled_orbs,
           _record.point_multiplier,
           _record.bomb_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
       } else {
         return model;
@@ -5800,7 +5887,9 @@ function check_game_status(model) {
           _record.pulled_orbs,
           _record.point_multiplier,
           _record.bomb_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
       } else if ($3) {
         let _record = model;
@@ -5817,7 +5906,9 @@ function check_game_status(model) {
           _record.pulled_orbs,
           _record.point_multiplier,
           _record.bomb_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
       } else if ($4) {
         let _record = model;
@@ -5834,7 +5925,9 @@ function check_game_status(model) {
           _record.pulled_orbs,
           _record.point_multiplier,
           _record.bomb_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
       } else {
         return model;
@@ -5844,6 +5937,83 @@ function check_game_status(model) {
     }
   } else {
     return model;
+  }
+}
+function handle_choice_orb_activation(model) {
+  let $ = model.bag;
+  if ($ instanceof Empty) {
+    return check_game_status(model);
+  } else {
+    let $1 = $.tail;
+    if ($1 instanceof Empty) {
+      let single_orb = $.head;
+      let _block;
+      let _record = model;
+      _block = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        toList([single_orb]),
+        _record.screen,
+        _record.last_orb,
+        _record.last_orb_message,
+        _record.input_value,
+        _record.pulled_orbs,
+        _record.point_multiplier,
+        _record.bomb_immunity,
+        _record.active_statuses,
+        _record.choice_orb_1,
+        _record.choice_orb_2
+      );
+      let temp_model = _block;
+      return handle_pull_orb(temp_model);
+    } else {
+      let first_choice = $.head;
+      let second_choice = $1.head;
+      let remaining = $1.tail;
+      let _block;
+      let $2 = model.screen;
+      if ($2 instanceof Testing) {
+        let $3 = $2[0];
+        if ($3 instanceof Gameplay) {
+          _block = new Testing(new TestingChoosing());
+        } else {
+          _block = model.screen;
+        }
+      } else if ($2 instanceof Game) {
+        let $3 = $2[0];
+        if ($3 instanceof Playing) {
+          _block = new Game(new Choosing());
+        } else {
+          _block = model.screen;
+        }
+      } else {
+        _block = model.screen;
+      }
+      let screen = _block;
+      let _block$1;
+      let _record = model;
+      _block$1 = new Model(
+        _record.health,
+        _record.points,
+        _record.level,
+        _record.milestone,
+        remaining,
+        screen,
+        _record.last_orb,
+        _record.last_orb_message,
+        _record.input_value,
+        _record.pulled_orbs,
+        _record.point_multiplier,
+        _record.bomb_immunity,
+        _record.active_statuses,
+        new Some(first_choice),
+        new Some(second_choice)
+      );
+      let choice_model = _block$1;
+      return choice_model;
+    }
   }
 }
 function handle_pull_orb(model) {
@@ -5877,7 +6047,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -5905,7 +6077,9 @@ function handle_pull_orb(model) {
               _record2.pulled_orbs,
               _record2.point_multiplier,
               _record2.bomb_immunity,
-              _record2.active_statuses
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -5929,7 +6103,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -5952,7 +6128,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -5978,7 +6156,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6004,7 +6184,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6035,13 +6217,15 @@ function handle_pull_orb(model) {
               _record2.pulled_orbs,
               new_multiplier,
               _record2.bomb_immunity,
-              _record2.active_statuses
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2
             );
           })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
-        } else {
+        } else if (first_orb instanceof BombImmunityOrb) {
           let _block$12;
           let _pipe = model;
           let _pipe$1 = add_status(
@@ -6063,12 +6247,17 @@ function handle_pull_orb(model) {
               _record2.pulled_orbs,
               _record2.point_multiplier,
               3,
-              _record2.active_statuses
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2
             );
           })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
+        } else {
+          let message = orb_result_message(first_orb);
+          _block = [model, message, false];
         }
         let $3 = _block;
         let new_model = $3[0];
@@ -6114,7 +6303,9 @@ function handle_pull_orb(model) {
           })(),
           _record.point_multiplier,
           new_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -6124,7 +6315,11 @@ function handle_pull_orb(model) {
           _block$4 = tick_statuses(model_with_bag_and_pulls);
         }
         let updated_model = _block$4;
-        return check_game_status(updated_model);
+        if (first_orb instanceof ChoiceOrb) {
+          return handle_choice_orb_activation(updated_model);
+        } else {
+          return check_game_status(updated_model);
+        }
       }
     } else {
       return model;
@@ -6158,7 +6353,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6186,7 +6383,9 @@ function handle_pull_orb(model) {
               _record2.pulled_orbs,
               _record2.point_multiplier,
               _record2.bomb_immunity,
-              _record2.active_statuses
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -6210,7 +6409,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -6233,7 +6434,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6259,7 +6462,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6285,7 +6490,9 @@ function handle_pull_orb(model) {
             _record2.pulled_orbs,
             _record2.point_multiplier,
             _record2.bomb_immunity,
-            _record2.active_statuses
+            _record2.active_statuses,
+            _record2.choice_orb_1,
+            _record2.choice_orb_2
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -6316,13 +6523,15 @@ function handle_pull_orb(model) {
               _record2.pulled_orbs,
               new_multiplier,
               _record2.bomb_immunity,
-              _record2.active_statuses
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2
             );
           })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
-        } else {
+        } else if (first_orb instanceof BombImmunityOrb) {
           let _block$12;
           let _pipe = model;
           let _pipe$1 = add_status(
@@ -6344,12 +6553,17 @@ function handle_pull_orb(model) {
               _record2.pulled_orbs,
               _record2.point_multiplier,
               3,
-              _record2.active_statuses
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2
             );
           })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
+        } else {
+          let message = orb_result_message(first_orb);
+          _block = [model, message, false];
         }
         let $3 = _block;
         let new_model = $3[0];
@@ -6395,7 +6609,9 @@ function handle_pull_orb(model) {
           })(),
           _record.point_multiplier,
           new_immunity,
-          _record.active_statuses
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -6405,7 +6621,115 @@ function handle_pull_orb(model) {
           _block$4 = tick_statuses(model_with_bag_and_pulls);
         }
         let updated_model = _block$4;
-        return check_game_status(updated_model);
+        if (first_orb instanceof ChoiceOrb) {
+          return handle_choice_orb_activation(updated_model);
+        } else {
+          return check_game_status(updated_model);
+        }
+      }
+    } else {
+      return model;
+    }
+  } else {
+    return model;
+  }
+}
+function handle_choose_orb(model, choice_index) {
+  let $ = model.screen;
+  let $1 = model.choice_orb_1;
+  let $2 = model.choice_orb_2;
+  if ($2 instanceof Some) {
+    if ($1 instanceof Some) {
+      if ($ instanceof Testing) {
+        let $3 = $[0];
+        if ($3 instanceof TestingChoosing) {
+          let second_choice = $2[0];
+          let first_choice = $1[0];
+          let _block;
+          if (choice_index === 0) {
+            _block = first_choice;
+          } else {
+            _block = second_choice;
+          }
+          let chosen_orb = _block;
+          let _block$1;
+          if (choice_index === 0) {
+            _block$1 = second_choice;
+          } else {
+            _block$1 = first_choice;
+          }
+          let unchosen_orb = _block$1;
+          let new_bag = append(model.bag, toList([unchosen_orb]));
+          let _block$2;
+          let _record = model;
+          _block$2 = new Model(
+            _record.health,
+            _record.points,
+            _record.level,
+            _record.milestone,
+            prepend(chosen_orb, new_bag),
+            new Testing(new Gameplay()),
+            _record.last_orb,
+            _record.last_orb_message,
+            _record.input_value,
+            _record.pulled_orbs,
+            _record.point_multiplier,
+            _record.bomb_immunity,
+            _record.active_statuses,
+            new None(),
+            new None()
+          );
+          let temp_model = _block$2;
+          return handle_pull_orb(temp_model);
+        } else {
+          return model;
+        }
+      } else if ($ instanceof Game) {
+        let $3 = $[0];
+        if ($3 instanceof Choosing) {
+          let second_choice = $2[0];
+          let first_choice = $1[0];
+          let _block;
+          if (choice_index === 0) {
+            _block = first_choice;
+          } else {
+            _block = second_choice;
+          }
+          let chosen_orb = _block;
+          let _block$1;
+          if (choice_index === 0) {
+            _block$1 = second_choice;
+          } else {
+            _block$1 = first_choice;
+          }
+          let unchosen_orb = _block$1;
+          let new_bag = append(model.bag, toList([unchosen_orb]));
+          let _block$2;
+          let _record = model;
+          _block$2 = new Model(
+            _record.health,
+            _record.points,
+            _record.level,
+            _record.milestone,
+            prepend(chosen_orb, new_bag),
+            new Game(new Playing()),
+            _record.last_orb,
+            _record.last_orb_message,
+            _record.input_value,
+            _record.pulled_orbs,
+            _record.point_multiplier,
+            _record.bomb_immunity,
+            _record.active_statuses,
+            new None(),
+            new None()
+          );
+          let temp_model = _block$2;
+          return handle_pull_orb(temp_model);
+        } else {
+          return model;
+        }
+      } else {
+        return model;
       }
     } else {
       return model;
@@ -6434,6 +6758,8 @@ function update2(model, msg) {
     return handle_back_to_orb_testing(model);
   } else if (msg instanceof StartTestingWithBothStatuses) {
     return handle_start_testing_with_both_statuses(model);
+  } else if (msg instanceof StartTestingWithTripleChoice) {
+    return handle_start_testing_with_triple_choice(model);
   } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
@@ -6442,8 +6768,11 @@ function update2(model, msg) {
     return init(void 0);
   } else if (msg instanceof ResetTesting) {
     return handle_reset_testing(model);
-  } else {
+  } else if (msg instanceof ExitTesting) {
     return handle_exit_testing(model);
+  } else {
+    let choice_index = msg[0];
+    return handle_choose_orb(model, choice_index);
   }
 }
 
@@ -6625,11 +6954,17 @@ function orb_result_display(orb, message) {
           "text-yellow-700",
           "bg-yellow-50 border-yellow-200"
         );
-      } else {
+      } else if (orb_value instanceof BombImmunityOrb) {
         return info_panel(
           orb_message,
           "text-cyan-700",
           "bg-cyan-50 border-cyan-200"
+        );
+      } else {
+        return info_panel(
+          orb_message,
+          "text-indigo-700",
+          "bg-indigo-50 border-indigo-200"
         );
       }
     } else {
@@ -6677,11 +7012,17 @@ function orb_result_display(orb, message) {
           "text-yellow-700",
           "bg-yellow-50 border-yellow-200"
         );
-      } else {
+      } else if (orb_value instanceof BombImmunityOrb) {
         return info_panel(
           fallback_message,
           "text-cyan-700",
           "bg-cyan-50 border-cyan-200"
+        );
+      } else {
+        return info_panel(
+          fallback_message,
+          "text-indigo-700",
+          "bg-indigo-50 border-indigo-200"
         );
       }
     }
@@ -6912,8 +7253,10 @@ function get_orb_style_classes(orb) {
     return ["bg-orange-50", "text-orange-700", "border-orange-200"];
   } else if (orb instanceof MultiplierOrb) {
     return ["bg-yellow-50", "text-yellow-700", "border-yellow-200"];
-  } else {
+  } else if (orb instanceof BombImmunityOrb) {
     return ["bg-cyan-50", "text-cyan-700", "border-cyan-200"];
+  } else {
+    return ["bg-indigo-50", "text-indigo-700", "border-indigo-200"];
   }
 }
 function pulled_orbs_log(pulled_orbs) {
@@ -6965,6 +7308,44 @@ function pulled_orbs_log(pulled_orbs) {
       ])
     );
   }
+}
+function choice_panel(title, first_option, second_option, first_msg, second_msg) {
+  return div(
+    toList([class$("space-y-4")]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-sm text-indigo-700 font-medium bg-indigo-50 border border-indigo-200 rounded p-3 text-center"
+          )
+        ]),
+        toList([text3(title)])
+      ),
+      div(
+        toList([class$("grid grid-cols-1 gap-3")]),
+        toList([
+          button(
+            toList([
+              class$(
+                "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide"
+              ),
+              on_click(first_msg)
+            ]),
+            toList([text3(first_option)])
+          ),
+          button(
+            toList([
+              class$(
+                "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide"
+              ),
+              on_click(second_msg)
+            ]),
+            toList([text3(second_option)])
+          )
+        ])
+      )
+    ])
+  );
 }
 
 // build/dev/javascript/newmoon/view.mjs
@@ -7055,8 +7436,16 @@ function render_orb_testing_view() {
         new SelectOrbType(new BombImmunitySample())
       ),
       orb_selection_button(
+        "Choice Portal Sample",
+        new SelectOrbType(new ChoiceSample())
+      ),
+      orb_selection_button(
         "Both Status Effects",
         new StartTestingWithBothStatuses()
+      ),
+      orb_selection_button(
+        "Triple Choice Test",
+        new StartTestingWithTripleChoice()
       ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])
@@ -7078,8 +7467,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block = "Point Collector Sample";
   } else if (orb_type instanceof BombSurvivorSample) {
     _block = "Bomb Survivor Sample";
-  } else {
+  } else if (orb_type instanceof BombImmunitySample) {
     _block = "Shield Generator Sample";
+  } else {
+    _block = "Choice Portal Sample";
   }
   let orb_name = _block;
   let _block$1;
@@ -7097,8 +7488,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block$1 = "Awards points equal to number of data samples left in container";
   } else if (orb_type instanceof BombSurvivorSample) {
     _block$1 = "Awards points equal to number of hazard samples encountered so far";
-  } else {
+  } else if (orb_type instanceof BombImmunitySample) {
     _block$1 = "Activates hazard shield for 3 extractions, returning hazards to container";
+  } else {
+    _block$1 = "Presents a choice between two samples from the container";
   }
   let description = _block$1;
   if (orb_type instanceof DataSample) {
@@ -7177,6 +7570,18 @@ function render_orb_value_selection_view(orb_type, input_value) {
       ])
     );
   } else if (orb_type instanceof BombSurvivorSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-purple-50 border-purple-200"
+        ),
+        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof BombImmunitySample) {
     return fragment2(
       toList([
         status_panel(
@@ -7305,6 +7710,102 @@ function render_testing_lost_view(last_orb, last_orb_message, bag, active_status
     ])
   );
 }
+function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, pulled_orbs) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(active_statuses);
+  if (choice_orb_2 instanceof Some) {
+    if (choice_orb_1 instanceof Some) {
+      let second_choice = choice_orb_2[0];
+      let first_choice = choice_orb_1[0];
+      return fragment2(
+        toList([
+          orb_result_display(last_orb, last_orb_message),
+          status_effects_display(status_effects),
+          pulled_orbs_log(pulled_orbs),
+          container_display(orbs_left),
+          choice_panel(
+            "SELECT ONE SAMPLE:",
+            orb_display_name(first_choice),
+            orb_display_name(second_choice),
+            new ChooseOrb(0),
+            new ChooseOrb(1)
+          )
+        ])
+      );
+    } else {
+      return fragment2(
+        toList([
+          orb_result_display(last_orb, last_orb_message),
+          status_effects_display(status_effects),
+          pulled_orbs_log(pulled_orbs),
+          container_display(orbs_left),
+          failure_panel("CHOICE ERROR", "No choice options available.")
+        ])
+      );
+    }
+  } else {
+    return fragment2(
+      toList([
+        orb_result_display(last_orb, last_orb_message),
+        status_effects_display(status_effects),
+        pulled_orbs_log(pulled_orbs),
+        container_display(orbs_left),
+        failure_panel("CHOICE ERROR", "No choice options available.")
+      ])
+    );
+  }
+}
+function render_testing_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, pulled_orbs) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(active_statuses);
+  if (choice_orb_2 instanceof Some) {
+    if (choice_orb_1 instanceof Some) {
+      let second_choice = choice_orb_2[0];
+      let first_choice = choice_orb_1[0];
+      return fragment2(
+        toList([
+          orb_result_display(last_orb, last_orb_message),
+          status_effects_display(status_effects),
+          pulled_orbs_log(pulled_orbs),
+          container_display(orbs_left),
+          choice_panel(
+            "SELECT ONE SAMPLE:",
+            orb_display_name(first_choice),
+            orb_display_name(second_choice),
+            new ChooseOrb(0),
+            new ChooseOrb(1)
+          ),
+          secondary_button("RESTART TESTING", new ResetTesting()),
+          secondary_button(exit_testing_text, new ExitTesting())
+        ])
+      );
+    } else {
+      return fragment2(
+        toList([
+          orb_result_display(last_orb, last_orb_message),
+          status_effects_display(status_effects),
+          pulled_orbs_log(pulled_orbs),
+          container_display(orbs_left),
+          failure_panel("CHOICE ERROR", "No choice options available."),
+          secondary_button("RESTART TESTING", new ResetTesting()),
+          secondary_button(exit_testing_text, new ExitTesting())
+        ])
+      );
+    }
+  } else {
+    return fragment2(
+      toList([
+        orb_result_display(last_orb, last_orb_message),
+        status_effects_display(status_effects),
+        pulled_orbs_log(pulled_orbs),
+        container_display(orbs_left),
+        failure_panel("CHOICE ERROR", "No choice options available."),
+        secondary_button("RESTART TESTING", new ResetTesting()),
+        secondary_button(exit_testing_text, new ExitTesting())
+      ])
+    );
+  }
+}
 function view(model) {
   let $ = model.screen;
   if ($ instanceof Menu) {
@@ -7372,7 +7873,7 @@ function view(model) {
           ])
         )
       );
-    } else {
+    } else if ($1 instanceof Failure) {
       return app_container(
         game_card(
           toList([
@@ -7389,6 +7890,30 @@ function view(model) {
               model.last_orb_message,
               model.bag,
               model.active_statuses,
+              model.pulled_orbs
+            )
+          ])
+        )
+      );
+    } else {
+      return app_container(
+        game_card(
+          toList([
+            game_header(),
+            testing_mode_indicator2(),
+            render_game_stats(
+              model.health,
+              model.points,
+              model.milestone,
+              model.level
+            ),
+            render_testing_choosing_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.active_statuses,
+              model.choice_orb_1,
+              model.choice_orb_2,
               model.pulled_orbs
             )
           ])
@@ -7440,7 +7965,7 @@ function view(model) {
           ])
         )
       );
-    } else {
+    } else if ($1 instanceof Defeat) {
       return app_container(
         game_card(
           toList([
@@ -7456,6 +7981,29 @@ function view(model) {
               model.last_orb_message,
               model.bag,
               model.active_statuses,
+              model.pulled_orbs
+            )
+          ])
+        )
+      );
+    } else {
+      return app_container(
+        game_card(
+          toList([
+            game_header(),
+            render_game_stats(
+              model.health,
+              model.points,
+              model.milestone,
+              model.level
+            ),
+            render_choosing_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.active_statuses,
+              model.choice_orb_1,
+              model.choice_orb_2,
               model.pulled_orbs
             )
           ])

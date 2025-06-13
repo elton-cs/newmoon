@@ -9,7 +9,7 @@ import lustre/element/html
 import lustre/event
 import types.{
   type Msg, type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb, PullOrb,
+  ChoiceOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb, PullOrb,
   UpdateInputValue,
 }
 
@@ -127,6 +127,12 @@ pub fn orb_result_display(
           )
         types.BombImmunityOrb ->
           info_panel(orb_message, "text-cyan-700", "bg-cyan-50 border-cyan-200")
+        types.ChoiceOrb ->
+          info_panel(
+            orb_message,
+            "text-indigo-700",
+            "bg-indigo-50 border-indigo-200",
+          )
       }
     }
     Some(orb_value), None -> {
@@ -180,6 +186,12 @@ pub fn orb_result_display(
             fallback_message,
             "text-cyan-700",
             "bg-cyan-50 border-cyan-200",
+          )
+        types.ChoiceOrb ->
+          info_panel(
+            fallback_message,
+            "text-indigo-700",
+            "bg-indigo-50 border-indigo-200",
           )
       }
     }
@@ -446,5 +458,47 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
     BombSurvivorOrb -> #("bg-orange-50", "text-orange-700", "border-orange-200")
     MultiplierOrb -> #("bg-yellow-50", "text-yellow-700", "border-yellow-200")
     BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
+    ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
   }
+}
+
+// Choice Components
+
+pub fn choice_panel(
+  title: String,
+  first_option: String,
+  second_option: String,
+  first_msg: Msg,
+  second_msg: Msg,
+) -> Element(Msg) {
+  html.div([attribute.class("space-y-4")], [
+    html.div(
+      [
+        attribute.class(
+          "text-sm text-indigo-700 font-medium bg-indigo-50 border border-indigo-200 rounded p-3 text-center",
+        ),
+      ],
+      [html.text(title)],
+    ),
+    html.div([attribute.class("grid grid-cols-1 gap-3")], [
+      html.button(
+        [
+          attribute.class(
+            "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide",
+          ),
+          event.on_click(first_msg),
+        ],
+        [html.text(first_option)],
+      ),
+      html.button(
+        [
+          attribute.class(
+            "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide",
+          ),
+          event.on_click(second_msg),
+        ],
+        [html.text(second_option)],
+      ),
+    ]),
+  ])
 }
