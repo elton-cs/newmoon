@@ -5149,6 +5149,8 @@ var StartTestingRiskSuccess = class extends CustomType {
 };
 var StartTestingRiskFailure = class extends CustomType {
 };
+var StartTestingRiskContinue = class extends CustomType {
+};
 var PullOrb = class extends CustomType {
 };
 var NextLevel = class extends CustomType {
@@ -6050,6 +6052,48 @@ function handle_start_testing_risk_failure(model) {
     0,
     _record.level,
     _record.milestone,
+    test_bag,
+    new Testing(new Gameplay()),
+    new None(),
+    new None(),
+    _record.input_value,
+    toList([]),
+    1,
+    0,
+    _record.active_statuses,
+    new None(),
+    new None(),
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
+  );
+}
+function handle_start_testing_risk_continue(model) {
+  let risk_orbs = toList([
+    new PointOrb(1),
+    new PointOrb(1),
+    new PointOrb(1),
+    new PointOrb(1),
+    new PointOrb(1)
+  ]);
+  let _block;
+  let _pipe = toList([new RiskOrb()]);
+  let _pipe$1 = append(_pipe, risk_orbs);
+  _block = append(_pipe$1, starter_orbs());
+  let test_bag = _block;
+  let clean_model = clear_statuses_by_persistence(
+    model,
+    new ClearOnGame()
+  );
+  let _record = clean_model;
+  return new Model(
+    5,
+    0,
+    _record.level,
+    50,
     test_bag,
     new Testing(new Gameplay()),
     new None(),
@@ -8024,6 +8068,8 @@ function update2(model, msg) {
     return handle_start_testing_risk_success(model);
   } else if (msg instanceof StartTestingRiskFailure) {
     return handle_start_testing_risk_failure(model);
+  } else if (msg instanceof StartTestingRiskContinue) {
+    return handle_start_testing_risk_continue(model);
   } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
@@ -9286,6 +9332,10 @@ function render_orb_testing_view() {
       orb_selection_button(
         "Risk Failure Test",
         new StartTestingRiskFailure()
+      ),
+      orb_selection_button(
+        "Risk Continue Test",
+        new StartTestingRiskContinue()
       ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])

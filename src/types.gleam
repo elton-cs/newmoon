@@ -128,6 +128,7 @@ pub type Msg {
   StartTestingWithTripleChoice
   StartTestingRiskSuccess
   StartTestingRiskFailure
+  StartTestingRiskContinue
   PullOrb
   NextLevel
   RestartGame

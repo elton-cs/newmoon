@@ -15,11 +15,12 @@ import types.{
   Playing, PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb,
   PullRiskOrb, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied,
   RiskOrb, RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectOrbType,
-  StartGame, StartTestingRiskFailure, StartTestingRiskSuccess,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
-  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ToggleDevMode,
-  UpdateInputValue, ValueConfiguration, Victory,
+  StartGame, StartTestingRiskContinue, StartTestingRiskFailure,
+  StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
+  TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
+  TestingRiskReveal, TestingRiskSurvived, ToggleDevMode, UpdateInputValue,
+  ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -120,6 +121,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
       handle_start_testing_with_triple_choice(model)
     StartTestingRiskSuccess -> handle_start_testing_risk_success(model)
     StartTestingRiskFailure -> handle_start_testing_risk_failure(model)
+    StartTestingRiskContinue -> handle_start_testing_risk_continue(model)
     ChooseOrb(choice_index) -> handle_choose_orb(model, choice_index)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
@@ -299,6 +301,39 @@ fn handle_start_testing_risk_failure(model: Model) -> Model {
     bag: test_bag,
     health: 5,
     points: 0,
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
+  )
+}
+
+fn handle_start_testing_risk_continue(model: Model) -> Model {
+  // Test bag for risk continue: RiskOrb first, then small rewards that won't reach milestone
+  // PointOrb(1) → 2 points (2× bonus), PointOrb(1) → 2 points (2× bonus), 
+  // PointOrb(1) → 2 points (2× bonus), PointOrb(1) → 2 points (2× bonus)
+  // Total: 8 enhanced points, survives but doesn't reach the high milestone (50)
+  let risk_orbs = [
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(1),
+  ]
+  let test_bag =
+    [RiskOrb] |> list.append(risk_orbs) |> list.append(starter_orbs())
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
+    milestone: 50,
+    // Much higher milestone to test continue case
     last_orb: None,
     last_orb_message: None,
     pulled_orbs: [],
