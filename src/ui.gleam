@@ -924,6 +924,15 @@ pub fn risk_effects_summary(risk_effects: types.RiskEffects) -> Element(Msg) {
             ])
           False -> html.div([], [])
         },
+        case risk_effects.damage_taken > 0 {
+          True ->
+            html.div([attribute.class("text-red-800")], [
+              html.text(
+                "○ HAZARD DAMAGE: -" <> int.to_string(risk_effects.damage_taken),
+              ),
+            ])
+          False -> html.div([], [])
+        },
         case risk_effects.points_gained > 0 {
           True ->
             html.div([attribute.class("text-green-800")], [

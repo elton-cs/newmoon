@@ -8,17 +8,18 @@ import types.{
   AllCollectorOrb, AllCollectorSample, ApplyRiskEffects, BackToMainMenu,
   BackToOrbTesting, BombImmunityOrb, BombImmunitySample, BombOrb,
   BombSurvivorOrb, BombSurvivorSample, ChoiceOrb, ChoiceSample, ChooseOrb,
-  Choosing, ClearOnGame, ClearOnLevel, ConfirmOrbValue, DataSample, Defeat,
-  ExitRisk, ExitTesting, Failure, Game, Gameplay, GoToOrbTesting, HazardSample,
-  HealthOrb, HealthSample, Main, Menu, Model, MultiplierOrb, MultiplierSample,
-  NextLevel, OrbSelection, Playing, PointCollectorOrb, PointCollectorSample,
-  PointOrb, PullOrb, PullRiskOrb, ResetTesting, RestartGame, RiskAccept,
-  RiskDied, RiskOrb, RiskPlaying, RiskReveal, RiskSample, RiskSurvived,
-  SelectOrbType, StartGame, StartTestingRiskFailure, StartTestingRiskSuccess,
+  Choosing, ClearOnGame, ClearOnLevel, ConfirmOrbValue,
+  ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
+  Failure, Game, Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample,
+  Main, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection,
+  Playing, PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb,
+  PullRiskOrb, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied,
+  RiskOrb, RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectOrbType,
+  StartGame, StartTestingRiskFailure, StartTestingRiskSuccess,
   StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskDied, TestingRiskPlaying,
-  TestingRiskReveal, TestingRiskSurvived, ToggleDevMode, UpdateInputValue,
-  ValueConfiguration, Victory,
+  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
+  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ToggleDevMode,
+  UpdateInputValue, ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -45,6 +46,7 @@ pub fn init(_) -> Model {
     risk_accumulated_effects: types.RiskEffects(
       health_gained: 0,
       points_gained: 0,
+      damage_taken: 0,
       special_orbs: [],
     ),
     risk_health: 5,
@@ -129,6 +131,8 @@ pub fn update(model: Model, msg: Msg) -> Model {
     AcceptFate -> handle_accept_fate(model)
     PullRiskOrb -> handle_pull_risk_orb(model)
     ApplyRiskEffects -> handle_apply_risk_effects(model)
+    ContinueAfterRiskConsumption ->
+      handle_continue_after_risk_consumption(model)
     ExitRisk -> handle_exit_risk(model)
   }
 }
@@ -638,6 +642,7 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
             risk_accumulated_effects: types.RiskEffects(
               health_gained: 0,
               points_gained: 0,
+              damage_taken: 0,
               special_orbs: [],
             ),
             risk_pulled_orbs: [],
@@ -670,55 +675,36 @@ fn handle_pull_risk_orb(model: Model) -> Model {
       model
     }
     [first_orb, ..rest] -> {
-      let #(new_risk_health, new_effects, orb_message) =
-        process_risk_orb(
+      // Just accumulate the orb effects without applying health changes yet
+      let #(new_effects, orb_message) =
+        accumulate_risk_orb(
           first_orb,
-          model.risk_health,
           model.risk_accumulated_effects,
           model.active_statuses,
         )
 
-      case new_risk_health <= 0 {
-        True -> {
-          // Player died during risk
-          Model(
-            ..model,
-            risk_health: new_risk_health,
-            last_orb: Some(first_orb),
-            last_orb_message: Some(orb_message),
-            screen: case model.screen {
-              Game(RiskPlaying) -> Game(RiskDied)
-              Testing(TestingRiskPlaying) -> Testing(TestingRiskDied)
-              _ -> model.screen
-            },
-          )
-        }
-        False -> {
-          // Continue with next orb or transition if complete
-          let updated_model =
-            Model(
-              ..model,
-              risk_orbs: rest,
-              risk_pulled_orbs: [first_orb, ..model.risk_pulled_orbs],
-              risk_health: new_risk_health,
-              risk_accumulated_effects: new_effects,
-              last_orb: Some(first_orb),
-              last_orb_message: Some(orb_message),
-            )
+      // Continue with next orb or transition if complete
+      let updated_model =
+        Model(
+          ..model,
+          risk_orbs: rest,
+          risk_pulled_orbs: [first_orb, ..model.risk_pulled_orbs],
+          risk_accumulated_effects: new_effects,
+          last_orb: Some(first_orb),
+          last_orb_message: Some(orb_message),
+        )
 
-          // Check if we've completed all orbs and transition to survival screen
-          case list.is_empty(rest) {
-            True -> {
-              let screen = case model.screen {
-                Game(RiskPlaying) -> Game(RiskSurvived)
-                Testing(TestingRiskPlaying) -> Testing(TestingRiskSurvived)
-                _ -> model.screen
-              }
-              Model(..updated_model, screen: screen)
-            }
-            False -> updated_model
+      // Check if we've completed all orbs and transition to survival screen
+      case list.is_empty(rest) {
+        True -> {
+          let screen = case model.screen {
+            Game(RiskPlaying) -> Game(RiskSurvived)
+            Testing(TestingRiskPlaying) -> Testing(TestingRiskSurvived)
+            _ -> model.screen
           }
+          Model(..updated_model, screen: screen)
         }
+        False -> updated_model
       }
     }
   }
@@ -726,50 +712,91 @@ fn handle_pull_risk_orb(model: Model) -> Model {
 
 fn handle_apply_risk_effects(model: Model) -> Model {
   let effects = model.risk_accumulated_effects
-  let new_health = int.min(model.health + effects.health_gained, 5)
-  let new_points = model.points + effects.points_gained
 
-  // Apply special orbs
-  let model_with_special =
-    list.fold(effects.special_orbs, model, fn(acc_model, special_orb) {
-      case special_orb {
-        MultiplierOrb -> {
-          let new_multiplier = acc_model.point_multiplier * 2
-          acc_model
-          |> status.add_status(status.create_point_multiplier(new_multiplier))
-          |> fn(m) { Model(..m, point_multiplier: new_multiplier) }
-        }
-        BombImmunityOrb -> {
-          acc_model
-          |> status.add_status(status.create_bomb_immunity(3))
-          |> fn(m) { Model(..m, bomb_immunity: 3) }
-        }
-        _ -> acc_model
+  // Calculate total health change from all accumulated effects
+  let total_health_change = effects.health_gained - effects.damage_taken
+  let final_health = model.health + total_health_change
+
+  // Check if player survived the risk
+  case final_health <= 0 {
+    True -> {
+      // Player risked out - show special death screen
+      let death_screen = case model.screen {
+        Game(RiskSurvived) -> Game(RiskDied)
+        Testing(TestingRiskSurvived) -> Testing(TestingRiskDied)
+        _ -> model.screen
       }
-    })
+      Model(..model, screen: death_screen, health: final_health)
+    }
+    False -> {
+      // Player survived - apply all effects and show consumption success
+      let capped_health = int.min(final_health, 5)
+      let new_points = model.points + effects.points_gained
 
-  // Determine return screen and clear risk state
-  let return_screen = case model.screen {
-    Game(RiskSurvived) -> Game(Playing)
-    Testing(TestingRiskSurvived) -> Testing(Gameplay)
-    _ -> model.screen
+      // Apply special orbs
+      let model_with_special =
+        list.fold(effects.special_orbs, model, fn(acc_model, special_orb) {
+          case special_orb {
+            MultiplierOrb -> {
+              let new_multiplier = acc_model.point_multiplier * 2
+              acc_model
+              |> status.add_status(status.create_point_multiplier(
+                new_multiplier,
+              ))
+              |> fn(m) { Model(..m, point_multiplier: new_multiplier) }
+            }
+            BombImmunityOrb -> {
+              acc_model
+              |> status.add_status(status.create_bomb_immunity(3))
+              |> fn(m) { Model(..m, bomb_immunity: 3) }
+            }
+            _ -> acc_model
+          }
+        })
+
+      // Show consumption success screen first
+      let consumption_screen = case model.screen {
+        Game(RiskSurvived) -> Game(RiskConsumed)
+        Testing(TestingRiskSurvived) -> Testing(TestingRiskConsumed)
+        _ -> model.screen
+      }
+
+      // Apply effects but keep risk state for the success screen
+      Model(
+        ..model_with_special,
+        health: capped_health,
+        points: new_points,
+        screen: consumption_screen,
+      )
+    }
   }
+}
 
-  Model(
-    ..model_with_special,
-    health: new_health,
-    points: new_points,
-    screen: return_screen,
-    risk_orbs: [],
-    risk_original_orbs: [],
-    risk_pulled_orbs: [],
-    risk_accumulated_effects: types.RiskEffects(
-      health_gained: 0,
-      points_gained: 0,
-      special_orbs: [],
-    ),
-    risk_health: 5,
-  )
+fn handle_continue_after_risk_consumption(model: Model) -> Model {
+  // Clear risk state and determine final outcome
+  let clean_model =
+    Model(
+      ..model,
+      risk_orbs: [],
+      risk_original_orbs: [],
+      risk_pulled_orbs: [],
+      risk_accumulated_effects: types.RiskEffects(
+        health_gained: 0,
+        points_gained: 0,
+        damage_taken: 0,
+        special_orbs: [],
+      ),
+      risk_health: 5,
+    )
+
+  // Check if player won or lost and transition accordingly
+  case model.screen {
+    Game(RiskConsumed) ->
+      check_game_status(Model(..clean_model, screen: Game(Playing)))
+    Testing(TestingRiskConsumed) ->
+      check_game_status(Model(..clean_model, screen: Testing(Gameplay)))
+    _ -> clean_model
+  }
 }
 
 fn handle_exit_risk(model: Model) -> Model {
@@ -782,19 +809,19 @@ fn handle_exit_risk(model: Model) -> Model {
     risk_accumulated_effects: types.RiskEffects(
       health_gained: 0,
       points_gained: 0,
+      damage_taken: 0,
       special_orbs: [],
     ),
     risk_health: 5,
   )
 }
 
-// Helper function to process individual risk orbs
-fn process_risk_orb(
+// Helper function to accumulate risk orb effects without applying health changes
+fn accumulate_risk_orb(
   orb: Orb,
-  current_health: Int,
   current_effects: types.RiskEffects,
   active_statuses: List(types.StatusEffect),
-) -> #(Int, types.RiskEffects, String) {
+) -> #(types.RiskEffects, String) {
   case orb {
     PointOrb(value) -> {
       let multiplier = status.get_point_multiplier(active_statuses)
@@ -805,41 +832,30 @@ fn process_risk_orb(
           points_gained: current_effects.points_gained + risk_bonus_points,
         )
       #(
-        current_health,
         new_effects,
         "● RISK DATA ACQUIRED +" <> int.to_string(risk_bonus_points),
       )
     }
     BombOrb(value) -> {
       case status.has_bomb_immunity(active_statuses) {
-        True -> #(
-          current_health,
-          current_effects,
-          "◈ SHIELD PROTECTED FROM HAZARD",
-        )
+        True -> #(current_effects, "◈ SHIELD PROTECTED FROM HAZARD")
         False -> {
-          let new_health = current_health - value
-          #(
-            new_health,
-            current_effects,
-            "○ HAZARD DAMAGE -" <> int.to_string(value),
-          )
+          let new_effects =
+            types.RiskEffects(
+              ..current_effects,
+              damage_taken: current_effects.damage_taken + value,
+            )
+          #(new_effects, "○ HAZARD DAMAGE -" <> int.to_string(value))
         }
       }
     }
     HealthOrb(value) -> {
-      let health_to_add = int.min(value, 5 - current_health)
-      let new_health = current_health + health_to_add
       let new_effects =
         types.RiskEffects(
           ..current_effects,
-          health_gained: current_effects.health_gained + health_to_add,
+          health_gained: current_effects.health_gained + value,
         )
-      #(
-        new_health,
-        new_effects,
-        "◇ EMERGENCY SYSTEMS +" <> int.to_string(health_to_add),
-      )
+      #(new_effects, "◇ EMERGENCY SYSTEMS +" <> int.to_string(value))
     }
     special_orb -> {
       let new_effects =
@@ -847,7 +863,7 @@ fn process_risk_orb(
           special_orb,
           ..current_effects.special_orbs
         ])
-      #(current_health, new_effects, display.orb_result_message(special_orb))
+      #(new_effects, display.orb_result_message(special_orb))
     }
   }
 }

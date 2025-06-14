@@ -18,7 +18,12 @@ pub type StatusPersistence {
 }
 
 pub type RiskEffects {
-  RiskEffects(health_gained: Int, points_gained: Int, special_orbs: List(Orb))
+  RiskEffects(
+    health_gained: Int,
+    points_gained: Int,
+    damage_taken: Int,
+    special_orbs: List(Orb),
+  )
 }
 
 pub type Orb {
@@ -49,6 +54,7 @@ pub type TestingScreen {
   TestingRiskReveal
   TestingRiskPlaying
   TestingRiskSurvived
+  TestingRiskConsumed
   TestingRiskDied
 }
 
@@ -61,6 +67,7 @@ pub type GameScreen {
   RiskReveal
   RiskPlaying
   RiskSurvived
+  RiskConsumed
   RiskDied
 }
 
@@ -132,5 +139,6 @@ pub type Msg {
   AcceptFate
   PullRiskOrb
   ApplyRiskEffects
+  ContinueAfterRiskConsumption
   ExitRisk
 }

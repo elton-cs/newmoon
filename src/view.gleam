@@ -8,15 +8,15 @@ import types.{
   type Model, type Msg, type OrbType, AcceptFate, AcceptRisk, AllCollectorSample,
   ApplyRiskEffects, BackToMainMenu, BackToOrbTesting, BombImmunitySample,
   BombSurvivorSample, ChoiceSample, ChooseOrb, Choosing, ConfirmOrbValue,
-  DataSample, Defeat, ExitRisk, ExitTesting, Failure, Game, Gameplay,
-  GoToOrbTesting, HazardSample, HealthSample, Main, Menu, MultiplierSample,
-  NextLevel, OrbSelection, Playing, PointCollectorSample, PullRiskOrb,
-  ResetTesting, RestartGame, RiskAccept, RiskDied, RiskPlaying, RiskReveal,
-  RiskSample, RiskSurvived, SelectOrbType, StartGame, StartTestingRiskFailure,
-  StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
+  Failure, Game, Gameplay, GoToOrbTesting, HazardSample, HealthSample, Main,
+  Menu, MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
+  PullRiskOrb, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied,
+  RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectOrbType, StartGame,
+  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
   StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
-  TestingRiskAccept, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
-  TestingRiskSurvived, ValueConfiguration, Victory,
+  TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
+  TestingRiskReveal, TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
 
@@ -213,6 +213,13 @@ pub fn view(model: Model) -> Element(Msg) {
           ),
         ]),
       )
+    Game(RiskConsumed) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_risk_consumed_view(model.milestone, model.points),
+        ]),
+      )
     Game(RiskDied) ->
       ui.app_container(
         ui.game_card([
@@ -286,6 +293,14 @@ pub fn view(model: Model) -> Element(Msg) {
             model.risk_accumulated_effects,
             model.risk_pulled_orbs,
           ),
+        ]),
+      )
+    Testing(TestingRiskConsumed) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          ui.testing_mode_indicator(),
+          render_testing_risk_consumed_view(model.milestone, model.points),
         ]),
       )
     Testing(TestingRiskDied) ->
@@ -761,14 +776,37 @@ fn render_risk_survived_view(
 ) -> Element(Msg) {
   element.fragment([
     ui.status_panel(
-      "YOU SURVIVED THE VOID",
-      "The fates smiled upon you. Your enhanced rewards await application.",
-      "bg-green-50 border-green-200",
+      "RISK EFFECTS ACCUMULATED",
+      "All specimens have been extracted from the void. The accumulated effects await consumption.",
+      "bg-orange-50 border-orange-200",
     ),
     ui.risk_effects_summary(risk_accumulated_effects),
     ui.pulled_orbs_log(risk_pulled_orbs),
-    ui.primary_button("CLAIM REWARDS", ApplyRiskEffects),
+    ui.primary_button("CONSUME", ApplyRiskEffects),
   ])
+}
+
+fn render_risk_consumed_view(milestone: Int, points: Int) -> Element(Msg) {
+  case points >= milestone {
+    True ->
+      element.fragment([
+        ui.status_panel(
+          "YOU SURVIVED THE VOID",
+          "The void's power flows through you. Your gamble has paid off with enhanced rewards.",
+          "bg-green-50 border-green-200",
+        ),
+        ui.success_button("CONTINUE MISSION", ContinueAfterRiskConsumption),
+      ])
+    False ->
+      element.fragment([
+        ui.status_panel(
+          "YOU SURVIVED THE VOID",
+          "The void's power flows through you. Your survival instincts have kept you alive.",
+          "bg-green-50 border-green-200",
+        ),
+        ui.primary_button("CONTINUE MISSION", ContinueAfterRiskConsumption),
+      ])
+  }
 }
 
 fn render_risk_died_view(
@@ -796,7 +834,7 @@ fn render_testing_risk_accept_view() -> Element(Msg) {
       "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
       "bg-red-50 border-red-200",
     ),
-    ui.primary_button("ACCEPT FATE", AcceptRisk(True)),
+    ui.primary_button("ACCEPT RISK", AcceptRisk(True)),
     ui.secondary_button("DECLINE RISK", AcceptRisk(False)),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
@@ -847,16 +885,46 @@ fn render_testing_risk_survived_view(
 ) -> Element(Msg) {
   element.fragment([
     ui.status_panel(
-      "YOU SURVIVED THE VOID",
-      "The fates smiled upon you. Your enhanced rewards await application.",
-      "bg-green-50 border-green-200",
+      "RISK EFFECTS ACCUMULATED",
+      "All specimens have been extracted from the void. The accumulated effects await consumption.",
+      "bg-orange-50 border-orange-200",
     ),
     ui.risk_effects_summary(risk_accumulated_effects),
     ui.pulled_orbs_log(risk_pulled_orbs),
-    ui.primary_button("CLAIM REWARDS", ApplyRiskEffects),
+    ui.primary_button("CONSUME", ApplyRiskEffects),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
   ])
+}
+
+fn render_testing_risk_consumed_view(
+  milestone: Int,
+  points: Int,
+) -> Element(Msg) {
+  case points >= milestone {
+    True ->
+      element.fragment([
+        ui.status_panel(
+          "YOU SURVIVED THE VOID",
+          "The void's power flows through you. Your gamble has paid off with enhanced rewards.",
+          "bg-green-50 border-green-200",
+        ),
+        ui.success_button("CONTINUE TEST", ContinueAfterRiskConsumption),
+        ui.secondary_button("RESTART TESTING", ResetTesting),
+        ui.secondary_button(display.exit_testing_text, ExitTesting),
+      ])
+    False ->
+      element.fragment([
+        ui.status_panel(
+          "YOU SURVIVED THE VOID",
+          "The void's power flows through you. Your survival instincts have kept you alive.",
+          "bg-green-50 border-green-200",
+        ),
+        ui.primary_button("CONTINUE TEST", ContinueAfterRiskConsumption),
+        ui.secondary_button("RESTART TESTING", ResetTesting),
+        ui.secondary_button(display.exit_testing_text, ExitTesting),
+      ])
+  }
 }
 
 fn render_testing_risk_died_view(
