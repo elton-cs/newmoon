@@ -6069,6 +6069,31 @@ function handle_start_testing_risk_failure(model) {
     _record.risk_health
   );
 }
+function handle_restart_game(model) {
+  return new Model(
+    5,
+    0,
+    1,
+    5,
+    starter_orbs(),
+    new Menu(new Main()),
+    new None(),
+    new None(),
+    "",
+    toList([]),
+    1,
+    0,
+    toList([]),
+    new None(),
+    new None(),
+    model.dev_mode,
+    toList([]),
+    toList([]),
+    toList([]),
+    new RiskEffects(0, 0, 0, toList([])),
+    5
+  );
+}
 function handle_next_level(model) {
   let clean_model = clear_statuses_by_persistence(
     model,
@@ -6125,8 +6150,30 @@ function handle_reset_testing(model) {
     _record.risk_health
   );
 }
-function handle_exit_testing(_) {
-  return init(void 0);
+function handle_exit_testing(model) {
+  return new Model(
+    5,
+    0,
+    1,
+    5,
+    starter_orbs(),
+    new Menu(new Main()),
+    new None(),
+    new None(),
+    "",
+    toList([]),
+    1,
+    0,
+    toList([]),
+    new None(),
+    new None(),
+    model.dev_mode,
+    toList([]),
+    toList([]),
+    toList([]),
+    new RiskEffects(0, 0, 0, toList([])),
+    5
+  );
 }
 function check_game_status(model) {
   let $ = model.screen;
@@ -6717,7 +6764,7 @@ function handle_apply_risk_effects(model) {
       _record.last_orb,
       _record.last_orb_message,
       _record.input_value,
-      _record.pulled_orbs,
+      append(model.pulled_orbs, model.risk_pulled_orbs),
       _record.point_multiplier,
       _record.bomb_immunity,
       _record.active_statuses,
@@ -7982,7 +8029,7 @@ function update2(model, msg) {
   } else if (msg instanceof NextLevel) {
     return handle_next_level(model);
   } else if (msg instanceof RestartGame) {
-    return init(void 0);
+    return handle_restart_game(model);
   } else if (msg instanceof ResetTesting) {
     return handle_reset_testing(model);
   } else if (msg instanceof ExitTesting) {
@@ -9050,7 +9097,7 @@ function risk_effects_summary(risk_effects) {
             "text-sm text-green-700 uppercase tracking-wider mb-3 font-light"
           )
         ]),
-        toList([text3("ENHANCED REWARDS")])
+        toList([text3("ACCUMULATED EFFECTS")])
       ),
       div(
         toList([class$("space-y-2")]),

@@ -123,7 +123,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
     ChooseOrb(choice_index) -> handle_choose_orb(model, choice_index)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
-    RestartGame -> init(Nil)
+    RestartGame -> handle_restart_game(model)
     ResetTesting -> handle_reset_testing(model)
     ExitTesting -> handle_exit_testing(model)
     ToggleDevMode -> handle_toggle_dev_mode(model)
@@ -483,6 +483,37 @@ fn handle_choice_orb_activation(model: Model) -> Model {
   }
 }
 
+fn handle_restart_game(model: Model) -> Model {
+  Model(
+    health: 5,
+    points: 0,
+    level: 1,
+    milestone: 5,
+    bag: starter_orbs(),
+    screen: Menu(Main),
+    last_orb: None,
+    last_orb_message: None,
+    input_value: "",
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    active_statuses: [],
+    choice_orb_1: None,
+    choice_orb_2: None,
+    dev_mode: model.dev_mode,
+    risk_orbs: [],
+    risk_original_orbs: [],
+    risk_pulled_orbs: [],
+    risk_accumulated_effects: types.RiskEffects(
+      health_gained: 0,
+      points_gained: 0,
+      damage_taken: 0,
+      special_orbs: [],
+    ),
+    risk_health: 5,
+  )
+}
+
 fn handle_next_level(model: Model) -> Model {
   let clean_model = status.clear_statuses_by_persistence(model, ClearOnLevel)
   Model(
@@ -505,8 +536,35 @@ fn handle_reset_testing(model: Model) -> Model {
   Model(..model, screen: Testing(OrbSelection))
 }
 
-fn handle_exit_testing(_model: Model) -> Model {
-  init(Nil)
+fn handle_exit_testing(model: Model) -> Model {
+  Model(
+    health: 5,
+    points: 0,
+    level: 1,
+    milestone: 5,
+    bag: starter_orbs(),
+    screen: Menu(Main),
+    last_orb: None,
+    last_orb_message: None,
+    input_value: "",
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    active_statuses: [],
+    choice_orb_1: None,
+    choice_orb_2: None,
+    dev_mode: model.dev_mode,
+    risk_orbs: [],
+    risk_original_orbs: [],
+    risk_pulled_orbs: [],
+    risk_accumulated_effects: types.RiskEffects(
+      health_gained: 0,
+      points_gained: 0,
+      damage_taken: 0,
+      special_orbs: [],
+    ),
+    risk_health: 5,
+  )
 }
 
 fn check_game_status(model: Model) -> Model {
@@ -761,12 +819,13 @@ fn handle_apply_risk_effects(model: Model) -> Model {
         _ -> model.screen
       }
 
-      // Apply effects but keep risk state for the success screen
+      // Apply effects and add risk orbs to main extraction log
       Model(
         ..model_with_special,
         health: capped_health,
         points: new_points,
         screen: consumption_screen,
+        pulled_orbs: list.append(model.pulled_orbs, model.risk_pulled_orbs),
       )
     }
   }

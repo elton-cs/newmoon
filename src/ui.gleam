@@ -949,7 +949,7 @@ pub fn risk_effects_summary(risk_effects: types.RiskEffects) -> Element(Msg) {
             "text-sm text-green-700 uppercase tracking-wider mb-3 font-light",
           ),
         ],
-        [html.text("ENHANCED REWARDS")],
+        [html.text("ACCUMULATED EFFECTS")],
       ),
       html.div([attribute.class("space-y-2")], [
         case risk_effects.health_gained > 0 {
