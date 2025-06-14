@@ -14,11 +14,11 @@ import types.{
   NextLevel, OrbSelection, Playing, PointCollectorOrb, PointCollectorSample,
   PointOrb, PullOrb, PullRiskOrb, ResetTesting, RestartGame, RiskAccept,
   RiskDied, RiskOrb, RiskPlaying, RiskReveal, RiskSample, RiskSurvived,
-  SelectOrbType, StartGame, StartTestingWithBothStatuses,
-  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
-  TestingRiskAccept, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
-  TestingRiskSurvived, ToggleDevMode, UpdateInputValue, ValueConfiguration,
-  Victory,
+  SelectOrbType, StartGame, StartTestingRiskFailure, StartTestingRiskSuccess,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
+  TestingChoosing, TestingRiskAccept, TestingRiskDied, TestingRiskPlaying,
+  TestingRiskReveal, TestingRiskSurvived, ToggleDevMode, UpdateInputValue,
+  ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -40,6 +40,7 @@ pub fn init(_) -> Model {
     choice_orb_2: None,
     dev_mode: False,
     risk_orbs: [],
+    risk_original_orbs: [],
     risk_pulled_orbs: [],
     risk_accumulated_effects: types.RiskEffects(
       health_gained: 0,
@@ -115,6 +116,8 @@ pub fn update(model: Model, msg: Msg) -> Model {
       handle_start_testing_with_both_statuses(model)
     StartTestingWithTripleChoice ->
       handle_start_testing_with_triple_choice(model)
+    StartTestingRiskSuccess -> handle_start_testing_risk_success(model)
+    StartTestingRiskFailure -> handle_start_testing_risk_failure(model)
     ChooseOrb(choice_index) -> handle_choose_orb(model, choice_index)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
@@ -245,6 +248,61 @@ fn handle_start_testing_with_triple_choice(model: Model) -> Model {
 
 fn handle_back_to_main_menu(model: Model) -> Model {
   Model(..model, screen: Menu(Main))
+}
+
+fn handle_start_testing_risk_success(model: Model) -> Model {
+  // Test bag for risk success: RiskOrb first, then mixed rewards/damage with health to survive
+  // PointOrb(3) → 6 points (2× bonus), BombOrb(1) → 4 health, PointOrb(2) → 4 points (2× bonus),
+  // HealthOrb(2) → 6 health (full), PointOrb(1) → 2 points (2× bonus)
+  // Total: 12 enhanced points, survives with full health after taking damage
+  let risk_orbs = [
+    PointOrb(3),
+    BombOrb(1),
+    PointOrb(2),
+    HealthOrb(2),
+    PointOrb(1),
+  ]
+  let test_bag =
+    [RiskOrb] |> list.append(risk_orbs) |> list.append(starter_orbs())
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
+  )
+}
+
+fn handle_start_testing_risk_failure(model: Model) -> Model {
+  // Test bag for risk failure: RiskOrb first, then bombs to kill player
+  // BombOrb(2) → 3 health, BombOrb(2) → 1 health, BombOrb(2) → -1 health (death)
+  // Dies on 3rd extraction, shows "YOU RISKED OUT" screen
+  let risk_orbs = [BombOrb(2), BombOrb(2), BombOrb(2), BombOrb(1)]
+  let test_bag =
+    [RiskOrb] |> list.append(risk_orbs) |> list.append(starter_orbs())
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
+  )
 }
 
 fn handle_pull_orb(model: Model) -> Model {
@@ -575,6 +633,7 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
             screen: screen,
             bag: remaining_bag,
             risk_orbs: risk_orbs,
+            risk_original_orbs: risk_orbs,
             risk_health: model.health,
             risk_accumulated_effects: types.RiskEffects(
               health_gained: 0,
@@ -702,6 +761,7 @@ fn handle_apply_risk_effects(model: Model) -> Model {
     points: new_points,
     screen: return_screen,
     risk_orbs: [],
+    risk_original_orbs: [],
     risk_pulled_orbs: [],
     risk_accumulated_effects: types.RiskEffects(
       health_gained: 0,

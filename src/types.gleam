@@ -102,6 +102,7 @@ pub type Model {
     choice_orb_2: Option(Orb),
     dev_mode: Bool,
     risk_orbs: List(Orb),
+    risk_original_orbs: List(Orb),
     risk_pulled_orbs: List(Orb),
     risk_accumulated_effects: RiskEffects,
     risk_health: Int,
@@ -118,6 +119,8 @@ pub type Msg {
   BackToOrbTesting
   StartTestingWithBothStatuses
   StartTestingWithTripleChoice
+  StartTestingRiskSuccess
+  StartTestingRiskFailure
   PullOrb
   NextLevel
   RestartGame

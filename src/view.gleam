@@ -12,10 +12,11 @@ import types.{
   GoToOrbTesting, HazardSample, HealthSample, Main, Menu, MultiplierSample,
   NextLevel, OrbSelection, Playing, PointCollectorSample, PullRiskOrb,
   ResetTesting, RestartGame, RiskAccept, RiskDied, RiskPlaying, RiskReveal,
-  RiskSample, RiskSurvived, SelectOrbType, StartGame,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskDied, TestingRiskPlaying,
-  TestingRiskReveal, TestingRiskSurvived, ValueConfiguration, Victory,
+  RiskSample, RiskSurvived, SelectOrbType, StartGame, StartTestingRiskFailure,
+  StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
+  TestingRiskAccept, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
+  TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
 
@@ -196,6 +197,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.risk_orbs,
+            model.risk_original_orbs,
             model.risk_health,
             model.risk_pulled_orbs,
           ),
@@ -269,6 +271,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.last_orb,
             model.last_orb_message,
             model.risk_orbs,
+            model.risk_original_orbs,
             model.risk_health,
             model.risk_pulled_orbs,
           ),
@@ -468,6 +471,8 @@ fn render_orb_testing_view() -> Element(Msg) {
     ui.orb_selection_button("Fate Sample", SelectOrbType(RiskSample)),
     ui.orb_selection_button("Both Status Effects", StartTestingWithBothStatuses),
     ui.orb_selection_button("Triple Choice Test", StartTestingWithTripleChoice),
+    ui.orb_selection_button("Risk Success Test", StartTestingRiskSuccess),
+    ui.orb_selection_button("Risk Failure Test", StartTestingRiskFailure),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }
@@ -730,10 +735,11 @@ fn render_risk_playing_view(
   last_orb: Option(types.Orb),
   last_orb_message: Option(String),
   risk_orbs: List(types.Orb),
-  risk_health: Int,
+  risk_original_orbs: List(types.Orb),
+  _risk_health: Int,
   risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
-  let orbs_left = list.length(risk_orbs)
+  let _orbs_left = list.length(risk_orbs)
   let is_disabled = list.is_empty(risk_orbs)
 
   element.fragment([
@@ -742,10 +748,9 @@ fn render_risk_playing_view(
       "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
       "bg-red-50 border-red-200",
     ),
-    ui.risk_health_display(risk_health),
+    ui.risk_orbs_progress_display(risk_original_orbs, risk_orbs),
     ui.orb_result_display(last_orb, last_orb_message),
     ui.pulled_orbs_log(risk_pulled_orbs),
-    ui.risk_container_display(orbs_left),
     ui.risk_extract_button(is_disabled),
   ])
 }
@@ -816,10 +821,11 @@ fn render_testing_risk_playing_view(
   last_orb: Option(types.Orb),
   last_orb_message: Option(String),
   risk_orbs: List(types.Orb),
-  risk_health: Int,
+  risk_original_orbs: List(types.Orb),
+  _risk_health: Int,
   risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
-  let orbs_left = list.length(risk_orbs)
+  let _orbs_left = list.length(risk_orbs)
   let is_disabled = list.is_empty(risk_orbs)
 
   element.fragment([
@@ -828,10 +834,9 @@ fn render_testing_risk_playing_view(
       "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
       "bg-red-50 border-red-200",
     ),
-    ui.risk_health_display(risk_health),
+    ui.risk_orbs_progress_display(risk_original_orbs, risk_orbs),
     ui.orb_result_display(last_orb, last_orb_message),
     ui.pulled_orbs_log(risk_pulled_orbs),
-    ui.risk_container_display(orbs_left),
     ui.risk_extract_button(is_disabled),
   ])
 }

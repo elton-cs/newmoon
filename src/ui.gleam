@@ -787,6 +787,62 @@ pub fn risk_orbs_display(risk_orbs: List(Orb)) -> Element(Msg) {
   )
 }
 
+pub fn risk_orbs_progress_display(
+  all_risk_orbs: List(Orb),
+  remaining_risk_orbs: List(Orb),
+) -> Element(Msg) {
+  let completed_count =
+    list.length(all_risk_orbs) - list.length(remaining_risk_orbs)
+
+  html.div(
+    [attribute.class("p-4 bg-red-50 border border-red-200 rounded text-center")],
+    [
+      html.div(
+        [
+          attribute.class(
+            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light",
+          ),
+        ],
+        [html.text("YOUR DESTINY AWAITS")],
+      ),
+      html.div(
+        [attribute.class("grid grid-cols-5 gap-2")],
+        list.index_map(all_risk_orbs, fn(orb, index) {
+          let is_completed = index < completed_count
+          let #(bg_class, text_class, border_class) = case is_completed {
+            True -> #("bg-gray-200", "text-gray-400", "border-gray-300")
+            False -> get_orb_style_classes(orb)
+          }
+          html.div(
+            [
+              attribute.class(
+                "p-2 rounded text-xs text-center transition-colors "
+                <> bg_class
+                <> " "
+                <> text_class
+                <> " border "
+                <> border_class
+                <> case is_completed {
+                  True -> " opacity-50"
+                  False -> ""
+                },
+              ),
+            ],
+            [
+              html.div([attribute.class("font-bold mb-1")], [
+                html.text(int.to_string(index + 1)),
+              ]),
+              html.div([attribute.class("text-xs")], [
+                html.text(display.orb_display_name(orb)),
+              ]),
+            ],
+          )
+        }),
+      ),
+    ],
+  )
+}
+
 pub fn risk_health_display(risk_health: Int) -> Element(Msg) {
   html.div(
     [

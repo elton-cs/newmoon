@@ -5085,7 +5085,7 @@ var ChoiceSample = class extends CustomType {
 var RiskSample = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health) {
+  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_original_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health) {
     super();
     this.health = health;
     this.points = points;
@@ -5104,6 +5104,7 @@ var Model = class extends CustomType {
     this.choice_orb_2 = choice_orb_2;
     this.dev_mode = dev_mode;
     this.risk_orbs = risk_orbs;
+    this.risk_original_orbs = risk_original_orbs;
     this.risk_pulled_orbs = risk_pulled_orbs;
     this.risk_accumulated_effects = risk_accumulated_effects;
     this.risk_health = risk_health;
@@ -5138,6 +5139,10 @@ var BackToOrbTesting = class extends CustomType {
 var StartTestingWithBothStatuses = class extends CustomType {
 };
 var StartTestingWithTripleChoice = class extends CustomType {
+};
+var StartTestingRiskSuccess = class extends CustomType {
+};
+var StartTestingRiskFailure = class extends CustomType {
 };
 var PullOrb = class extends CustomType {
 };
@@ -5373,6 +5378,7 @@ function clear_statuses_by_persistence(model, persistence) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5449,6 +5455,7 @@ function tick_statuses(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5588,6 +5595,7 @@ function add_status(model, new_status) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5643,6 +5651,7 @@ function init(_) {
     new None(),
     new None(),
     false,
+    toList([]),
     toList([]),
     toList([]),
     new RiskEffects(0, 0, toList([])),
@@ -5703,6 +5712,7 @@ function handle_start_game(model) {
     new None(),
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5728,6 +5738,7 @@ function handle_go_to_orb_testing(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5753,6 +5764,7 @@ function handle_select_orb_type(model, orb_type) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5778,6 +5790,7 @@ function handle_update_input_value(model, value2) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5834,6 +5847,7 @@ function handle_confirm_orb_value(model, orb_type) {
         new None(),
         _record.dev_mode,
         _record.risk_orbs,
+        _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
         _record.risk_health
@@ -5865,6 +5879,7 @@ function handle_back_to_orb_testing(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5898,6 +5913,7 @@ function handle_start_testing_with_both_statuses(model) {
     new None(),
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5931,6 +5947,7 @@ function handle_start_testing_with_triple_choice(model) {
     new None(),
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5956,6 +5973,90 @@ function handle_back_to_main_menu(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
+  );
+}
+function handle_start_testing_risk_success(model) {
+  let risk_orbs = toList([
+    new PointOrb(3),
+    new BombOrb(1),
+    new PointOrb(2),
+    new HealthOrb(2),
+    new PointOrb(1)
+  ]);
+  let _block;
+  let _pipe = toList([new RiskOrb()]);
+  let _pipe$1 = append(_pipe, risk_orbs);
+  _block = append(_pipe$1, starter_orbs());
+  let test_bag = _block;
+  let clean_model = clear_statuses_by_persistence(
+    model,
+    new ClearOnGame()
+  );
+  let _record = clean_model;
+  return new Model(
+    5,
+    0,
+    _record.level,
+    _record.milestone,
+    test_bag,
+    new Testing(new Gameplay()),
+    new None(),
+    new None(),
+    _record.input_value,
+    toList([]),
+    1,
+    0,
+    _record.active_statuses,
+    new None(),
+    new None(),
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
+  );
+}
+function handle_start_testing_risk_failure(model) {
+  let risk_orbs = toList([
+    new BombOrb(2),
+    new BombOrb(2),
+    new BombOrb(2),
+    new BombOrb(1)
+  ]);
+  let _block;
+  let _pipe = toList([new RiskOrb()]);
+  let _pipe$1 = append(_pipe, risk_orbs);
+  _block = append(_pipe$1, starter_orbs());
+  let test_bag = _block;
+  let clean_model = clear_statuses_by_persistence(
+    model,
+    new ClearOnGame()
+  );
+  let _record = clean_model;
+  return new Model(
+    5,
+    0,
+    _record.level,
+    _record.milestone,
+    test_bag,
+    new Testing(new Gameplay()),
+    new None(),
+    new None(),
+    _record.input_value,
+    toList([]),
+    1,
+    0,
+    _record.active_statuses,
+    new None(),
+    new None(),
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -5985,6 +6086,7 @@ function handle_next_level(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -6010,6 +6112,7 @@ function handle_reset_testing(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -6046,6 +6149,7 @@ function check_game_status(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -6070,6 +6174,7 @@ function check_game_status(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -6094,6 +6199,7 @@ function check_game_status(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -6130,6 +6236,7 @@ function check_game_status(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -6154,6 +6261,7 @@ function check_game_status(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -6178,6 +6286,7 @@ function check_game_status(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -6212,6 +6321,7 @@ function handle_toggle_dev_mode(model) {
     _record.choice_orb_2,
     !model.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -6257,6 +6367,7 @@ function handle_risk_orb_activation(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -6310,6 +6421,7 @@ function handle_accept_risk(loop$model, loop$accept) {
           _record.choice_orb_2,
           _record.dev_mode,
           risk_orbs,
+          risk_orbs,
           toList([]),
           new RiskEffects(0, 0, toList([])),
           model.health
@@ -6344,6 +6456,7 @@ function handle_accept_risk(loop$model, loop$accept) {
                 _record.choice_orb_2,
                 _record.dev_mode,
                 _record.risk_orbs,
+                _record.risk_original_orbs,
                 _record.risk_pulled_orbs,
                 _record.risk_accumulated_effects,
                 _record.risk_health
@@ -6377,6 +6490,7 @@ function handle_accept_risk(loop$model, loop$accept) {
                 _record.choice_orb_2,
                 _record.dev_mode,
                 _record.risk_orbs,
+                _record.risk_original_orbs,
                 _record.risk_pulled_orbs,
                 _record.risk_accumulated_effects,
                 _record.risk_health
@@ -6432,6 +6546,7 @@ function handle_accept_fate(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     _record.risk_orbs,
+    _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health
@@ -6472,6 +6587,7 @@ function handle_apply_risk_effects(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -6500,6 +6616,7 @@ function handle_apply_risk_effects(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -6550,6 +6667,7 @@ function handle_apply_risk_effects(model) {
     _record.dev_mode,
     toList([]),
     toList([]),
+    toList([]),
     new RiskEffects(0, 0, toList([])),
     5
   );
@@ -6574,6 +6692,7 @@ function handle_exit_risk(model) {
     _record.choice_orb_2,
     _record.dev_mode,
     toList([]),
+    _record.risk_original_orbs,
     toList([]),
     new RiskEffects(0, 0, toList([])),
     5
@@ -6700,6 +6819,7 @@ function handle_pull_risk_orb(model) {
         _record.choice_orb_2,
         _record.dev_mode,
         _record.risk_orbs,
+        _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
         new_risk_health
@@ -6725,6 +6845,7 @@ function handle_pull_risk_orb(model) {
         _record.choice_orb_2,
         _record.dev_mode,
         rest,
+        _record.risk_original_orbs,
         prepend(first_orb, model.risk_pulled_orbs),
         new_effects,
         new_risk_health
@@ -6771,6 +6892,7 @@ function handle_pull_risk_orb(model) {
           _record$1.choice_orb_2,
           _record$1.dev_mode,
           _record$1.risk_orbs,
+          _record$1.risk_original_orbs,
           _record$1.risk_pulled_orbs,
           _record$1.risk_accumulated_effects,
           _record$1.risk_health
@@ -6809,6 +6931,7 @@ function handle_choice_orb_activation(model) {
         _record.choice_orb_2,
         _record.dev_mode,
         _record.risk_orbs,
+        _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
         _record.risk_health
@@ -6859,6 +6982,7 @@ function handle_choice_orb_activation(model) {
         new Some(second_choice),
         _record.dev_mode,
         _record.risk_orbs,
+        _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
         _record.risk_health
@@ -6904,6 +7028,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -6939,6 +7064,7 @@ function handle_pull_orb(model) {
               _record2.choice_orb_2,
               _record2.dev_mode,
               _record2.risk_orbs,
+              _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health
@@ -6970,6 +7096,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7000,6 +7127,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7033,6 +7161,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7066,6 +7195,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7104,6 +7234,7 @@ function handle_pull_orb(model) {
               _record2.choice_orb_2,
               _record2.dev_mode,
               _record2.risk_orbs,
+              _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health
@@ -7139,6 +7270,7 @@ function handle_pull_orb(model) {
               _record2.choice_orb_2,
               _record2.dev_mode,
               _record2.risk_orbs,
+              _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health
@@ -7203,6 +7335,7 @@ function handle_pull_orb(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -7260,6 +7393,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7295,6 +7429,7 @@ function handle_pull_orb(model) {
               _record2.choice_orb_2,
               _record2.dev_mode,
               _record2.risk_orbs,
+              _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health
@@ -7326,6 +7461,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7356,6 +7492,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7389,6 +7526,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7422,6 +7560,7 @@ function handle_pull_orb(model) {
             _record2.choice_orb_2,
             _record2.dev_mode,
             _record2.risk_orbs,
+            _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health
@@ -7460,6 +7599,7 @@ function handle_pull_orb(model) {
               _record2.choice_orb_2,
               _record2.dev_mode,
               _record2.risk_orbs,
+              _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health
@@ -7495,6 +7635,7 @@ function handle_pull_orb(model) {
               _record2.choice_orb_2,
               _record2.dev_mode,
               _record2.risk_orbs,
+              _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health
@@ -7559,6 +7700,7 @@ function handle_pull_orb(model) {
           _record.choice_orb_2,
           _record.dev_mode,
           _record.risk_orbs,
+          _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health
@@ -7632,6 +7774,7 @@ function handle_choose_orb(model, choice_index) {
             new None(),
             _record.dev_mode,
             _record.risk_orbs,
+            _record.risk_original_orbs,
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
             _record.risk_health
@@ -7681,6 +7824,7 @@ function handle_choose_orb(model, choice_index) {
             new None(),
             _record.dev_mode,
             _record.risk_orbs,
+            _record.risk_original_orbs,
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
             _record.risk_health
@@ -7722,6 +7866,10 @@ function update2(model, msg) {
     return handle_start_testing_with_both_statuses(model);
   } else if (msg instanceof StartTestingWithTripleChoice) {
     return handle_start_testing_with_triple_choice(model);
+  } else if (msg instanceof StartTestingRiskSuccess) {
+    return handle_start_testing_risk_success(model);
+  } else if (msg instanceof StartTestingRiskFailure) {
+    return handle_start_testing_risk_failure(model);
   } else if (msg instanceof PullOrb) {
     return handle_pull_orb(model);
   } else if (msg instanceof NextLevel) {
@@ -8697,48 +8845,66 @@ function risk_orbs_display(risk_orbs) {
     ])
   );
 }
-function risk_health_display(risk_health) {
-  return div(
-    toList([
-      class$(
-        "p-3 bg-red-100 border border-red-300 rounded text-center"
-      )
-    ]),
-    toList([
-      div(
-        toList([
-          class$(
-            "text-sm text-red-800 uppercase tracking-wider mb-2 font-light"
-          )
-        ]),
-        toList([text3("VOID PROTECTION")])
-      ),
-      div(
-        toList([class$("text-2xl font-bold text-red-900")]),
-        toList([text3(to_string(risk_health))])
-      )
-    ])
+function risk_orbs_progress_display(all_risk_orbs, remaining_risk_orbs) {
+  let completed_count = length(all_risk_orbs) - length(
+    remaining_risk_orbs
   );
-}
-function risk_container_display(orbs_left) {
   return div(
     toList([
       class$(
-        "p-3 bg-red-50 border border-red-200 rounded text-center"
+        "p-4 bg-red-50 border border-red-200 rounded text-center"
       )
     ]),
     toList([
       div(
         toList([
           class$(
-            "text-sm text-red-700 uppercase tracking-wider mb-2 font-light"
+            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light"
           )
         ]),
-        toList([text3("VOID SPECIMENS REMAINING")])
+        toList([text3("YOUR DESTINY AWAITS")])
       ),
       div(
-        toList([class$("text-2xl font-bold text-red-800")]),
-        toList([text3(to_string(orbs_left))])
+        toList([class$("grid grid-cols-5 gap-2")]),
+        index_map(
+          all_risk_orbs,
+          (orb, index4) => {
+            let is_completed = index4 < completed_count;
+            let _block;
+            if (is_completed) {
+              _block = ["bg-gray-200", "text-gray-400", "border-gray-300"];
+            } else {
+              _block = get_orb_style_classes(orb);
+            }
+            let $ = _block;
+            let bg_class = $[0];
+            let text_class = $[1];
+            let border_class = $[2];
+            return div(
+              toList([
+                class$(
+                  "p-2 rounded text-xs text-center transition-colors " + bg_class + " " + text_class + " border " + border_class + (() => {
+                    if (is_completed) {
+                      return " opacity-50";
+                    } else {
+                      return "";
+                    }
+                  })()
+                )
+              ]),
+              toList([
+                div(
+                  toList([class$("font-bold mb-1")]),
+                  toList([text3(to_string(index4 + 1))])
+                ),
+                div(
+                  toList([class$("text-xs")]),
+                  toList([text3(orb_display_name(orb))])
+                )
+              ])
+            );
+          }
+        )
       )
     ])
   );
@@ -8937,6 +9103,14 @@ function render_orb_testing_view() {
       orb_selection_button(
         "Triple Choice Test",
         new StartTestingWithTripleChoice()
+      ),
+      orb_selection_button(
+        "Risk Success Test",
+        new StartTestingRiskSuccess()
+      ),
+      orb_selection_button(
+        "Risk Failure Test",
+        new StartTestingRiskFailure()
       ),
       secondary_button(back_to_menu_text, new BackToMainMenu())
     ])
@@ -9339,8 +9513,8 @@ function render_risk_reveal_view(risk_orbs) {
     ])
   );
 }
-function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_health, risk_pulled_orbs) {
-  let orbs_left = length(risk_orbs);
+function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_original_orbs, _, risk_pulled_orbs) {
+  let $ = length(risk_orbs);
   let is_disabled = is_empty(risk_orbs);
   return fragment2(
     toList([
@@ -9349,10 +9523,9 @@ function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_he
         "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
         "bg-red-50 border-red-200"
       ),
-      risk_health_display(risk_health),
+      risk_orbs_progress_display(risk_original_orbs, risk_orbs),
       orb_result_display(last_orb, last_orb_message),
       pulled_orbs_log(risk_pulled_orbs),
-      risk_container_display(orbs_left),
       risk_extract_button(is_disabled)
     ])
   );
@@ -9414,8 +9587,8 @@ function render_testing_risk_reveal_view(risk_orbs) {
     ])
   );
 }
-function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_health, risk_pulled_orbs) {
-  let orbs_left = length(risk_orbs);
+function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_original_orbs, _, risk_pulled_orbs) {
+  let $ = length(risk_orbs);
   let is_disabled = is_empty(risk_orbs);
   return fragment2(
     toList([
@@ -9424,10 +9597,9 @@ function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs,
         "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
         "bg-red-50 border-red-200"
       ),
-      risk_health_display(risk_health),
+      risk_orbs_progress_display(risk_original_orbs, risk_orbs),
       orb_result_display(last_orb, last_orb_message),
       pulled_orbs_log(risk_pulled_orbs),
-      risk_container_display(orbs_left),
       risk_extract_button(is_disabled)
     ])
   );
@@ -9606,6 +9778,7 @@ function view(model) {
               model.last_orb,
               model.last_orb_message,
               model.risk_orbs,
+              model.risk_original_orbs,
               model.risk_health,
               model.risk_pulled_orbs
             )
@@ -9748,6 +9921,7 @@ function view(model) {
               model.last_orb,
               model.last_orb_message,
               model.risk_orbs,
+              model.risk_original_orbs,
               model.risk_health,
               model.risk_pulled_orbs
             )
