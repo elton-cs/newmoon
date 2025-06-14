@@ -327,6 +327,7 @@ pub fn view(model: Model) -> Element(Msg) {
       model.choice_orb_1,
       model.choice_orb_2,
       model.active_statuses,
+      model.pulled_orbs,
     ),
   ])
 }
@@ -372,7 +373,7 @@ fn render_playing_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
@@ -381,7 +382,6 @@ fn render_playing_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
-    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
   ])
@@ -394,7 +394,7 @@ fn render_won_view(
   bag,
   active_statuses: List(types.StatusEffect),
   milestone: Int,
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -403,7 +403,6 @@ fn render_won_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
-    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.success_button(display.advance_button_text, NextLevel),
     ui.status_panel(
@@ -420,7 +419,7 @@ fn render_lost_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -428,7 +427,6 @@ fn render_lost_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
-    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.failure_button(display.play_again_text, RestartGame),
     ui.failure_panel(
@@ -565,7 +563,7 @@ fn render_testing_mode_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
@@ -574,7 +572,6 @@ fn render_testing_mode_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
-    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled),
     ui.secondary_button(display.reset_testing_text, ResetTesting),
@@ -589,7 +586,7 @@ fn render_testing_won_view(
   bag,
   active_statuses: List(types.StatusEffect),
   milestone: Int,
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -598,7 +595,6 @@ fn render_testing_won_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
-    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
@@ -612,7 +608,7 @@ fn render_testing_lost_view(
   last_orb_message,
   bag,
   active_statuses: List(types.StatusEffect),
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -620,7 +616,6 @@ fn render_testing_lost_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
-    ui.pulled_orbs_log(pulled_orbs),
     ui.container_display(orbs_left),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
@@ -646,7 +641,7 @@ fn render_choosing_view(
   active_statuses: List(types.StatusEffect),
   choice_orb_1: Option(types.Orb),
   choice_orb_2: Option(types.Orb),
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -656,7 +651,6 @@ fn render_choosing_view(
       element.fragment([
         ui.orb_result_display(last_orb, last_orb_message),
         ui.status_effects_display(status_effects),
-        ui.pulled_orbs_log(pulled_orbs),
         ui.container_display(orbs_left),
         ui.choice_panel(
           "SELECT ONE SAMPLE:",
@@ -670,7 +664,6 @@ fn render_choosing_view(
       element.fragment([
         ui.orb_result_display(last_orb, last_orb_message),
         ui.status_effects_display(status_effects),
-        ui.pulled_orbs_log(pulled_orbs),
         ui.container_display(orbs_left),
         ui.failure_panel("CHOICE ERROR", "No choice options available."),
       ])
@@ -685,7 +678,7 @@ fn render_testing_choosing_view(
   active_statuses: List(types.StatusEffect),
   choice_orb_1: Option(types.Orb),
   choice_orb_2: Option(types.Orb),
-  pulled_orbs: List(types.Orb),
+  _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let status_effects = extract_active_status_effects(active_statuses)
@@ -695,7 +688,6 @@ fn render_testing_choosing_view(
       element.fragment([
         ui.orb_result_display(last_orb, last_orb_message),
         ui.status_effects_display(status_effects),
-        ui.pulled_orbs_log(pulled_orbs),
         ui.container_display(orbs_left),
         ui.choice_panel(
           "SELECT ONE SAMPLE:",
@@ -711,7 +703,6 @@ fn render_testing_choosing_view(
       element.fragment([
         ui.orb_result_display(last_orb, last_orb_message),
         ui.status_effects_display(status_effects),
-        ui.pulled_orbs_log(pulled_orbs),
         ui.container_display(orbs_left),
         ui.failure_panel("CHOICE ERROR", "No choice options available."),
         ui.secondary_button("RESTART TESTING", ResetTesting),
@@ -752,7 +743,7 @@ fn render_risk_playing_view(
   risk_orbs: List(types.Orb),
   risk_original_orbs: List(types.Orb),
   _risk_health: Int,
-  risk_pulled_orbs: List(types.Orb),
+  _risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let _orbs_left = list.length(risk_orbs)
   let is_disabled = list.is_empty(risk_orbs)
@@ -765,14 +756,13 @@ fn render_risk_playing_view(
     ),
     ui.risk_orbs_progress_display(risk_original_orbs, risk_orbs),
     ui.orb_result_display(last_orb, last_orb_message),
-    ui.pulled_orbs_log(risk_pulled_orbs),
     ui.risk_extract_button(is_disabled),
   ])
 }
 
 fn render_risk_survived_view(
   risk_accumulated_effects: types.RiskEffects,
-  risk_pulled_orbs: List(types.Orb),
+  _risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   element.fragment([
     ui.status_panel(
@@ -781,7 +771,6 @@ fn render_risk_survived_view(
       "bg-orange-50 border-orange-200",
     ),
     ui.risk_effects_summary(risk_accumulated_effects),
-    ui.pulled_orbs_log(risk_pulled_orbs),
     ui.primary_button("CONSUME", ApplyRiskEffects),
   ])
 }
@@ -812,11 +801,10 @@ fn render_risk_consumed_view(milestone: Int, points: Int) -> Element(Msg) {
 fn render_risk_died_view(
   last_orb: Option(types.Orb),
   last_orb_message: Option(String),
-  risk_pulled_orbs: List(types.Orb),
+  _risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
-    ui.pulled_orbs_log(risk_pulled_orbs),
     ui.failure_button("RESTART MISSION", RestartGame),
     ui.failure_panel(
       "YOU RISKED OUT",
@@ -861,7 +849,7 @@ fn render_testing_risk_playing_view(
   risk_orbs: List(types.Orb),
   risk_original_orbs: List(types.Orb),
   _risk_health: Int,
-  risk_pulled_orbs: List(types.Orb),
+  _risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let _orbs_left = list.length(risk_orbs)
   let is_disabled = list.is_empty(risk_orbs)
@@ -874,14 +862,13 @@ fn render_testing_risk_playing_view(
     ),
     ui.risk_orbs_progress_display(risk_original_orbs, risk_orbs),
     ui.orb_result_display(last_orb, last_orb_message),
-    ui.pulled_orbs_log(risk_pulled_orbs),
     ui.risk_extract_button(is_disabled),
   ])
 }
 
 fn render_testing_risk_survived_view(
   risk_accumulated_effects: types.RiskEffects,
-  risk_pulled_orbs: List(types.Orb),
+  _risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   element.fragment([
     ui.status_panel(
@@ -890,7 +877,6 @@ fn render_testing_risk_survived_view(
       "bg-orange-50 border-orange-200",
     ),
     ui.risk_effects_summary(risk_accumulated_effects),
-    ui.pulled_orbs_log(risk_pulled_orbs),
     ui.primary_button("CONSUME", ApplyRiskEffects),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
@@ -930,11 +916,10 @@ fn render_testing_risk_consumed_view(
 fn render_testing_risk_died_view(
   last_orb: Option(types.Orb),
   last_orb_message: Option(String),
-  risk_pulled_orbs: List(types.Orb),
+  _risk_pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
-    ui.pulled_orbs_log(risk_pulled_orbs),
     ui.secondary_button("RESTART TESTING", ResetTesting),
     ui.secondary_button(display.exit_testing_text, ExitTesting),
     ui.failure_panel(

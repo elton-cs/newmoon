@@ -527,6 +527,7 @@ pub fn dev_mode_panel(
   choice_orb_1: Option(Orb),
   choice_orb_2: Option(Orb),
   active_statuses: List(StatusEffect),
+  pulled_orbs: List(Orb),
 ) -> Element(Msg) {
   let dev_display = case enabled {
     True -> [
@@ -543,6 +544,7 @@ pub fn dev_mode_panel(
             choice_orb_1,
             choice_orb_2,
             active_statuses,
+            pulled_orbs,
           ),
         ],
       ),
@@ -578,6 +580,7 @@ fn render_dev_mode_content(
   choice_orb_1: Option(Orb),
   choice_orb_2: Option(Orb),
   active_statuses: List(StatusEffect),
+  pulled_orbs: List(Orb),
 ) -> Element(Msg) {
   let status_section = case list.is_empty(active_statuses) {
     False -> [
@@ -595,11 +598,20 @@ fn render_dev_mode_content(
     _ -> []
   }
 
+  let pulled_orbs_section = case list.is_empty(pulled_orbs) {
+    False -> [
+      render_pulled_orbs_log(pulled_orbs),
+      html.div([attribute.class("mt-3 pt-3 border-t border-yellow-300")], []),
+    ]
+    True -> []
+  }
+
   let container_section = [render_container_contents(bag)]
 
   element.fragment(
     status_section
     |> list.append(choice_section)
+    |> list.append(pulled_orbs_section)
     |> list.append(container_section),
   )
 }
@@ -645,6 +657,32 @@ fn render_choice_mode_info(
           ])
       },
     ]),
+  ])
+}
+
+fn render_pulled_orbs_log(pulled_orbs: List(Orb)) -> Element(Msg) {
+  html.div([], [
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light",
+        ),
+      ],
+      [html.text("EXTRACTION LOG")],
+    ),
+    html.div(
+      [attribute.class("space-y-1 max-h-32 overflow-y-auto")],
+      list.index_map(pulled_orbs, fn(orb, index) {
+        html.div([attribute.class("flex items-center text-yellow-800")], [
+          html.span([attribute.class("mr-2 w-6 text-right")], [
+            html.text(int.to_string(index + 1) <> "."),
+          ]),
+          html.span([attribute.class("font-medium")], [
+            html.text(format_orb_for_dev_display(orb)),
+          ]),
+        ])
+      }),
+    ),
   ])
 }
 

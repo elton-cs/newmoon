@@ -8505,56 +8505,6 @@ function get_orb_style_classes(orb) {
     return ["bg-red-100", "text-red-800", "border-red-300"];
   }
 }
-function pulled_orbs_log(pulled_orbs) {
-  if (pulled_orbs instanceof Empty) {
-    return div(toList([class$("h-0")]), toList([]));
-  } else {
-    return div(
-      toList([
-        class$("p-3 bg-gray-50 border border-gray-200 rounded")
-      ]),
-      toList([
-        div(
-          toList([
-            class$(
-              "text-xs text-gray-500 uppercase tracking-wider mb-3 font-light"
-            )
-          ]),
-          toList([text3("EXTRACTION LOG")])
-        ),
-        div(
-          toList([class$("space-y-2 max-h-32 overflow-y-auto")]),
-          map(
-            pulled_orbs,
-            (orb) => {
-              let $ = get_orb_style_classes(orb);
-              let bg_class = $[0];
-              let text_class = $[1];
-              let border_class = $[2];
-              return div(
-                toList([
-                  class$(
-                    "flex items-center px-2 py-1 " + bg_class + " border " + border_class + " rounded text-xs"
-                  )
-                ]),
-                toList([
-                  span(
-                    toList([class$("mr-2 text-gray-400")]),
-                    toList([text3("\u25CF")])
-                  ),
-                  span(
-                    toList([class$(text_class + " font-medium")]),
-                    toList([text3(orb_display_name(orb))])
-                  )
-                ])
-              );
-            }
-          )
-        )
-      ])
-    );
-  }
-}
 function choice_panel(title, first_option, second_option, first_msg, second_msg) {
   return div(
     toList([class$("space-y-4")]),
@@ -8758,6 +8708,42 @@ function render_choice_mode_info(choice_orb_1, choice_orb_2) {
     ])
   );
 }
+function render_pulled_orbs_log(pulled_orbs) {
+  return div(
+    toList([]),
+    toList([
+      div(
+        toList([
+          class$(
+            "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light"
+          )
+        ]),
+        toList([text3("EXTRACTION LOG")])
+      ),
+      div(
+        toList([class$("space-y-1 max-h-32 overflow-y-auto")]),
+        index_map(
+          pulled_orbs,
+          (orb, index4) => {
+            return div(
+              toList([class$("flex items-center text-yellow-800")]),
+              toList([
+                span(
+                  toList([class$("mr-2 w-6 text-right")]),
+                  toList([text3(to_string(index4 + 1) + ".")])
+                ),
+                span(
+                  toList([class$("font-medium")]),
+                  toList([text3(format_orb_for_dev_display(orb))])
+                )
+              ])
+            );
+          }
+        )
+      )
+    ])
+  );
+}
 function render_container_contents(bag) {
   return div(
     toList([]),
@@ -8794,7 +8780,7 @@ function render_container_contents(bag) {
     ])
   );
 }
-function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active_statuses) {
+function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active_statuses, pulled_orbs) {
   let _block;
   let $ = is_empty(active_statuses);
   if ($) {
@@ -8811,8 +8797,8 @@ function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active
   let status_section = _block;
   let _block$1;
   if (screen instanceof Testing) {
-    let $1 = screen[0];
-    if ($1 instanceof TestingChoosing) {
+    let $12 = screen[0];
+    if ($12 instanceof TestingChoosing) {
       _block$1 = toList([
         render_choice_mode_info(choice_orb_1, choice_orb_2),
         div(
@@ -8824,8 +8810,8 @@ function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active
       _block$1 = toList([]);
     }
   } else if (screen instanceof Game) {
-    let $1 = screen[0];
-    if ($1 instanceof Choosing) {
+    let $12 = screen[0];
+    if ($12 instanceof Choosing) {
       _block$1 = toList([
         render_choice_mode_info(choice_orb_1, choice_orb_2),
         div(
@@ -8840,16 +8826,31 @@ function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active
     _block$1 = toList([]);
   }
   let choice_section = _block$1;
+  let _block$2;
+  let $1 = is_empty(pulled_orbs);
+  if ($1) {
+    _block$2 = toList([]);
+  } else {
+    _block$2 = toList([
+      render_pulled_orbs_log(pulled_orbs),
+      div(
+        toList([class$("mt-3 pt-3 border-t border-yellow-300")]),
+        toList([])
+      )
+    ]);
+  }
+  let pulled_orbs_section = _block$2;
   let container_section = toList([render_container_contents(bag)]);
   return fragment2(
     (() => {
       let _pipe = status_section;
       let _pipe$1 = append(_pipe, choice_section);
-      return append(_pipe$1, container_section);
+      let _pipe$2 = append(_pipe$1, pulled_orbs_section);
+      return append(_pipe$2, container_section);
     })()
   );
 }
-function dev_mode_panel(enabled, bag, screen, choice_orb_1, choice_orb_2, active_statuses) {
+function dev_mode_panel(enabled, bag, screen, choice_orb_1, choice_orb_2, active_statuses, pulled_orbs) {
   let _block;
   if (enabled) {
     _block = toList([
@@ -8865,7 +8866,8 @@ function dev_mode_panel(enabled, bag, screen, choice_orb_1, choice_orb_2, active
             bag,
             choice_orb_1,
             choice_orb_2,
-            active_statuses
+            active_statuses,
+            pulled_orbs
           )
         ])
       )
@@ -9417,7 +9419,7 @@ function render_orb_value_selection_view(orb_type, input_value) {
 function extract_active_status_effects(active_statuses) {
   return map(active_statuses, status_to_display_text);
 }
-function render_playing_view(last_orb, last_orb_message, bag, active_statuses, pulled_orbs) {
+function render_playing_view(last_orb, last_orb_message, bag, active_statuses, _) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
   let status_effects = extract_active_status_effects(active_statuses);
@@ -9425,13 +9427,12 @@ function render_playing_view(last_orb, last_orb_message, bag, active_statuses, p
     toList([
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
-      pulled_orbs_log(pulled_orbs),
       container_display(orbs_left),
       extract_button(is_disabled)
     ])
   );
 }
-function render_won_view(last_orb, last_orb_message, bag, active_statuses, milestone, pulled_orbs) {
+function render_won_view(last_orb, last_orb_message, bag, active_statuses, milestone, _) {
   let orbs_left = length(bag);
   let status_effects = extract_active_status_effects(active_statuses);
   let message = data_target_message(milestone);
@@ -9439,7 +9440,6 @@ function render_won_view(last_orb, last_orb_message, bag, active_statuses, miles
     toList([
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
-      pulled_orbs_log(pulled_orbs),
       container_display(orbs_left),
       success_button(advance_button_text, new NextLevel()),
       status_panel(
@@ -9450,14 +9450,13 @@ function render_won_view(last_orb, last_orb_message, bag, active_statuses, miles
     ])
   );
 }
-function render_lost_view(last_orb, last_orb_message, bag, active_statuses, pulled_orbs) {
+function render_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
   let orbs_left = length(bag);
   let status_effects = extract_active_status_effects(active_statuses);
   return fragment2(
     toList([
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
-      pulled_orbs_log(pulled_orbs),
       container_display(orbs_left),
       failure_button(play_again_text, new RestartGame()),
       failure_panel(
@@ -9467,7 +9466,7 @@ function render_lost_view(last_orb, last_orb_message, bag, active_statuses, pull
     ])
   );
 }
-function render_testing_mode_view(last_orb, last_orb_message, bag, active_statuses, pulled_orbs) {
+function render_testing_mode_view(last_orb, last_orb_message, bag, active_statuses, _) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
   let status_effects = extract_active_status_effects(active_statuses);
@@ -9475,7 +9474,6 @@ function render_testing_mode_view(last_orb, last_orb_message, bag, active_status
     toList([
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
-      pulled_orbs_log(pulled_orbs),
       container_display(orbs_left),
       extract_button(is_disabled),
       secondary_button(reset_testing_text, new ResetTesting()),
@@ -9483,7 +9481,7 @@ function render_testing_mode_view(last_orb, last_orb_message, bag, active_status
     ])
   );
 }
-function render_testing_won_view(last_orb, last_orb_message, bag, active_statuses, milestone, pulled_orbs) {
+function render_testing_won_view(last_orb, last_orb_message, bag, active_statuses, milestone, _) {
   let orbs_left = length(bag);
   let status_effects = extract_active_status_effects(active_statuses);
   let message = data_target_message(milestone);
@@ -9491,7 +9489,6 @@ function render_testing_won_view(last_orb, last_orb_message, bag, active_statuse
     toList([
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
-      pulled_orbs_log(pulled_orbs),
       container_display(orbs_left),
       secondary_button("RESTART TESTING", new ResetTesting()),
       secondary_button(exit_testing_text, new ExitTesting()),
@@ -9499,14 +9496,13 @@ function render_testing_won_view(last_orb, last_orb_message, bag, active_statuse
     ])
   );
 }
-function render_testing_lost_view(last_orb, last_orb_message, bag, active_statuses, pulled_orbs) {
+function render_testing_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
   let orbs_left = length(bag);
   let status_effects = extract_active_status_effects(active_statuses);
   return fragment2(
     toList([
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
-      pulled_orbs_log(pulled_orbs),
       container_display(orbs_left),
       secondary_button("RESTART TESTING", new ResetTesting()),
       secondary_button(exit_testing_text, new ExitTesting()),
@@ -9517,7 +9513,7 @@ function render_testing_lost_view(last_orb, last_orb_message, bag, active_status
     ])
   );
 }
-function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, pulled_orbs) {
+function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, _) {
   let orbs_left = length(bag);
   let status_effects = extract_active_status_effects(active_statuses);
   if (choice_orb_2 instanceof Some) {
@@ -9528,7 +9524,6 @@ function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, 
         toList([
           orb_result_display(last_orb, last_orb_message),
           status_effects_display(status_effects),
-          pulled_orbs_log(pulled_orbs),
           container_display(orbs_left),
           choice_panel(
             "SELECT ONE SAMPLE:",
@@ -9544,7 +9539,6 @@ function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, 
         toList([
           orb_result_display(last_orb, last_orb_message),
           status_effects_display(status_effects),
-          pulled_orbs_log(pulled_orbs),
           container_display(orbs_left),
           failure_panel("CHOICE ERROR", "No choice options available.")
         ])
@@ -9555,14 +9549,13 @@ function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, 
       toList([
         orb_result_display(last_orb, last_orb_message),
         status_effects_display(status_effects),
-        pulled_orbs_log(pulled_orbs),
         container_display(orbs_left),
         failure_panel("CHOICE ERROR", "No choice options available.")
       ])
     );
   }
 }
-function render_testing_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, pulled_orbs) {
+function render_testing_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, _) {
   let orbs_left = length(bag);
   let status_effects = extract_active_status_effects(active_statuses);
   if (choice_orb_2 instanceof Some) {
@@ -9573,7 +9566,6 @@ function render_testing_choosing_view(last_orb, last_orb_message, bag, active_st
         toList([
           orb_result_display(last_orb, last_orb_message),
           status_effects_display(status_effects),
-          pulled_orbs_log(pulled_orbs),
           container_display(orbs_left),
           choice_panel(
             "SELECT ONE SAMPLE:",
@@ -9591,7 +9583,6 @@ function render_testing_choosing_view(last_orb, last_orb_message, bag, active_st
         toList([
           orb_result_display(last_orb, last_orb_message),
           status_effects_display(status_effects),
-          pulled_orbs_log(pulled_orbs),
           container_display(orbs_left),
           failure_panel("CHOICE ERROR", "No choice options available."),
           secondary_button("RESTART TESTING", new ResetTesting()),
@@ -9604,7 +9595,6 @@ function render_testing_choosing_view(last_orb, last_orb_message, bag, active_st
       toList([
         orb_result_display(last_orb, last_orb_message),
         status_effects_display(status_effects),
-        pulled_orbs_log(pulled_orbs),
         container_display(orbs_left),
         failure_panel("CHOICE ERROR", "No choice options available."),
         secondary_button("RESTART TESTING", new ResetTesting()),
@@ -9639,7 +9629,7 @@ function render_risk_reveal_view(risk_orbs) {
     ])
   );
 }
-function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_original_orbs, _, risk_pulled_orbs) {
+function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_original_orbs, _, _1) {
   let $ = length(risk_orbs);
   let is_disabled = is_empty(risk_orbs);
   return fragment2(
@@ -9651,12 +9641,11 @@ function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_or
       ),
       risk_orbs_progress_display(risk_original_orbs, risk_orbs),
       orb_result_display(last_orb, last_orb_message),
-      pulled_orbs_log(risk_pulled_orbs),
       risk_extract_button(is_disabled)
     ])
   );
 }
-function render_risk_survived_view(risk_accumulated_effects, risk_pulled_orbs) {
+function render_risk_survived_view(risk_accumulated_effects, _) {
   return fragment2(
     toList([
       status_panel(
@@ -9665,7 +9654,6 @@ function render_risk_survived_view(risk_accumulated_effects, risk_pulled_orbs) {
         "bg-orange-50 border-orange-200"
       ),
       risk_effects_summary(risk_accumulated_effects),
-      pulled_orbs_log(risk_pulled_orbs),
       primary_button("CONSUME", new ApplyRiskEffects())
     ])
   );
@@ -9702,11 +9690,10 @@ function render_risk_consumed_view(milestone, points) {
     );
   }
 }
-function render_risk_died_view(last_orb, last_orb_message, risk_pulled_orbs) {
+function render_risk_died_view(last_orb, last_orb_message, _) {
   return fragment2(
     toList([
       orb_result_display(last_orb, last_orb_message),
-      pulled_orbs_log(risk_pulled_orbs),
       failure_button("RESTART MISSION", new RestartGame()),
       failure_panel(
         "YOU RISKED OUT",
@@ -9745,7 +9732,7 @@ function render_testing_risk_reveal_view(risk_orbs) {
     ])
   );
 }
-function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_original_orbs, _, risk_pulled_orbs) {
+function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_original_orbs, _, _1) {
   let $ = length(risk_orbs);
   let is_disabled = is_empty(risk_orbs);
   return fragment2(
@@ -9757,12 +9744,11 @@ function render_testing_risk_playing_view(last_orb, last_orb_message, risk_orbs,
       ),
       risk_orbs_progress_display(risk_original_orbs, risk_orbs),
       orb_result_display(last_orb, last_orb_message),
-      pulled_orbs_log(risk_pulled_orbs),
       risk_extract_button(is_disabled)
     ])
   );
 }
-function render_testing_risk_survived_view(risk_accumulated_effects, risk_pulled_orbs) {
+function render_testing_risk_survived_view(risk_accumulated_effects, _) {
   return fragment2(
     toList([
       status_panel(
@@ -9771,7 +9757,6 @@ function render_testing_risk_survived_view(risk_accumulated_effects, risk_pulled
         "bg-orange-50 border-orange-200"
       ),
       risk_effects_summary(risk_accumulated_effects),
-      pulled_orbs_log(risk_pulled_orbs),
       primary_button("CONSUME", new ApplyRiskEffects()),
       secondary_button("RESTART TESTING", new ResetTesting()),
       secondary_button(exit_testing_text, new ExitTesting())
@@ -9808,11 +9793,10 @@ function render_testing_risk_consumed_view(milestone, points) {
     );
   }
 }
-function render_testing_risk_died_view(last_orb, last_orb_message, risk_pulled_orbs) {
+function render_testing_risk_died_view(last_orb, last_orb_message, _) {
   return fragment2(
     toList([
       orb_result_display(last_orb, last_orb_message),
-      pulled_orbs_log(risk_pulled_orbs),
       secondary_button("RESTART TESTING", new ResetTesting()),
       secondary_button(exit_testing_text, new ExitTesting()),
       failure_panel(
@@ -10172,7 +10156,8 @@ function view(model) {
         model.screen,
         model.choice_orb_1,
         model.choice_orb_2,
-        model.active_statuses
+        model.active_statuses,
+        model.pulled_orbs
       )
     ])
   );
