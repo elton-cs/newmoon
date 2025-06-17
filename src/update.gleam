@@ -15,12 +15,13 @@ import types.{
   Playing, PointCollectorOrb, PointCollectorSample, PointOrb, PointRecoveryOrb,
   PointRecoverySample, PullOrb, PullRiskOrb, ResetTesting, RestartGame,
   RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying, RiskReveal,
-  RiskSample, RiskSurvived, SelectOrbType, StartGame, StartTestingRiskContinue,
-  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
-  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
-  TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
-  TestingRiskReveal, TestingRiskSurvived, ToggleDevMode, UpdateInputValue,
-  ValueConfiguration, Victory,
+  RiskSample, RiskSurvived, SelectOrbType, StartGame,
+  StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
+  StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
+  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
+  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ToggleDevMode,
+  UpdateInputValue, ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -152,6 +153,10 @@ pub fn update(model: Model, msg: Msg) -> Model {
     StartTestingRiskSuccess -> handle_start_testing_risk_success(model)
     StartTestingRiskFailure -> handle_start_testing_risk_failure(model)
     StartTestingRiskContinue -> handle_start_testing_risk_continue(model)
+    StartTestingPointRecoveryFirst ->
+      handle_start_testing_point_recovery_first(model)
+    StartTestingPointRecoveryActive ->
+      handle_start_testing_point_recovery_active(model)
     ChooseOrb(choice_index) -> handle_choose_orb(model, choice_index)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
@@ -365,6 +370,48 @@ fn handle_start_testing_risk_continue(model: Model) -> Model {
     points: 0,
     milestone: 50,
     // Much higher milestone to test continue case
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
+  )
+}
+
+fn handle_start_testing_point_recovery_first(model: Model) -> Model {
+  // Test bag for point recovery first: PointRecoveryOrb first, then PointOrbs
+  // Tests scenario where PointRecoveryOrb is pulled when no PointOrbs have been pulled yet
+  let test_bag = [PointRecoveryOrb, PointOrb(1), PointOrb(2), PointOrb(3)]
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+    choice_orb_1: None,
+    choice_orb_2: None,
+  )
+}
+
+fn handle_start_testing_point_recovery_active(model: Model) -> Model {
+  // Test bag for point recovery active: 2 PointOrbs, then PointRecoveryOrb, then 1 PointOrb
+  // Tests scenario where PointRecoveryOrb can recover the lowest pulled PointOrb
+  let test_bag = [PointOrb(1), PointOrb(3), PointRecoveryOrb, PointOrb(2)]
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
+  Model(
+    ..clean_model,
+    screen: Testing(Gameplay),
+    bag: test_bag,
+    health: 5,
+    points: 0,
     last_orb: None,
     last_orb_message: None,
     pulled_orbs: [],

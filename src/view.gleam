@@ -13,8 +13,9 @@ import types.{
   Menu, MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
   PointRecoverySample, PullRiskOrb, ResetTesting, RestartGame, RiskAccept,
   RiskConsumed, RiskDied, RiskPlaying, RiskReveal, RiskSample, RiskSurvived,
-  SelectOrbType, StartGame, StartTestingRiskContinue, StartTestingRiskFailure,
-  StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  SelectOrbType, StartGame, StartTestingPointRecoveryActive,
+  StartTestingPointRecoveryFirst, StartTestingRiskContinue,
+  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
   StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
   TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
   TestingRiskReveal, TestingRiskSurvived, ValueConfiguration, Victory,
@@ -492,6 +493,14 @@ fn render_orb_testing_view() -> Element(Msg) {
     ui.orb_selection_button("Risk Success Test", StartTestingRiskSuccess),
     ui.orb_selection_button("Risk Failure Test", StartTestingRiskFailure),
     ui.orb_selection_button("Risk Continue Test", StartTestingRiskContinue),
+    ui.orb_selection_button(
+      "Point Recovery First Test",
+      StartTestingPointRecoveryFirst,
+    ),
+    ui.orb_selection_button(
+      "Point Recovery Active Test",
+      StartTestingPointRecoveryActive,
+    ),
     ui.secondary_button(display.back_to_menu_text, BackToMainMenu),
   ])
 }

@@ -131,6 +131,8 @@ pub type Msg {
   StartTestingRiskSuccess
   StartTestingRiskFailure
   StartTestingRiskContinue
+  StartTestingPointRecoveryFirst
+  StartTestingPointRecoveryActive
   PullOrb
   NextLevel
   RestartGame
