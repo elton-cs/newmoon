@@ -37,6 +37,7 @@ pub type Orb {
   BombImmunityOrb
   ChoiceOrb
   RiskOrb
+  PointRecoveryOrb
 }
 
 pub type MenuScreen {
@@ -88,6 +89,7 @@ pub type OrbType {
   BombImmunitySample
   ChoiceSample
   RiskSample
+  PointRecoverySample
 }
 
 pub type Model {

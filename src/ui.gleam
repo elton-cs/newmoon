@@ -11,8 +11,9 @@ import types.{
   type Msg, type Orb, type Screen, type StatusDuration, type StatusEffect,
   AllCollectorOrb, BombImmunity, BombImmunityOrb, BombOrb, BombSurvivorOrb,
   ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb, Permanent,
-  PointCollectorOrb, PointMultiplier, PointOrb, PullOrb, PullRiskOrb, RiskOrb,
-  Testing, TestingChoosing, ToggleDevMode, Triggered, UpdateInputValue,
+  PointCollectorOrb, PointMultiplier, PointOrb, PointRecoveryOrb, PullOrb,
+  PullRiskOrb, RiskOrb, Testing, TestingChoosing, ToggleDevMode, Triggered,
+  UpdateInputValue,
 }
 
 // Layout Components
@@ -141,6 +142,8 @@ pub fn orb_result_display(
             "text-orange-700",
             "bg-orange-50 border-orange-200",
           )
+        types.PointRecoveryOrb ->
+          info_panel(orb_message, "text-teal-700", "bg-teal-50 border-teal-200")
       }
     }
     Some(orb_value), None -> {
@@ -206,6 +209,12 @@ pub fn orb_result_display(
             fallback_message,
             "text-orange-700",
             "bg-orange-50 border-orange-200",
+          )
+        types.PointRecoveryOrb ->
+          info_panel(
+            fallback_message,
+            "text-teal-700",
+            "bg-teal-50 border-teal-200",
           )
       }
     }
@@ -482,6 +491,7 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
     BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
     ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
     RiskOrb -> #("bg-red-100", "text-red-800", "border-red-300")
+    PointRecoveryOrb -> #("bg-teal-50", "text-teal-700", "border-teal-200")
   }
 }
 
@@ -786,6 +796,7 @@ fn format_orb_for_dev_display(orb: Orb) -> String {
     BombImmunityOrb -> "BombImmunity"
     ChoiceOrb -> "Choice"
     RiskOrb -> "Risk"
+    PointRecoveryOrb -> "PointRecovery"
   }
 }
 

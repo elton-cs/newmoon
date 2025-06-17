@@ -11,13 +11,13 @@ import types.{
   ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
   Failure, Game, Gameplay, GoToOrbTesting, HazardSample, HealthSample, Main,
   Menu, MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
-  PullRiskOrb, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied,
-  RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectOrbType, StartGame,
-  StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
-  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ValueConfiguration,
-  Victory,
+  PointRecoverySample, PullRiskOrb, ResetTesting, RestartGame, RiskAccept,
+  RiskConsumed, RiskDied, RiskPlaying, RiskReveal, RiskSample, RiskSurvived,
+  SelectOrbType, StartGame, StartTestingRiskContinue, StartTestingRiskFailure,
+  StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
+  TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
+  TestingRiskReveal, TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
 
@@ -483,6 +483,10 @@ fn render_orb_testing_view() -> Element(Msg) {
     ),
     ui.orb_selection_button("Choice Portal Sample", SelectOrbType(ChoiceSample)),
     ui.orb_selection_button("Fate Sample", SelectOrbType(RiskSample)),
+    ui.orb_selection_button(
+      "Point Recovery Sample",
+      SelectOrbType(PointRecoverySample),
+    ),
     ui.orb_selection_button("Both Status Effects", StartTestingWithBothStatuses),
     ui.orb_selection_button("Triple Choice Test", StartTestingWithTripleChoice),
     ui.orb_selection_button("Risk Success Test", StartTestingRiskSuccess),
@@ -508,6 +512,7 @@ fn render_orb_value_selection_view(
     BombImmunitySample -> "Shield Generator Sample"
     ChoiceSample -> "Choice Portal Sample"
     RiskSample -> "Fate Sample"
+    PointRecoverySample -> "Point Recovery Sample"
   }
   let description = case orb_type {
     DataSample -> "Enter the data points this sample will provide"
@@ -526,6 +531,8 @@ fn render_orb_value_selection_view(
     ChoiceSample -> "Presents a choice between two samples from the container"
     RiskSample ->
       "High-risk sample that extracts 5 samples at once with 2× point bonus if survived"
+    PointRecoverySample ->
+      "Returns the lowest-value data sample back to the container for another chance at points"
   }
 
   case orb_type {
@@ -545,7 +552,11 @@ fn render_orb_value_selection_view(
         ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
         ui.secondary_button("Back to Selection", BackToOrbTesting),
       ])
-    MultiplierSample | BombImmunitySample | ChoiceSample | RiskSample ->
+    MultiplierSample
+    | BombImmunitySample
+    | ChoiceSample
+    | RiskSample
+    | PointRecoverySample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",

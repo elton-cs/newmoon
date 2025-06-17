@@ -5013,6 +5013,8 @@ var ChoiceOrb = class extends CustomType {
 };
 var RiskOrb = class extends CustomType {
 };
+var PointRecoveryOrb = class extends CustomType {
+};
 var Main = class extends CustomType {
 };
 var OrbSelection = class extends CustomType {
@@ -5100,6 +5102,8 @@ var BombImmunitySample = class extends CustomType {
 var ChoiceSample = class extends CustomType {
 };
 var RiskSample = class extends CustomType {
+};
+var PointRecoverySample = class extends CustomType {
 };
 var Model = class extends CustomType {
   constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_original_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health) {
@@ -5216,8 +5220,10 @@ function orb_display_name(orb) {
     return "Shield Generator Sample";
   } else if (orb instanceof ChoiceOrb) {
     return "Choice Portal Sample";
-  } else {
+  } else if (orb instanceof RiskOrb) {
     return "Fate Sample";
+  } else {
+    return "Point Recovery Sample";
   }
 }
 function orb_result_message(orb) {
@@ -5242,8 +5248,10 @@ function orb_result_message(orb) {
     return "\u25C8 SHIELD GENERATOR ACTIVATED";
   } else if (orb instanceof ChoiceOrb) {
     return "\u25C8 CHOICE PORTAL ACTIVATED";
-  } else {
+  } else if (orb instanceof RiskOrb) {
     return "\u26A0 FATE SAMPLE DETECTED";
+  } else {
+    return "\u25C7 DATA RECOVERY ACTIVATED";
   }
 }
 function collector_result_message(orb, bonus_points) {
@@ -5647,7 +5655,8 @@ function starter_orbs() {
     new MultiplierOrb(),
     new BombImmunityOrb(),
     new ChoiceOrb(),
-    new RiskOrb()
+    new RiskOrb(),
+    new PointRecoveryOrb()
   ]);
   let _pipe = point_orbs;
   let _pipe$1 = append(_pipe, bomb_orbs);
@@ -5708,6 +5717,47 @@ function count_pulled_bomb_orbs(pulled_orbs) {
       }
     }
   );
+}
+function find_lowest_point_orb(pulled_orbs) {
+  let point_orbs = filter(
+    pulled_orbs,
+    (orb) => {
+      if (orb instanceof PointOrb) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  );
+  if (point_orbs instanceof Empty) {
+    return new None();
+  } else {
+    let first = point_orbs.head;
+    let rest = point_orbs.tail;
+    let lowest = fold(
+      rest,
+      first,
+      (current_lowest, orb) => {
+        if (orb instanceof PointOrb) {
+          if (current_lowest instanceof PointOrb) {
+            let new_value = orb[0];
+            let current_value = current_lowest[0];
+            let $ = new_value < current_value;
+            if ($) {
+              return orb;
+            } else {
+              return current_lowest;
+            }
+          } else {
+            return current_lowest;
+          }
+        } else {
+          return current_lowest;
+        }
+      }
+    );
+    return new Some(lowest);
+  }
 }
 function handle_start_game(model) {
   let clean_model = clear_statuses_by_persistence(
@@ -5841,8 +5891,10 @@ function handle_confirm_orb_value(model, orb_type) {
         _block = new BombImmunityOrb();
       } else if (orb_type instanceof ChoiceSample) {
         _block = new ChoiceOrb();
-      } else {
+      } else if (orb_type instanceof RiskSample) {
         _block = new RiskOrb();
+      } else {
+        _block = new PointRecoveryOrb();
       }
       let test_orb = _block;
       let clean_model = clear_statuses_by_persistence(
@@ -7495,9 +7547,51 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof ChoiceOrb) {
           let message = orb_result_message(first_orb);
           _block = [model, message, false];
-        } else {
+        } else if (first_orb instanceof RiskOrb) {
           let message = orb_result_message(first_orb);
           _block = [model, message, false];
+        } else {
+          let $4 = find_lowest_point_orb(model.pulled_orbs);
+          if ($4 instanceof Some) {
+            let lowest_point_orb = $4[0];
+            let updated_pulled_orbs = filter(
+              model.pulled_orbs,
+              (orb) => {
+                return !isEqual(orb, lowest_point_orb);
+              }
+            );
+            let _block$12;
+            let _record2 = model;
+            _block$12 = new Model(
+              _record2.health,
+              _record2.points,
+              _record2.level,
+              _record2.milestone,
+              _record2.bag,
+              _record2.screen,
+              _record2.last_orb,
+              _record2.last_orb_message,
+              _record2.input_value,
+              updated_pulled_orbs,
+              _record2.point_multiplier,
+              _record2.bomb_immunity,
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2,
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_original_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
+            );
+            let new_model2 = _block$12;
+            let message = orb_result_message(first_orb);
+            _block = [new_model2, message, false];
+          } else {
+            let message = orb_result_message(first_orb);
+            _block = [model, message, false];
+          }
         }
         let $3 = _block;
         let new_model = $3[0];
@@ -7507,7 +7601,17 @@ function handle_pull_orb(model) {
         if (return_orb_to_bag) {
           _block$1 = append(rest, toList([first_orb]));
         } else {
-          _block$1 = rest;
+          if (first_orb instanceof PointRecoveryOrb) {
+            let $4 = find_lowest_point_orb(model.pulled_orbs);
+            if ($4 instanceof Some) {
+              let lowest_point_orb = $4[0];
+              _block$1 = append(rest, toList([lowest_point_orb]));
+            } else {
+              _block$1 = rest;
+            }
+          } else {
+            _block$1 = rest;
+          }
         }
         let new_bag = _block$1;
         let _block$2;
@@ -7863,9 +7967,51 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof ChoiceOrb) {
           let message = orb_result_message(first_orb);
           _block = [model, message, false];
-        } else {
+        } else if (first_orb instanceof RiskOrb) {
           let message = orb_result_message(first_orb);
           _block = [model, message, false];
+        } else {
+          let $4 = find_lowest_point_orb(model.pulled_orbs);
+          if ($4 instanceof Some) {
+            let lowest_point_orb = $4[0];
+            let updated_pulled_orbs = filter(
+              model.pulled_orbs,
+              (orb) => {
+                return !isEqual(orb, lowest_point_orb);
+              }
+            );
+            let _block$12;
+            let _record2 = model;
+            _block$12 = new Model(
+              _record2.health,
+              _record2.points,
+              _record2.level,
+              _record2.milestone,
+              _record2.bag,
+              _record2.screen,
+              _record2.last_orb,
+              _record2.last_orb_message,
+              _record2.input_value,
+              updated_pulled_orbs,
+              _record2.point_multiplier,
+              _record2.bomb_immunity,
+              _record2.active_statuses,
+              _record2.choice_orb_1,
+              _record2.choice_orb_2,
+              _record2.dev_mode,
+              _record2.risk_orbs,
+              _record2.risk_original_orbs,
+              _record2.risk_pulled_orbs,
+              _record2.risk_accumulated_effects,
+              _record2.risk_health
+            );
+            let new_model2 = _block$12;
+            let message = orb_result_message(first_orb);
+            _block = [new_model2, message, false];
+          } else {
+            let message = orb_result_message(first_orb);
+            _block = [model, message, false];
+          }
         }
         let $3 = _block;
         let new_model = $3[0];
@@ -7875,7 +8021,17 @@ function handle_pull_orb(model) {
         if (return_orb_to_bag) {
           _block$1 = append(rest, toList([first_orb]));
         } else {
-          _block$1 = rest;
+          if (first_orb instanceof PointRecoveryOrb) {
+            let $4 = find_lowest_point_orb(model.pulled_orbs);
+            if ($4 instanceof Some) {
+              let lowest_point_orb = $4[0];
+              _block$1 = append(rest, toList([lowest_point_orb]));
+            } else {
+              _block$1 = rest;
+            }
+          } else {
+            _block$1 = rest;
+          }
         }
         let new_bag = _block$1;
         let _block$2;
@@ -8309,11 +8465,17 @@ function orb_result_display(orb, message) {
           "text-indigo-700",
           "bg-indigo-50 border-indigo-200"
         );
-      } else {
+      } else if (orb_value instanceof RiskOrb) {
         return info_panel(
           orb_message,
           "text-orange-700",
           "bg-orange-50 border-orange-200"
+        );
+      } else {
+        return info_panel(
+          orb_message,
+          "text-teal-700",
+          "bg-teal-50 border-teal-200"
         );
       }
     } else {
@@ -8373,11 +8535,17 @@ function orb_result_display(orb, message) {
           "text-indigo-700",
           "bg-indigo-50 border-indigo-200"
         );
-      } else {
+      } else if (orb_value instanceof RiskOrb) {
         return info_panel(
           fallback_message,
           "text-orange-700",
           "bg-orange-50 border-orange-200"
+        );
+      } else {
+        return info_panel(
+          fallback_message,
+          "text-teal-700",
+          "bg-teal-50 border-teal-200"
         );
       }
     }
@@ -8612,8 +8780,10 @@ function get_orb_style_classes(orb) {
     return ["bg-cyan-50", "text-cyan-700", "border-cyan-200"];
   } else if (orb instanceof ChoiceOrb) {
     return ["bg-indigo-50", "text-indigo-700", "border-indigo-200"];
-  } else {
+  } else if (orb instanceof RiskOrb) {
     return ["bg-red-100", "text-red-800", "border-red-300"];
+  } else {
+    return ["bg-teal-50", "text-teal-700", "border-teal-200"];
   }
 }
 function choice_panel(title, first_option, second_option, first_msg, second_msg) {
@@ -8752,8 +8922,10 @@ function format_orb_for_dev_display(orb) {
     return "BombImmunity";
   } else if (orb instanceof ChoiceOrb) {
     return "Choice";
-  } else {
+  } else if (orb instanceof RiskOrb) {
     return "Risk";
+  } else {
+    return "PointRecovery";
   }
 }
 function render_choice_mode_info(choice_orb_1, choice_orb_2) {
@@ -9343,6 +9515,10 @@ function render_orb_testing_view() {
         new SelectOrbType(new RiskSample())
       ),
       orb_selection_button(
+        "Point Recovery Sample",
+        new SelectOrbType(new PointRecoverySample())
+      ),
+      orb_selection_button(
         "Both Status Effects",
         new StartTestingWithBothStatuses()
       ),
@@ -9386,8 +9562,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block = "Shield Generator Sample";
   } else if (orb_type instanceof ChoiceSample) {
     _block = "Choice Portal Sample";
-  } else {
+  } else if (orb_type instanceof RiskSample) {
     _block = "Fate Sample";
+  } else {
+    _block = "Point Recovery Sample";
   }
   let orb_name = _block;
   let _block$1;
@@ -9409,8 +9587,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block$1 = "Activates hazard shield for 3 extractions, returning hazards to container";
   } else if (orb_type instanceof ChoiceSample) {
     _block$1 = "Presents a choice between two samples from the container";
-  } else {
+  } else if (orb_type instanceof RiskSample) {
     _block$1 = "High-risk sample that extracts 5 samples at once with 2\xD7 point bonus if survived";
+  } else {
+    _block$1 = "Returns the lowest-value data sample back to the container for another chance at points";
   }
   let description = _block$1;
   if (orb_type instanceof DataSample) {
@@ -9516,6 +9696,18 @@ function render_orb_value_selection_view(orb_type, input_value) {
       ])
     );
   } else if (orb_type instanceof ChoiceSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-purple-50 border-purple-200"
+        ),
+        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof RiskSample) {
     return fragment2(
       toList([
         status_panel(

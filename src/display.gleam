@@ -1,6 +1,7 @@
 import types.{
   type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  ChoiceOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb, RiskOrb,
+  ChoiceOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb,
+  PointRecoveryOrb, RiskOrb,
 }
 
 // Import int for string conversion
@@ -23,6 +24,7 @@ pub fn orb_display_name(orb: Orb) -> String {
     BombImmunityOrb -> "Shield Generator Sample"
     ChoiceOrb -> "Choice Portal Sample"
     RiskOrb -> "Fate Sample"
+    PointRecoveryOrb -> "Point Recovery Sample"
   }
 }
 
@@ -39,6 +41,7 @@ pub fn orb_result_message(orb: Orb) -> String {
     BombImmunityOrb -> "◈ SHIELD GENERATOR ACTIVATED"
     ChoiceOrb -> "◈ CHOICE PORTAL ACTIVATED"
     RiskOrb -> "⚠ FATE SAMPLE DETECTED"
+    PointRecoveryOrb -> "◇ DATA RECOVERY ACTIVATED"
   }
 }
 

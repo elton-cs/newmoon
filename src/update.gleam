@@ -12,11 +12,11 @@ import types.{
   ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
   Failure, Game, Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample,
   Main, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection,
-  Playing, PointCollectorOrb, PointCollectorSample, PointOrb, PullOrb,
-  PullRiskOrb, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied,
-  RiskOrb, RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectOrbType,
-  StartGame, StartTestingRiskContinue, StartTestingRiskFailure,
-  StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  Playing, PointCollectorOrb, PointCollectorSample, PointOrb, PointRecoveryOrb,
+  PointRecoverySample, PullOrb, PullRiskOrb, ResetTesting, RestartGame,
+  RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying, RiskReveal,
+  RiskSample, RiskSurvived, SelectOrbType, StartGame, StartTestingRiskContinue,
+  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
   StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
   TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
   TestingRiskReveal, TestingRiskSurvived, ToggleDevMode, UpdateInputValue,
@@ -73,6 +73,7 @@ fn starter_orbs() -> List(Orb) {
     BombImmunityOrb,
     ChoiceOrb,
     RiskOrb,
+    PointRecoveryOrb,
   ]
 
   point_orbs
@@ -104,6 +105,35 @@ fn count_pulled_bomb_orbs(pulled_orbs: List(Orb)) -> Int {
       _ -> count
     }
   })
+}
+
+// Helper function to find the lowest value PointOrb from pulled orbs
+fn find_lowest_point_orb(pulled_orbs: List(Orb)) -> option.Option(Orb) {
+  let point_orbs =
+    list.filter(pulled_orbs, fn(orb) {
+      case orb {
+        PointOrb(_) -> True
+        _ -> False
+      }
+    })
+
+  case point_orbs {
+    [] -> option.None
+    [first, ..rest] -> {
+      let lowest =
+        list.fold(rest, first, fn(current_lowest, orb) {
+          case current_lowest, orb {
+            PointOrb(current_value), PointOrb(new_value) ->
+              case new_value < current_value {
+                True -> orb
+                False -> current_lowest
+              }
+            _, _ -> current_lowest
+          }
+        })
+      option.Some(lowest)
+    }
+  }
 }
 
 pub fn update(model: Model, msg: Msg) -> Model {
@@ -187,6 +217,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         BombImmunitySample -> BombImmunityOrb
         ChoiceSample -> ChoiceOrb
         RiskSample -> RiskOrb
+        PointRecoverySample -> PointRecoveryOrb
       }
       let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
       Model(
@@ -444,11 +475,41 @@ fn handle_pull_orb(model: Model) -> Model {
               let message = display.orb_result_message(first_orb)
               #(model, message, False)
             }
+            PointRecoveryOrb -> {
+              // Find lowest point orb and return it to bag
+              case find_lowest_point_orb(model.pulled_orbs) {
+                option.Some(lowest_point_orb) -> {
+                  // Remove the lowest point orb from pulled_orbs
+                  let updated_pulled_orbs =
+                    list.filter(model.pulled_orbs, fn(orb) {
+                      orb != lowest_point_orb
+                    })
+                  let new_model =
+                    Model(..model, pulled_orbs: updated_pulled_orbs)
+                  let message = display.orb_result_message(first_orb)
+                  #(new_model, message, False)
+                }
+                option.None -> {
+                  // No point orbs to recover
+                  let message = display.orb_result_message(first_orb)
+                  #(model, message, False)
+                }
+              }
+            }
           }
 
           let new_bag = case return_orb_to_bag {
             True -> list.append(rest, [first_orb])
-            False -> rest
+            False ->
+              case first_orb {
+                PointRecoveryOrb ->
+                  case find_lowest_point_orb(model.pulled_orbs) {
+                    option.Some(lowest_point_orb) ->
+                      list.append(rest, [lowest_point_orb])
+                    option.None -> rest
+                  }
+                _ -> rest
+              }
           }
 
           let new_immunity = case first_orb {
