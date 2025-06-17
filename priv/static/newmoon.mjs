@@ -5051,6 +5051,8 @@ var Victory = class extends CustomType {
 };
 var Defeat = class extends CustomType {
 };
+var GameComplete = class extends CustomType {
+};
 var Choosing = class extends CustomType {
 };
 var RiskAccept = class extends CustomType {
@@ -5637,42 +5639,35 @@ function add_status(model, new_status) {
 
 // build/dev/javascript/newmoon/update.mjs
 function starter_orbs() {
-  let point_orbs = toList([
+  return toList([
+    new PointOrb(1),
+    new PointOrb(1),
     new PointOrb(1),
     new PointOrb(1),
     new PointOrb(2),
     new PointOrb(2),
-    new PointOrb(3)
+    new PointOrb(2),
+    new PointOrb(2),
+    new PointOrb(3),
+    new PointOrb(3),
+    new PointOrb(3),
+    new PointOrb(4),
+    new PointOrb(4),
+    new PointOrb(5),
+    new PointOrb(5),
+    new PointOrb(6),
+    new PointOrb(6),
+    new PointOrb(7),
+    new PointOrb(8),
+    new PointOrb(10)
   ]);
-  let bomb_orbs = toList([
-    new BombOrb(1),
-    new BombOrb(1),
-    new BombOrb(2),
-    new BombOrb(2),
-    new BombOrb(3)
-  ]);
-  let health_orbs = toList([new HealthOrb(1), new HealthOrb(2)]);
-  let collector_orbs = toList([
-    new AllCollectorOrb(1),
-    new PointCollectorOrb(1),
-    new BombSurvivorOrb(1),
-    new MultiplierOrb(),
-    new BombImmunityOrb(),
-    new ChoiceOrb(),
-    new RiskOrb(),
-    new PointRecoveryOrb()
-  ]);
-  let _pipe = point_orbs;
-  let _pipe$1 = append(_pipe, bomb_orbs);
-  let _pipe$2 = append(_pipe$1, health_orbs);
-  return append(_pipe$2, collector_orbs);
 }
 function init(_) {
   return new Model(
     5,
     0,
     1,
-    5,
+    12,
     starter_orbs(),
     new Menu(new Main()),
     new None(),
@@ -5721,6 +5716,21 @@ function count_pulled_bomb_orbs(pulled_orbs) {
       }
     }
   );
+}
+function get_milestone_for_level(level) {
+  if (level === 1) {
+    return 12;
+  } else if (level === 2) {
+    return 18;
+  } else if (level === 3) {
+    return 28;
+  } else if (level === 4) {
+    return 44;
+  } else if (level === 5) {
+    return 66;
+  } else {
+    return 12;
+  }
 }
 function find_lowest_point_orb(pulled_orbs) {
   let point_orbs = filter(
@@ -6283,12 +6293,14 @@ function handle_next_level(model) {
     model,
     new ClearOnLevel()
   );
+  let new_level = model.level + 1;
+  let new_milestone = get_milestone_for_level(new_level);
   let _record = clean_model;
   return new Model(
     5,
     0,
-    model.level + 1,
-    model.milestone + 2,
+    new_level,
+    new_milestone,
     starter_orbs(),
     new Game(new Playing()),
     new None(),
@@ -6480,30 +6492,58 @@ function check_game_status(model) {
           _record.risk_health
         );
       } else if ($3) {
-        let _record = model;
-        return new Model(
-          _record.health,
-          _record.points,
-          _record.level,
-          _record.milestone,
-          _record.bag,
-          new Game(new Victory()),
-          _record.last_orb,
-          _record.last_orb_message,
-          _record.input_value,
-          _record.pulled_orbs,
-          _record.point_multiplier,
-          _record.bomb_immunity,
-          _record.active_statuses,
-          _record.choice_orb_1,
-          _record.choice_orb_2,
-          _record.dev_mode,
-          _record.risk_orbs,
-          _record.risk_original_orbs,
-          _record.risk_pulled_orbs,
-          _record.risk_accumulated_effects,
-          _record.risk_health
-        );
+        let $5 = model.level === 5;
+        if ($5) {
+          let _record = model;
+          return new Model(
+            _record.health,
+            _record.points,
+            _record.level,
+            _record.milestone,
+            _record.bag,
+            new Game(new GameComplete()),
+            _record.last_orb,
+            _record.last_orb_message,
+            _record.input_value,
+            _record.pulled_orbs,
+            _record.point_multiplier,
+            _record.bomb_immunity,
+            _record.active_statuses,
+            _record.choice_orb_1,
+            _record.choice_orb_2,
+            _record.dev_mode,
+            _record.risk_orbs,
+            _record.risk_original_orbs,
+            _record.risk_pulled_orbs,
+            _record.risk_accumulated_effects,
+            _record.risk_health
+          );
+        } else {
+          let _record = model;
+          return new Model(
+            _record.health,
+            _record.points,
+            _record.level,
+            _record.milestone,
+            _record.bag,
+            new Game(new Victory()),
+            _record.last_orb,
+            _record.last_orb_message,
+            _record.input_value,
+            _record.pulled_orbs,
+            _record.point_multiplier,
+            _record.bomb_immunity,
+            _record.active_statuses,
+            _record.choice_orb_1,
+            _record.choice_orb_2,
+            _record.dev_mode,
+            _record.risk_orbs,
+            _record.risk_original_orbs,
+            _record.risk_pulled_orbs,
+            _record.risk_accumulated_effects,
+            _record.risk_health
+          );
+        }
       } else if ($4) {
         let _record = model;
         return new Model(
@@ -9871,6 +9911,23 @@ function render_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
     ])
   );
 }
+function render_game_complete_view(last_orb, last_orb_message, bag, active_statuses, _) {
+  let orbs_left = length(bag);
+  let status_effects = extract_active_status_effects(active_statuses);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      status_effects_display(status_effects),
+      container_display(orbs_left),
+      success_button("PLAY AGAIN", new RestartGame()),
+      status_panel(
+        "MISSION COMPLETE!",
+        "ALL FIVE SECTORS CONQUERED! You have successfully completed the deep space exploration mission and mastered the art of sample extraction. Congratulations, Space Explorer!",
+        "bg-green-50 border-green-200"
+      )
+    ])
+  );
+}
 function render_testing_mode_view(last_orb, last_orb_message, bag, active_statuses, _) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
@@ -10457,6 +10514,27 @@ function view(model) {
               model.level
             ),
             render_lost_view(
+              model.last_orb,
+              model.last_orb_message,
+              model.bag,
+              model.active_statuses,
+              model.pulled_orbs
+            )
+          ])
+        )
+      );
+    } else if ($1 instanceof GameComplete) {
+      _block = app_container(
+        game_card(
+          toList([
+            game_header(),
+            render_game_stats(
+              model.health,
+              model.points,
+              model.milestone,
+              model.level
+            ),
+            render_game_complete_view(
               model.last_orb,
               model.last_orb_message,
               model.bag,

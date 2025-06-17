@@ -63,6 +63,7 @@ pub type GameScreen {
   Playing
   Victory
   Defeat
+  GameComplete
   Choosing
   RiskAccept
   RiskReveal

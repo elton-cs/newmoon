@@ -10,12 +10,12 @@ import types.{
   BombSurvivorOrb, BombSurvivorSample, ChoiceOrb, ChoiceSample, ChooseOrb,
   Choosing, ClearOnGame, ClearOnLevel, ConfirmOrbValue,
   ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
-  Failure, Game, Gameplay, GoToOrbTesting, HazardSample, HealthOrb, HealthSample,
-  Main, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel, OrbSelection,
-  Playing, PointCollectorOrb, PointCollectorSample, PointOrb, PointRecoveryOrb,
-  PointRecoverySample, PullOrb, PullRiskOrb, ResetTesting, RestartGame,
-  RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying, RiskReveal,
-  RiskSample, RiskSurvived, SelectOrbType, StartGame,
+  Failure, Game, GameComplete, Gameplay, GoToOrbTesting, HazardSample, HealthOrb,
+  HealthSample, Main, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel,
+  OrbSelection, Playing, PointCollectorOrb, PointCollectorSample, PointOrb,
+  PointRecoveryOrb, PointRecoverySample, PullOrb, PullRiskOrb, ResetTesting,
+  RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying,
+  RiskReveal, RiskSample, RiskSurvived, SelectOrbType, StartGame,
   StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
   StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
   StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
@@ -29,7 +29,7 @@ pub fn init(_) -> Model {
     health: 5,
     points: 0,
     level: 1,
-    milestone: 5,
+    milestone: 12,
     bag: starter_orbs(),
     screen: Menu(Main),
     last_orb: None,
@@ -57,30 +57,15 @@ pub fn init(_) -> Model {
 
 // Single consistent orb bag used for all levels
 fn starter_orbs() -> List(Orb) {
-  let point_orbs = [
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(2),
-    PointOrb(2),
-    PointOrb(3),
+  [
+    PointOrb(1), PointOrb(1), PointOrb(1), PointOrb(1),
+    PointOrb(2), PointOrb(2), PointOrb(2), PointOrb(2),
+    PointOrb(3), PointOrb(3), PointOrb(3),
+    PointOrb(4), PointOrb(4),
+    PointOrb(5), PointOrb(5),
+    PointOrb(6), PointOrb(6),
+    PointOrb(7), PointOrb(8), PointOrb(10)
   ]
-  let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
-  let health_orbs = [HealthOrb(1), HealthOrb(2)]
-  let collector_orbs = [
-    AllCollectorOrb(1),
-    PointCollectorOrb(1),
-    BombSurvivorOrb(1),
-    MultiplierOrb,
-    BombImmunityOrb,
-    ChoiceOrb,
-    RiskOrb,
-    PointRecoveryOrb,
-  ]
-
-  point_orbs
-  |> list.append(bomb_orbs)
-  |> list.append(health_orbs)
-  |> list.append(collector_orbs)
 }
 
 // Test bag that includes the test orb plus the standard starter orbs
@@ -106,6 +91,19 @@ fn count_pulled_bomb_orbs(pulled_orbs: List(Orb)) -> Int {
       _ -> count
     }
   })
+}
+
+// Helper function to get milestone for specific level
+fn get_milestone_for_level(level: Int) -> Int {
+  case level {
+    1 -> 12
+    2 -> 18
+    3 -> 28
+    4 -> 44
+    5 -> 66
+    _ -> 12
+    // Default to level 1 milestone for invalid levels
+  }
 }
 
 // Helper function to find the lowest value PointOrb from pulled orbs
@@ -663,12 +661,14 @@ fn handle_restart_game(model: Model) -> Model {
 
 fn handle_next_level(model: Model) -> Model {
   let clean_model = status.clear_statuses_by_persistence(model, ClearOnLevel)
+  let new_level = model.level + 1
+  let new_milestone = get_milestone_for_level(new_level)
   Model(
     ..clean_model,
     health: 5,
     points: 0,
-    level: model.level + 1,
-    milestone: model.milestone + 2,
+    level: new_level,
+    milestone: new_milestone,
     bag: starter_orbs(),
     screen: Game(Playing),
     last_orb: None,
@@ -734,7 +734,11 @@ fn check_game_status(model: Model) -> Model {
         list.is_empty(model.bag)
       {
         True, _, _ -> Model(..model, screen: Game(Defeat))
-        False, True, _ -> Model(..model, screen: Game(Victory))
+        False, True, _ ->
+          case model.level == 5 {
+            True -> Model(..model, screen: Game(GameComplete))
+            False -> Model(..model, screen: Game(Victory))
+          }
         False, False, True -> Model(..model, screen: Game(Defeat))
         False, False, False -> model
       }

@@ -9,16 +9,17 @@ import types.{
   ApplyRiskEffects, BackToMainMenu, BackToOrbTesting, BombImmunitySample,
   BombSurvivorSample, ChoiceSample, ChooseOrb, Choosing, ConfirmOrbValue,
   ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
-  Failure, Game, Gameplay, GoToOrbTesting, HazardSample, HealthSample, Main,
-  Menu, MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
-  PointRecoverySample, PullRiskOrb, ResetTesting, RestartGame, RiskAccept,
-  RiskConsumed, RiskDied, RiskPlaying, RiskReveal, RiskSample, RiskSurvived,
-  SelectOrbType, StartGame, StartTestingPointRecoveryActive,
-  StartTestingPointRecoveryFirst, StartTestingRiskContinue,
-  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
-  StartTestingWithTripleChoice, Success, Testing, TestingChoosing,
-  TestingRiskAccept, TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying,
-  TestingRiskReveal, TestingRiskSurvived, ValueConfiguration, Victory,
+  Failure, Game, GameComplete, Gameplay, GoToOrbTesting, HazardSample,
+  HealthSample, Main, Menu, MultiplierSample, NextLevel, OrbSelection, Playing,
+  PointCollectorSample, PointRecoverySample, PullRiskOrb, ResetTesting,
+  RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskPlaying, RiskReveal,
+  RiskSample, RiskSurvived, SelectOrbType, StartGame,
+  StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
+  StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
+  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
+  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ValueConfiguration,
+  Victory,
 }
 import ui
 
@@ -110,6 +111,25 @@ pub fn view(model: Model) -> Element(Msg) {
             model.level,
           ),
           render_lost_view(
+            model.last_orb,
+            model.last_orb_message,
+            model.bag,
+            model.active_statuses,
+            model.pulled_orbs,
+          ),
+        ]),
+      )
+    Game(GameComplete) ->
+      ui.app_container(
+        ui.game_card([
+          ui.game_header(),
+          render_game_stats(
+            model.health,
+            model.points,
+            model.milestone,
+            model.level,
+          ),
+          render_game_complete_view(
             model.last_orb,
             model.last_orb_message,
             model.bag,
@@ -434,6 +454,30 @@ fn render_lost_view(
     ui.failure_panel(
       display.mission_failed_title,
       display.mission_failed_message,
+    ),
+  ])
+}
+
+// Game Complete View - shows final victory
+fn render_game_complete_view(
+  last_orb,
+  last_orb_message,
+  bag,
+  active_statuses: List(types.StatusEffect),
+  _pulled_orbs: List(types.Orb),
+) -> Element(Msg) {
+  let orbs_left = list.length(bag)
+  let status_effects = extract_active_status_effects(active_statuses)
+
+  element.fragment([
+    ui.orb_result_display(last_orb, last_orb_message),
+    ui.status_effects_display(status_effects),
+    ui.container_display(orbs_left),
+    ui.success_button("PLAY AGAIN", RestartGame),
+    ui.status_panel(
+      "MISSION COMPLETE!",
+      "ALL FIVE SECTORS CONQUERED! You have successfully completed the deep space exploration mission and mastered the art of sample extraction. Congratulations, Space Explorer!",
+      "bg-green-50 border-green-200",
     ),
   ])
 }
