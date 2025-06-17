@@ -8823,7 +8823,11 @@ function render_pulled_orbs_log(pulled_orbs) {
               toList([
                 span(
                   toList([class$("mr-2 w-6 text-right")]),
-                  toList([text3(to_string(index4 + 1) + ".")])
+                  toList([
+                    text3(
+                      to_string(length(pulled_orbs) - index4) + "."
+                    )
+                  ])
                 ),
                 span(
                   toList([class$("font-medium")]),

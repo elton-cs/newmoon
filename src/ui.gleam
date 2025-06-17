@@ -675,7 +675,7 @@ fn render_pulled_orbs_log(pulled_orbs: List(Orb)) -> Element(Msg) {
       list.index_map(pulled_orbs, fn(orb, index) {
         html.div([attribute.class("flex items-center text-yellow-800")], [
           html.span([attribute.class("mr-2 w-6 text-right")], [
-            html.text(int.to_string(index + 1) <> "."),
+            html.text(int.to_string(list.length(pulled_orbs) - index) <> "."),
           ]),
           html.span([attribute.class("font-medium")], [
             html.text(format_orb_for_dev_display(orb)),
