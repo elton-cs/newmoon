@@ -107,15 +107,15 @@ pub fn orb_result_display(
             "text-green-700",
             "bg-green-50 border-green-200",
           )
-        types.AllCollectorOrb ->
+        types.AllCollectorOrb(_) ->
           info_panel(
             orb_message,
             "text-purple-700",
             "bg-purple-50 border-purple-200",
           )
-        types.PointCollectorOrb ->
+        types.PointCollectorOrb(_) ->
           info_panel(orb_message, "text-blue-700", "bg-blue-50 border-blue-200")
-        types.BombSurvivorOrb ->
+        types.BombSurvivorOrb(_) ->
           info_panel(
             orb_message,
             "text-orange-700",
@@ -165,19 +165,19 @@ pub fn orb_result_display(
             "text-green-700",
             "bg-green-50 border-green-200",
           )
-        types.AllCollectorOrb ->
+        types.AllCollectorOrb(_) ->
           info_panel(
             fallback_message,
             "text-purple-700",
             "bg-purple-50 border-purple-200",
           )
-        types.PointCollectorOrb ->
+        types.PointCollectorOrb(_) ->
           info_panel(
             fallback_message,
             "text-blue-700",
             "bg-blue-50 border-blue-200",
           )
-        types.BombSurvivorOrb ->
+        types.BombSurvivorOrb(_) ->
           info_panel(
             fallback_message,
             "text-orange-700",
@@ -467,9 +467,17 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
     PointOrb(_) -> #("bg-gray-50", "text-gray-700", "border-gray-200")
     BombOrb(_) -> #("bg-red-50", "text-red-700", "border-red-200")
     HealthOrb(_) -> #("bg-green-50", "text-green-700", "border-green-200")
-    AllCollectorOrb -> #("bg-purple-50", "text-purple-700", "border-purple-200")
-    PointCollectorOrb -> #("bg-blue-50", "text-blue-700", "border-blue-200")
-    BombSurvivorOrb -> #("bg-orange-50", "text-orange-700", "border-orange-200")
+    AllCollectorOrb(_) -> #(
+      "bg-purple-50",
+      "text-purple-700",
+      "border-purple-200",
+    )
+    PointCollectorOrb(_) -> #("bg-blue-50", "text-blue-700", "border-blue-200")
+    BombSurvivorOrb(_) -> #(
+      "bg-orange-50",
+      "text-orange-700",
+      "border-orange-200",
+    )
     MultiplierOrb -> #("bg-yellow-50", "text-yellow-700", "border-yellow-200")
     BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
     ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
@@ -771,9 +779,9 @@ fn format_orb_for_dev_display(orb: Orb) -> String {
     PointOrb(value) -> "Point(" <> int.to_string(value) <> ")"
     BombOrb(value) -> "Bomb(" <> int.to_string(value) <> ")"
     HealthOrb(value) -> "Health(" <> int.to_string(value) <> ")"
-    AllCollectorOrb -> "AllCollector"
-    PointCollectorOrb -> "PointCollector"
-    BombSurvivorOrb -> "BombSurvivor"
+    AllCollectorOrb(value) -> "AllCollector(" <> int.to_string(value) <> ")"
+    PointCollectorOrb(value) -> "PointCollector(" <> int.to_string(value) <> ")"
+    BombSurvivorOrb(value) -> "BombSurvivor(" <> int.to_string(value) <> ")"
     MultiplierOrb -> "Multiplier"
     BombImmunityOrb -> "BombImmunity"
     ChoiceOrb -> "Choice"

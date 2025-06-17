@@ -30,9 +30,9 @@ pub type Orb {
   PointOrb(Int)
   BombOrb(Int)
   HealthOrb(Int)
-  AllCollectorOrb
-  PointCollectorOrb
-  BombSurvivorOrb
+  AllCollectorOrb(Int)
+  PointCollectorOrb(Int)
+  BombSurvivorOrb(Int)
   MultiplierOrb
   BombImmunityOrb
   ChoiceOrb

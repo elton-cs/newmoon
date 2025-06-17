@@ -516,11 +516,11 @@ fn render_orb_value_selection_view(
     MultiplierSample ->
       "Doubles the current point multiplier for all point-awarding samples"
     AllCollectorSample ->
-      "Awards points equal to remaining samples in container"
+      "Enter points awarded per remaining sample in container"
     PointCollectorSample ->
-      "Awards points equal to number of data samples left in container"
+      "Enter points awarded per data sample left in container"
     BombSurvivorSample ->
-      "Awards points equal to number of hazard samples encountered so far"
+      "Enter points awarded per hazard sample encountered so far"
     BombImmunitySample ->
       "Activates hazard shield for 3 extractions, returning hazards to container"
     ChoiceSample -> "Presents a choice between two samples from the container"
@@ -529,7 +529,12 @@ fn render_orb_value_selection_view(
   }
 
   case orb_type {
-    DataSample | HazardSample | HealthSample ->
+    DataSample
+    | HazardSample
+    | HealthSample
+    | AllCollectorSample
+    | PointCollectorSample
+    | BombSurvivorSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",
@@ -540,13 +545,7 @@ fn render_orb_value_selection_view(
         ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
         ui.secondary_button("Back to Selection", BackToOrbTesting),
       ])
-    MultiplierSample
-    | AllCollectorSample
-    | PointCollectorSample
-    | BombSurvivorSample
-    | BombImmunitySample
-    | ChoiceSample
-    | RiskSample ->
+    MultiplierSample | BombImmunitySample | ChoiceSample | RiskSample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",

@@ -4988,10 +4988,22 @@ var HealthOrb = class extends CustomType {
   }
 };
 var AllCollectorOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 var PointCollectorOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 var BombSurvivorOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 var MultiplierOrb = class extends CustomType {
 };
@@ -5629,9 +5641,9 @@ function starter_orbs() {
   ]);
   let health_orbs = toList([new HealthOrb(1), new HealthOrb(2)]);
   let collector_orbs = toList([
-    new AllCollectorOrb(),
-    new PointCollectorOrb(),
-    new BombSurvivorOrb(),
+    new AllCollectorOrb(1),
+    new PointCollectorOrb(1),
+    new BombSurvivorOrb(1),
     new MultiplierOrb(),
     new BombImmunityOrb(),
     new ChoiceOrb(),
@@ -5820,11 +5832,11 @@ function handle_confirm_orb_value(model, orb_type) {
       } else if (orb_type instanceof MultiplierSample) {
         _block = new MultiplierOrb();
       } else if (orb_type instanceof AllCollectorSample) {
-        _block = new AllCollectorOrb();
+        _block = new AllCollectorOrb(value2);
       } else if (orb_type instanceof PointCollectorSample) {
-        _block = new PointCollectorOrb();
+        _block = new PointCollectorOrb(value2);
       } else if (orb_type instanceof BombSurvivorSample) {
-        _block = new BombSurvivorOrb();
+        _block = new BombSurvivorOrb(value2);
       } else if (orb_type instanceof BombImmunitySample) {
         _block = new BombImmunityOrb();
       } else if (orb_type instanceof ChoiceSample) {
@@ -7303,8 +7315,9 @@ function handle_pull_orb(model) {
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
         } else if (first_orb instanceof AllCollectorOrb) {
+          let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = length(rest) * multiplier;
+          let bonus_points = length(rest) * collector_value * multiplier;
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -7337,8 +7350,9 @@ function handle_pull_orb(model) {
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof PointCollectorOrb) {
+          let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_point_orbs(rest) * multiplier;
+          let bonus_points = count_point_orbs(rest) * collector_value * multiplier;
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -7371,8 +7385,9 @@ function handle_pull_orb(model) {
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof BombSurvivorOrb) {
+          let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * multiplier;
+          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * collector_value * multiplier;
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -7668,8 +7683,9 @@ function handle_pull_orb(model) {
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
         } else if (first_orb instanceof AllCollectorOrb) {
+          let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = length(rest) * multiplier;
+          let bonus_points = length(rest) * collector_value * multiplier;
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -7702,8 +7718,9 @@ function handle_pull_orb(model) {
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof PointCollectorOrb) {
+          let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_point_orbs(rest) * multiplier;
+          let bonus_points = count_point_orbs(rest) * collector_value * multiplier;
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -7736,8 +7753,9 @@ function handle_pull_orb(model) {
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof BombSurvivorOrb) {
+          let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * multiplier;
+          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * collector_value * multiplier;
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8720,11 +8738,14 @@ function format_orb_for_dev_display(orb) {
     let value2 = orb[0];
     return "Health(" + to_string(value2) + ")";
   } else if (orb instanceof AllCollectorOrb) {
-    return "AllCollector";
+    let value2 = orb[0];
+    return "AllCollector(" + to_string(value2) + ")";
   } else if (orb instanceof PointCollectorOrb) {
-    return "PointCollector";
+    let value2 = orb[0];
+    return "PointCollector(" + to_string(value2) + ")";
   } else if (orb instanceof BombSurvivorOrb) {
-    return "BombSurvivor";
+    let value2 = orb[0];
+    return "BombSurvivor(" + to_string(value2) + ")";
   } else if (orb instanceof MultiplierOrb) {
     return "Multiplier";
   } else if (orb instanceof BombImmunityOrb) {
@@ -9379,11 +9400,11 @@ function render_orb_value_selection_view(orb_type, input_value) {
   } else if (orb_type instanceof MultiplierSample) {
     _block$1 = "Doubles the current point multiplier for all point-awarding samples";
   } else if (orb_type instanceof AllCollectorSample) {
-    _block$1 = "Awards points equal to remaining samples in container";
+    _block$1 = "Enter points awarded per remaining sample in container";
   } else if (orb_type instanceof PointCollectorSample) {
-    _block$1 = "Awards points equal to number of data samples left in container";
+    _block$1 = "Enter points awarded per data sample left in container";
   } else if (orb_type instanceof BombSurvivorSample) {
-    _block$1 = "Awards points equal to number of hazard samples encountered so far";
+    _block$1 = "Enter points awarded per hazard sample encountered so far";
   } else if (orb_type instanceof BombImmunitySample) {
     _block$1 = "Activates hazard shield for 3 extractions, returning hazards to container";
   } else if (orb_type instanceof ChoiceSample) {
@@ -9449,9 +9470,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
         status_panel(
           orb_name + " Configuration",
           description,
-          "bg-purple-50 border-purple-200"
+          "bg-blue-50 border-blue-200"
         ),
-        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
         secondary_button("Back to Selection", new BackToOrbTesting())
       ])
     );
@@ -9461,9 +9483,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
         status_panel(
           orb_name + " Configuration",
           description,
-          "bg-purple-50 border-purple-200"
+          "bg-blue-50 border-blue-200"
         ),
-        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
         secondary_button("Back to Selection", new BackToOrbTesting())
       ])
     );
@@ -9473,9 +9496,10 @@ function render_orb_value_selection_view(orb_type, input_value) {
         status_panel(
           orb_name + " Configuration",
           description,
-          "bg-purple-50 border-purple-200"
+          "bg-blue-50 border-blue-200"
         ),
-        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
         secondary_button("Back to Selection", new BackToOrbTesting())
       ])
     );

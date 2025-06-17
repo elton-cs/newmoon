@@ -16,9 +16,9 @@ pub fn orb_display_name(orb: Orb) -> String {
     PointOrb(_) -> "Data Sample"
     BombOrb(_) -> "Hazard Sample"
     HealthOrb(_) -> "Health Sample"
-    AllCollectorOrb -> "All Collector Sample"
-    PointCollectorOrb -> "Point Collector Sample"
-    BombSurvivorOrb -> "Bomb Survivor Sample"
+    AllCollectorOrb(_) -> "All Collector Sample"
+    PointCollectorOrb(_) -> "Point Collector Sample"
+    BombSurvivorOrb(_) -> "Bomb Survivor Sample"
     MultiplierOrb -> "Multiplier Sample"
     BombImmunityOrb -> "Shield Generator Sample"
     ChoiceOrb -> "Choice Portal Sample"
@@ -32,9 +32,9 @@ pub fn orb_result_message(orb: Orb) -> String {
     PointOrb(value) -> "● DATA ACQUIRED +" <> int.to_string(value)
     BombOrb(value) -> "○ SYSTEM DAMAGE -" <> int.to_string(value)
     HealthOrb(value) -> "◇ SYSTEMS RESTORED +" <> int.to_string(value)
-    AllCollectorOrb -> "◈ TOTAL COLLECTION +?"
-    PointCollectorOrb -> "◉ DATA COLLECTION +?"
-    BombSurvivorOrb -> "◆ SURVIVAL BONUS +?"
+    AllCollectorOrb(_) -> "◈ TOTAL COLLECTION +?"
+    PointCollectorOrb(_) -> "◉ DATA COLLECTION +?"
+    BombSurvivorOrb(_) -> "◆ SURVIVAL BONUS +?"
     MultiplierOrb -> "◈ MULTIPLIER ACTIVATED ×2"
     BombImmunityOrb -> "◈ SHIELD GENERATOR ACTIVATED"
     ChoiceOrb -> "◈ CHOICE PORTAL ACTIVATED"
@@ -45,9 +45,9 @@ pub fn orb_result_message(orb: Orb) -> String {
 // Collector orb result messages with actual values
 pub fn collector_result_message(orb: Orb, bonus_points: Int) -> String {
   case orb {
-    AllCollectorOrb -> "◈ TOTAL COLLECTION +" <> int.to_string(bonus_points)
-    PointCollectorOrb -> "◉ DATA COLLECTION +" <> int.to_string(bonus_points)
-    BombSurvivorOrb -> "◆ SURVIVAL BONUS +" <> int.to_string(bonus_points)
+    AllCollectorOrb(_) -> "◈ TOTAL COLLECTION +" <> int.to_string(bonus_points)
+    PointCollectorOrb(_) -> "◉ DATA COLLECTION +" <> int.to_string(bonus_points)
+    BombSurvivorOrb(_) -> "◆ SURVIVAL BONUS +" <> int.to_string(bonus_points)
     _ -> orb_result_message(orb)
   }
 }

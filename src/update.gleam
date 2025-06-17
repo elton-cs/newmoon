@@ -66,9 +66,9 @@ fn starter_orbs() -> List(Orb) {
   let bomb_orbs = [BombOrb(1), BombOrb(1), BombOrb(2), BombOrb(2), BombOrb(3)]
   let health_orbs = [HealthOrb(1), HealthOrb(2)]
   let collector_orbs = [
-    AllCollectorOrb,
-    PointCollectorOrb,
-    BombSurvivorOrb,
+    AllCollectorOrb(1),
+    PointCollectorOrb(1),
+    BombSurvivorOrb(1),
     MultiplierOrb,
     BombImmunityOrb,
     ChoiceOrb,
@@ -181,9 +181,9 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         HazardSample -> BombOrb(value)
         HealthSample -> HealthOrb(value)
         MultiplierSample -> MultiplierOrb
-        AllCollectorSample -> AllCollectorOrb
-        PointCollectorSample -> PointCollectorOrb
-        BombSurvivorSample -> BombSurvivorOrb
+        AllCollectorSample -> AllCollectorOrb(value)
+        PointCollectorSample -> PointCollectorOrb(value)
+        BombSurvivorSample -> BombSurvivorOrb(value)
         BombImmunitySample -> BombImmunityOrb
         ChoiceSample -> ChoiceOrb
         RiskSample -> RiskOrb
@@ -380,31 +380,35 @@ fn handle_pull_orb(model: Model) -> Model {
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
-            AllCollectorOrb -> {
-              let multiplier =
-                status.get_point_multiplier(model.active_statuses)
-              let bonus_points = list.length(rest) * multiplier
-              let new_model =
-                Model(..model, points: model.points + bonus_points)
-              let message =
-                display.collector_result_message(first_orb, bonus_points)
-              #(new_model, message, False)
-            }
-            PointCollectorOrb -> {
-              let multiplier =
-                status.get_point_multiplier(model.active_statuses)
-              let bonus_points = count_point_orbs(rest) * multiplier
-              let new_model =
-                Model(..model, points: model.points + bonus_points)
-              let message =
-                display.collector_result_message(first_orb, bonus_points)
-              #(new_model, message, False)
-            }
-            BombSurvivorOrb -> {
+            AllCollectorOrb(collector_value) -> {
               let multiplier =
                 status.get_point_multiplier(model.active_statuses)
               let bonus_points =
-                count_pulled_bomb_orbs(model.pulled_orbs) * multiplier
+                list.length(rest) * collector_value * multiplier
+              let new_model =
+                Model(..model, points: model.points + bonus_points)
+              let message =
+                display.collector_result_message(first_orb, bonus_points)
+              #(new_model, message, False)
+            }
+            PointCollectorOrb(collector_value) -> {
+              let multiplier =
+                status.get_point_multiplier(model.active_statuses)
+              let bonus_points =
+                count_point_orbs(rest) * collector_value * multiplier
+              let new_model =
+                Model(..model, points: model.points + bonus_points)
+              let message =
+                display.collector_result_message(first_orb, bonus_points)
+              #(new_model, message, False)
+            }
+            BombSurvivorOrb(collector_value) -> {
+              let multiplier =
+                status.get_point_multiplier(model.active_statuses)
+              let bonus_points =
+                count_pulled_bomb_orbs(model.pulled_orbs)
+                * collector_value
+                * multiplier
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
