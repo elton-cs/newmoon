@@ -5205,6 +5205,10 @@ var ApplyRiskEffects = class extends CustomType {
 };
 var ContinueAfterRiskConsumption = class extends CustomType {
 };
+var ExitRisk = class extends CustomType {
+};
+var TestGameComplete = class extends CustomType {
+};
 
 // build/dev/javascript/newmoon/display.mjs
 function orb_display_name(orb) {
@@ -7281,6 +7285,32 @@ function handle_pull_risk_orb(model) {
     }
   }
 }
+function handle_test_game_complete(model) {
+  let _record = model;
+  return new Model(
+    3,
+    66,
+    5,
+    66,
+    _record.bag,
+    new Game(new GameComplete()),
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health
+  );
+}
 function handle_choice_orb_activation(model) {
   let $ = model.bag;
   if ($ instanceof Empty) {
@@ -8390,8 +8420,10 @@ function update2(model, msg) {
     return handle_apply_risk_effects(model);
   } else if (msg instanceof ContinueAfterRiskConsumption) {
     return handle_continue_after_risk_consumption(model);
-  } else {
+  } else if (msg instanceof ExitRisk) {
     return handle_exit_risk(model);
+  } else {
+    return handle_test_game_complete(model);
   }
 }
 
@@ -9570,6 +9602,18 @@ function render_game_stats(health, points, milestone, level) {
     ])
   );
 }
+function render_game_complete_view(_, _1, _2, _3, _4) {
+  return fragment2(
+    toList([
+      status_panel(
+        "MISSION COMPLETE",
+        "ALL FIVE SECTORS SUCCESSFULLY EXPLORED. EXEMPLARY PERFORMANCE RECORDED.",
+        "bg-green-50 border-green-200"
+      ),
+      primary_button(play_again_text, new RestartGame())
+    ])
+  );
+}
 function render_main_menu_view() {
   return fragment2(
     toList([
@@ -9582,7 +9626,8 @@ function render_main_menu_view() {
       orb_selection_button(
         orb_testing_button_text,
         new GoToOrbTesting()
-      )
+      ),
+      secondary_button("TEST GAME COMPLETE", new TestGameComplete())
     ])
   );
 }
@@ -9907,23 +9952,6 @@ function render_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
       failure_panel(
         mission_failed_title,
         mission_failed_message
-      )
-    ])
-  );
-}
-function render_game_complete_view(last_orb, last_orb_message, bag, active_statuses, _) {
-  let orbs_left = length(bag);
-  let status_effects = extract_active_status_effects(active_statuses);
-  return fragment2(
-    toList([
-      orb_result_display(last_orb, last_orb_message),
-      status_effects_display(status_effects),
-      container_display(orbs_left),
-      success_button("PLAY AGAIN", new RestartGame()),
-      status_panel(
-        "MISSION COMPLETE!",
-        "ALL FIVE SECTORS CONQUERED! You have successfully completed the deep space exploration mission and mastered the art of sample extraction. Congratulations, Space Explorer!",
-        "bg-green-50 border-green-200"
       )
     ])
   );
@@ -10528,12 +10556,6 @@ function view(model) {
         game_card(
           toList([
             game_header(),
-            render_game_stats(
-              model.health,
-              model.points,
-              model.milestone,
-              model.level
-            ),
             render_game_complete_view(
               model.last_orb,
               model.last_orb_message,

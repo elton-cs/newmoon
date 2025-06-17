@@ -147,4 +147,5 @@ pub type Msg {
   ApplyRiskEffects
   ContinueAfterRiskConsumption
   ExitRisk
+  TestGameComplete
 }

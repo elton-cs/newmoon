@@ -2,7 +2,10 @@ import display
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import lustre/attribute
 import lustre/element.{type Element}
+import lustre/element/html
+import lustre/event
 import status
 import types.{
   type Model, type Msg, type OrbType, AcceptFate, AcceptRisk, AllCollectorSample,
@@ -16,10 +19,10 @@ import types.{
   RiskSample, RiskSurvived, SelectOrbType, StartGame,
   StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
   StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
-  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ValueConfiguration,
-  Victory,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
+  TestGameComplete, Testing, TestingChoosing, TestingRiskAccept,
+  TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
+  TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
 
@@ -123,12 +126,6 @@ pub fn view(model: Model) -> Element(Msg) {
       ui.app_container(
         ui.game_card([
           ui.game_header(),
-          render_game_stats(
-            model.health,
-            model.points,
-            model.milestone,
-            model.level,
-          ),
           render_game_complete_view(
             model.last_orb,
             model.last_orb_message,
@@ -458,27 +455,21 @@ fn render_lost_view(
   ])
 }
 
-// Game Complete View - shows final victory
+// Game Complete View - shows final victory message
 fn render_game_complete_view(
-  last_orb,
-  last_orb_message,
-  bag,
-  active_statuses: List(types.StatusEffect),
+  _last_orb,
+  _last_orb_message,
+  _bag,
+  _active_statuses: List(types.StatusEffect),
   _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
-  let orbs_left = list.length(bag)
-  let status_effects = extract_active_status_effects(active_statuses)
-
   element.fragment([
-    ui.orb_result_display(last_orb, last_orb_message),
-    ui.status_effects_display(status_effects),
-    ui.container_display(orbs_left),
-    ui.success_button("PLAY AGAIN", RestartGame),
     ui.status_panel(
-      "MISSION COMPLETE!",
-      "ALL FIVE SECTORS CONQUERED! You have successfully completed the deep space exploration mission and mastered the art of sample extraction. Congratulations, Space Explorer!",
+      "MISSION COMPLETE",
+      "ALL FIVE SECTORS SUCCESSFULLY EXPLORED. EXEMPLARY PERFORMANCE RECORDED.",
       "bg-green-50 border-green-200",
     ),
+    ui.primary_button(display.play_again_text, RestartGame),
   ])
 }
 
@@ -492,6 +483,7 @@ fn render_main_menu_view() -> Element(Msg) {
     ),
     ui.primary_button(display.start_game_button_text, StartGame),
     ui.orb_selection_button(display.orb_testing_button_text, GoToOrbTesting),
+    ui.secondary_button("TEST GAME COMPLETE", TestGameComplete),
   ])
 }
 

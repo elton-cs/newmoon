@@ -18,10 +18,11 @@ import types.{
   RiskReveal, RiskSample, RiskSurvived, SelectOrbType, StartGame,
   StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
   StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
-  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ToggleDevMode,
-  UpdateInputValue, ValueConfiguration, Victory,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
+  TestGameComplete, Testing, TestingChoosing, TestingRiskAccept,
+  TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
+  TestingRiskSurvived, ToggleDevMode, UpdateInputValue, ValueConfiguration,
+  Victory,
 }
 
 pub fn init(_) -> Model {
@@ -58,13 +59,26 @@ pub fn init(_) -> Model {
 // Single consistent orb bag used for all levels
 fn starter_orbs() -> List(Orb) {
   [
-    PointOrb(1), PointOrb(1), PointOrb(1), PointOrb(1),
-    PointOrb(2), PointOrb(2), PointOrb(2), PointOrb(2),
-    PointOrb(3), PointOrb(3), PointOrb(3),
-    PointOrb(4), PointOrb(4),
-    PointOrb(5), PointOrb(5),
-    PointOrb(6), PointOrb(6),
-    PointOrb(7), PointOrb(8), PointOrb(10)
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(1),
+    PointOrb(2),
+    PointOrb(2),
+    PointOrb(2),
+    PointOrb(2),
+    PointOrb(3),
+    PointOrb(3),
+    PointOrb(3),
+    PointOrb(4),
+    PointOrb(4),
+    PointOrb(5),
+    PointOrb(5),
+    PointOrb(6),
+    PointOrb(6),
+    PointOrb(7),
+    PointOrb(8),
+    PointOrb(10),
   ]
 }
 
@@ -169,6 +183,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
     ContinueAfterRiskConsumption ->
       handle_continue_after_risk_consumption(model)
     ExitRisk -> handle_exit_risk(model)
+    TestGameComplete -> handle_test_game_complete(model)
   }
 }
 
@@ -1076,4 +1091,16 @@ fn accumulate_risk_orb(
       #(new_effects, display.orb_result_message(special_orb))
     }
   }
+}
+
+// Test function to jump directly to GameComplete screen
+fn handle_test_game_complete(model: Model) -> Model {
+  Model(
+    ..model,
+    screen: Game(GameComplete),
+    level: 5,
+    points: 66,
+    milestone: 66,
+    health: 3,
+  )
 }
