@@ -1,7 +1,7 @@
 import types.{
-  type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  ChoiceOrb, HealthOrb, MultiplierOrb, PointCollectorOrb, PointOrb,
-  PointRecoveryOrb, RiskOrb,
+  type Orb, type Rarity, AllCollectorOrb, BombImmunityOrb, BombOrb,
+  BombSurvivorOrb, ChoiceOrb, Common, Cosmic, HealthOrb, MultiplierOrb,
+  PointCollectorOrb, PointOrb, PointRecoveryOrb, Rare, RiskOrb,
 }
 
 // Import int for string conversion
@@ -91,9 +91,41 @@ pub const sector_complete_title = "SECTOR COMPLETE"
 
 pub const mission_failed_title = "MISSION FAILED"
 
-pub const advance_button_text = "ADVANCE TO NEXT SECTOR"
+pub const advance_button_text = "VISIT MARKETPLACE"
 
 pub const play_again_text = "PLAY AGAIN"
+
+// Marketplace Messages
+pub const marketplace_title = "ORBITAL MARKETPLACE"
+
+pub const marketplace_subtitle = "FUTURE ORBITAL SAMPLE ACQUISITION INTERFACE - CURRENTLY UNDER CONSTRUCTION"
+
+pub const continue_to_next_sector_text = "CONTINUE TO NEXT SECTOR"
+
+pub const point_orb_cost = "5 CREDITS"
+
+pub const health_orb_cost = "10 CREDITS"
+
+pub const purchase_point_orb_text = "BUY DATA ORB (+2 POINTS)"
+
+pub const purchase_health_orb_text = "BUY HEALTH ORB (+1 HEALTH)"
+
+// Rarity display functions
+pub fn rarity_display_name(rarity: types.Rarity) -> String {
+  case rarity {
+    types.Common -> "COMMON"
+    types.Rare -> "RARE"
+    types.Cosmic -> "COSMIC"
+  }
+}
+
+pub fn rarity_color_class(rarity: types.Rarity) -> String {
+  case rarity {
+    types.Common -> "text-gray-600"
+    types.Rare -> "text-blue-600"
+    types.Cosmic -> "text-purple-600"
+  }
+}
 
 // Game Stats Labels
 pub const systems_label = "SYSTEMS"
@@ -103,6 +135,10 @@ pub const data_label = "DATA"
 pub const target_label = "TARGET"
 
 pub const sector_label = "SECTOR"
+
+pub const credits_label = "CREDITS"
+
+pub const earned_label = "EARNED"
 
 // Status Messages
 pub fn data_target_message(milestone: Int) -> String {

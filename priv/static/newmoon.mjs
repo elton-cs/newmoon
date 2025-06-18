@@ -374,6 +374,14 @@ var Some = class extends CustomType {
 };
 var None = class extends CustomType {
 };
+function from_result(result) {
+  if (result instanceof Ok) {
+    let a = result[0];
+    return new Some(a);
+  } else {
+    return new None();
+  }
+}
 
 // build/dev/javascript/gleam_stdlib/dict.mjs
 var referenceMap = /* @__PURE__ */ new WeakMap();
@@ -1138,6 +1146,14 @@ function reverse(list4) {
 function is_empty(list4) {
   return isEqual(list4, toList([]));
 }
+function first(list4) {
+  if (list4 instanceof Empty) {
+    return new Error(void 0);
+  } else {
+    let first$1 = list4.head;
+    return new Ok(first$1);
+  }
+}
 function filter_loop(loop$list, loop$fun, loop$acc) {
   while (true) {
     let list4 = loop$list;
@@ -1250,20 +1266,20 @@ function take(list4, n) {
 }
 function append_loop(loop$first, loop$second) {
   while (true) {
-    let first = loop$first;
+    let first2 = loop$first;
     let second = loop$second;
-    if (first instanceof Empty) {
+    if (first2 instanceof Empty) {
       return second;
     } else {
-      let first$1 = first.head;
-      let rest$1 = first.tail;
+      let first$1 = first2.head;
+      let rest$1 = first2.tail;
       loop$first = rest$1;
       loop$second = prepend(first$1, second);
     }
   }
 }
-function append(first, second) {
-  return append_loop(reverse(first), second);
+function append(first2, second) {
+  return append_loop(reverse(first2), second);
 }
 function fold(loop$list, loop$initial, loop$fun) {
   while (true) {
@@ -1757,10 +1773,10 @@ function run_decoders(loop$data, loop$failure, loop$decoders) {
     }
   }
 }
-function one_of(first, alternatives) {
+function one_of(first2, alternatives) {
   return new Decoder(
     (dynamic_data) => {
-      let $ = first.function(dynamic_data);
+      let $ = first2.function(dynamic_data);
       let layer = $;
       let errors = $[1];
       if (errors instanceof Empty) {
@@ -4783,6 +4799,9 @@ function h1(attrs, children) {
 function h2(attrs, children) {
   return element2("h2", attrs, children);
 }
+function h3(attrs, children) {
+  return element2("h3", attrs, children);
+}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
@@ -4929,6 +4948,22 @@ function start3(app, selector, start_args) {
 }
 
 // build/dev/javascript/newmoon/types.mjs
+var Common = class extends CustomType {
+};
+var Rare = class extends CustomType {
+};
+var Cosmic = class extends CustomType {
+};
+var MarketplaceItem = class extends CustomType {
+  constructor(orb, price, rarity, name, description) {
+    super();
+    this.orb = orb;
+    this.price = price;
+    this.rarity = rarity;
+    this.name = name;
+    this.description = description;
+  }
+};
 var Permanent = class extends CustomType {
 };
 var Countdown = class extends CustomType {
@@ -5053,6 +5088,8 @@ var Defeat = class extends CustomType {
 };
 var GameComplete = class extends CustomType {
 };
+var Marketplace = class extends CustomType {
+};
 var Choosing = class extends CustomType {
 };
 var RiskAccept = class extends CustomType {
@@ -5108,13 +5145,15 @@ var RiskSample = class extends CustomType {
 var PointRecoverySample = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, level, milestone, bag, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_original_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health) {
+  constructor(health, points, credits, level, milestone, bag, purchased_orbs, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_original_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health, selected_marketplace_item) {
     super();
     this.health = health;
     this.points = points;
+    this.credits = credits;
     this.level = level;
     this.milestone = milestone;
     this.bag = bag;
+    this.purchased_orbs = purchased_orbs;
     this.screen = screen;
     this.last_orb = last_orb;
     this.last_orb_message = last_orb_message;
@@ -5131,6 +5170,7 @@ var Model = class extends CustomType {
     this.risk_pulled_orbs = risk_pulled_orbs;
     this.risk_accumulated_effects = risk_accumulated_effects;
     this.risk_health = risk_health;
+    this.selected_marketplace_item = selected_marketplace_item;
   }
 };
 var StartGame = class extends CustomType {
@@ -5209,6 +5249,22 @@ var ExitRisk = class extends CustomType {
 };
 var TestGameComplete = class extends CustomType {
 };
+var GoToMarketplace = class extends CustomType {
+};
+var ContinueToNextLevel = class extends CustomType {
+};
+var SelectMarketplaceItem = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var PurchaseItem = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
 
 // build/dev/javascript/newmoon/display.mjs
 function orb_display_name(orb) {
@@ -5275,6 +5331,24 @@ function collector_result_message(orb, bonus_points) {
     return orb_result_message(orb);
   }
 }
+function rarity_display_name(rarity) {
+  if (rarity instanceof Common) {
+    return "COMMON";
+  } else if (rarity instanceof Rare) {
+    return "RARE";
+  } else {
+    return "COSMIC";
+  }
+}
+function rarity_color_class(rarity) {
+  if (rarity instanceof Common) {
+    return "text-gray-600";
+  } else if (rarity instanceof Rare) {
+    return "text-blue-600";
+  } else {
+    return "text-purple-600";
+  }
+}
 function data_target_message(milestone) {
   return "DATA TARGET ACHIEVED: " + to_string(milestone) + " UNITS";
 }
@@ -5292,12 +5366,16 @@ var reset_testing_text = "RESET TEST";
 var exit_testing_text = "EXIT TO MENU";
 var sector_complete_title = "SECTOR COMPLETE";
 var mission_failed_title = "MISSION FAILED";
-var advance_button_text = "ADVANCE TO NEXT SECTOR";
+var advance_button_text = "VISIT MARKETPLACE";
 var play_again_text = "PLAY AGAIN";
+var marketplace_title = "ORBITAL MARKETPLACE";
+var continue_to_next_sector_text = "CONTINUE TO NEXT SECTOR";
 var systems_label = "SYSTEMS";
 var data_label = "DATA";
 var target_label = "TARGET";
 var sector_label = "SECTOR";
+var credits_label = "CREDITS";
+var earned_label = "EARNED";
 var mission_failed_message = "ALL SYSTEMS COMPROMISED. INITIATING RESET PROTOCOL.";
 
 // build/dev/javascript/newmoon/status.mjs
@@ -5402,9 +5480,11 @@ function clear_statuses_by_persistence(model, persistence) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     _record.screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -5420,7 +5500,8 @@ function clear_statuses_by_persistence(model, persistence) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function decrement_duration(duration) {
@@ -5479,9 +5560,11 @@ function tick_statuses(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     _record.screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -5497,7 +5580,8 @@ function tick_statuses(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function status_to_display_text(status) {
@@ -5523,8 +5607,8 @@ function at_helper(loop$list, loop$index) {
     if (list4 instanceof Empty) {
       return new Error(void 0);
     } else if (index4 === 0) {
-      let first = list4.head;
-      return new Ok(first);
+      let first2 = list4.head;
+      return new Ok(first2);
     } else {
       let n = index4;
       let rest = list4.tail;
@@ -5548,10 +5632,10 @@ function replace_at_helper(list4, target_index, new_item, current_index) {
     let rest = list4.tail;
     return prepend(new_item, rest);
   } else {
-    let first = list4.head;
+    let first2 = list4.head;
     let rest = list4.tail;
     return prepend(
-      first,
+      first2,
       replace_at_helper(rest, target_index, new_item, current_index + 1)
     );
   }
@@ -5619,9 +5703,11 @@ function add_status(model, new_status) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     _record.screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -5637,7 +5723,8 @@ function add_status(model, new_status) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 
@@ -5670,9 +5757,11 @@ function init(_) {
   return new Model(
     5,
     0,
+    0,
     1,
     12,
     starter_orbs(),
+    toList([]),
     new Menu(new Main()),
     new None(),
     new None(),
@@ -5688,8 +5777,93 @@ function init(_) {
     toList([]),
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
-    5
+    5,
+    new None()
   );
+}
+function get_full_bag(purchased_orbs) {
+  return append(starter_orbs(), purchased_orbs);
+}
+function marketplace_inventory() {
+  return toList([
+    new MarketplaceItem(
+      new PointOrb(5),
+      5,
+      new Common(),
+      "Data Sample",
+      "+5 points when extracted"
+    ),
+    new MarketplaceItem(
+      new RiskOrb(),
+      5,
+      new Common(),
+      "Fate Sample",
+      "High-risk, high-reward extraction"
+    ),
+    new MarketplaceItem(
+      new BombSurvivorOrb(2),
+      6,
+      new Common(),
+      "Bomb Survivor",
+      "+2 points per bomb pulled"
+    ),
+    new MarketplaceItem(
+      new HealthOrb(1),
+      9,
+      new Common(),
+      "Health Sample",
+      "+1 health when extracted"
+    ),
+    new MarketplaceItem(
+      new PointOrb(7),
+      8,
+      new Common(),
+      "Enhanced Data",
+      "+7 points when extracted"
+    ),
+    new MarketplaceItem(
+      new PointRecoveryOrb(),
+      8,
+      new Common(),
+      "Point Recovery",
+      "Returns lowest point sample to bag"
+    ),
+    new MarketplaceItem(
+      new PointCollectorOrb(2),
+      9,
+      new Common(),
+      "Point Collector",
+      "+2 points per data sample in bag"
+    ),
+    new MarketplaceItem(
+      new PointOrb(8),
+      11,
+      new Rare(),
+      "Premium Data",
+      "+8 points when extracted"
+    ),
+    new MarketplaceItem(
+      new PointOrb(9),
+      13,
+      new Rare(),
+      "Elite Data",
+      "+9 points when extracted"
+    ),
+    new MarketplaceItem(
+      new HealthOrb(3),
+      21,
+      new Cosmic(),
+      "Cosmic Health",
+      "+3 health when extracted"
+    ),
+    new MarketplaceItem(
+      new BombImmunityOrb(),
+      23,
+      new Cosmic(),
+      "Hazard Shield",
+      "Immunity to next 3 bomb samples"
+    )
+  ]);
 }
 function create_test_bag(test_orb) {
   let _pipe = toList([test_orb]);
@@ -5750,11 +5924,11 @@ function find_lowest_point_orb(pulled_orbs) {
   if (point_orbs instanceof Empty) {
     return new None();
   } else {
-    let first = point_orbs.head;
+    let first2 = point_orbs.head;
     let rest = point_orbs.tail;
     let lowest = fold(
       rest,
-      first,
+      first2,
       (current_lowest, orb) => {
         if (orb instanceof PointOrb) {
           if (current_lowest instanceof PointOrb) {
@@ -5786,9 +5960,11 @@ function handle_start_game(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
-    starter_orbs(),
+    get_full_bag(clean_model.purchased_orbs),
+    _record.purchased_orbs,
     new Game(new Playing()),
     new None(),
     new None(),
@@ -5804,7 +5980,8 @@ function handle_start_game(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -5812,9 +5989,11 @@ function handle_go_to_orb_testing(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     new Testing(new OrbSelection()),
     _record.last_orb,
     _record.last_orb_message,
@@ -5830,7 +6009,8 @@ function handle_go_to_orb_testing(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_select_orb_type(model, orb_type) {
@@ -5838,9 +6018,11 @@ function handle_select_orb_type(model, orb_type) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     new Testing(new ValueConfiguration(orb_type)),
     _record.last_orb,
     _record.last_orb_message,
@@ -5856,7 +6038,8 @@ function handle_select_orb_type(model, orb_type) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_update_input_value(model, value2) {
@@ -5864,9 +6047,11 @@ function handle_update_input_value(model, value2) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     _record.screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -5882,7 +6067,8 @@ function handle_update_input_value(model, value2) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
@@ -5923,9 +6109,11 @@ function handle_confirm_orb_value(model, orb_type) {
       return new Model(
         5,
         0,
+        _record.credits,
         _record.level,
         _record.milestone,
         create_test_bag(test_orb),
+        _record.purchased_orbs,
         new Testing(new Gameplay()),
         new None(),
         new None(),
@@ -5941,7 +6129,8 @@ function handle_confirm_orb_value(model, orb_type) {
         _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
-        _record.risk_health
+        _record.risk_health,
+        _record.selected_marketplace_item
       );
     } else {
       return model;
@@ -5955,9 +6144,11 @@ function handle_back_to_orb_testing(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     new Testing(new OrbSelection()),
     _record.last_orb,
     _record.last_orb_message,
@@ -5973,7 +6164,8 @@ function handle_back_to_orb_testing(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_with_both_statuses(model) {
@@ -5989,9 +6181,11 @@ function handle_start_testing_with_both_statuses(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6007,7 +6201,8 @@ function handle_start_testing_with_both_statuses(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_with_triple_choice(model) {
@@ -6023,9 +6218,11 @@ function handle_start_testing_with_triple_choice(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6041,7 +6238,8 @@ function handle_start_testing_with_triple_choice(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_back_to_main_menu(model) {
@@ -6049,9 +6247,11 @@ function handle_back_to_main_menu(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     new Menu(new Main()),
     _record.last_orb,
     _record.last_orb_message,
@@ -6067,7 +6267,8 @@ function handle_back_to_main_menu(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_risk_success(model) {
@@ -6091,9 +6292,11 @@ function handle_start_testing_risk_success(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6109,7 +6312,8 @@ function handle_start_testing_risk_success(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_risk_failure(model) {
@@ -6132,9 +6336,11 @@ function handle_start_testing_risk_failure(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6150,7 +6356,8 @@ function handle_start_testing_risk_failure(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_risk_continue(model) {
@@ -6174,9 +6381,11 @@ function handle_start_testing_risk_continue(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     50,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6192,7 +6401,8 @@ function handle_start_testing_risk_continue(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_point_recovery_first(model) {
@@ -6210,9 +6420,11 @@ function handle_start_testing_point_recovery_first(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6228,7 +6440,8 @@ function handle_start_testing_point_recovery_first(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_start_testing_point_recovery_active(model) {
@@ -6246,9 +6459,11 @@ function handle_start_testing_point_recovery_active(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     _record.level,
     _record.milestone,
     test_bag,
+    _record.purchased_orbs,
     new Testing(new Gameplay()),
     new None(),
     new None(),
@@ -6264,16 +6479,19 @@ function handle_start_testing_point_recovery_active(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_restart_game(model) {
   return new Model(
     5,
     0,
+    0,
     1,
     5,
     starter_orbs(),
+    toList([]),
     new Menu(new Main()),
     new None(),
     new None(),
@@ -6289,7 +6507,8 @@ function handle_restart_game(model) {
     toList([]),
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
-    5
+    5,
+    new None()
   );
 }
 function handle_next_level(model) {
@@ -6303,9 +6522,11 @@ function handle_next_level(model) {
   return new Model(
     5,
     0,
+    _record.credits,
     new_level,
     new_milestone,
     starter_orbs(),
+    _record.purchased_orbs,
     new Game(new Playing()),
     new None(),
     new None(),
@@ -6321,7 +6542,8 @@ function handle_next_level(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_reset_testing(model) {
@@ -6329,9 +6551,11 @@ function handle_reset_testing(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     new Testing(new OrbSelection()),
     _record.last_orb,
     _record.last_orb_message,
@@ -6347,16 +6571,19 @@ function handle_reset_testing(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_exit_testing(model) {
   return new Model(
     5,
     0,
+    0,
     1,
     5,
     starter_orbs(),
+    toList([]),
     new Menu(new Main()),
     new None(),
     new None(),
@@ -6372,7 +6599,8 @@ function handle_exit_testing(model) {
     toList([]),
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
-    5
+    5,
+    new None()
   );
 }
 function check_game_status(model) {
@@ -6388,9 +6616,11 @@ function check_game_status(model) {
         return new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           _record.bag,
+          _record.purchased_orbs,
           new Testing(new Failure()),
           _record.last_orb,
           _record.last_orb_message,
@@ -6406,16 +6636,19 @@ function check_game_status(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
       } else if ($3) {
         let _record = model;
         return new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           _record.bag,
+          _record.purchased_orbs,
           new Testing(new Success()),
           _record.last_orb,
           _record.last_orb_message,
@@ -6431,16 +6664,19 @@ function check_game_status(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
       } else if ($4) {
         let _record = model;
         return new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           _record.bag,
+          _record.purchased_orbs,
           new Testing(new Failure()),
           _record.last_orb,
           _record.last_orb_message,
@@ -6456,7 +6692,8 @@ function check_game_status(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
       } else {
         return model;
@@ -6475,9 +6712,11 @@ function check_game_status(model) {
         return new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           _record.bag,
+          _record.purchased_orbs,
           new Game(new Defeat()),
           _record.last_orb,
           _record.last_orb_message,
@@ -6493,7 +6732,8 @@ function check_game_status(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
       } else if ($3) {
         let $5 = model.level === 5;
@@ -6502,9 +6742,11 @@ function check_game_status(model) {
           return new Model(
             _record.health,
             _record.points,
+            _record.credits,
             _record.level,
             _record.milestone,
             _record.bag,
+            _record.purchased_orbs,
             new Game(new GameComplete()),
             _record.last_orb,
             _record.last_orb_message,
@@ -6520,16 +6762,19 @@ function check_game_status(model) {
             _record.risk_original_orbs,
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
-            _record.risk_health
+            _record.risk_health,
+            _record.selected_marketplace_item
           );
         } else {
           let _record = model;
           return new Model(
             _record.health,
             _record.points,
+            _record.credits,
             _record.level,
             _record.milestone,
             _record.bag,
+            _record.purchased_orbs,
             new Game(new Victory()),
             _record.last_orb,
             _record.last_orb_message,
@@ -6545,7 +6790,8 @@ function check_game_status(model) {
             _record.risk_original_orbs,
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
-            _record.risk_health
+            _record.risk_health,
+            _record.selected_marketplace_item
           );
         }
       } else if ($4) {
@@ -6553,9 +6799,11 @@ function check_game_status(model) {
         return new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           _record.bag,
+          _record.purchased_orbs,
           new Game(new Defeat()),
           _record.last_orb,
           _record.last_orb_message,
@@ -6571,7 +6819,8 @@ function check_game_status(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
       } else {
         return model;
@@ -6588,9 +6837,11 @@ function handle_toggle_dev_mode(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     _record.screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -6606,7 +6857,8 @@ function handle_toggle_dev_mode(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_risk_orb_activation(model) {
@@ -6634,9 +6886,11 @@ function handle_risk_orb_activation(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -6652,7 +6906,8 @@ function handle_risk_orb_activation(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_accept_risk(loop$model, loop$accept) {
@@ -6688,9 +6943,11 @@ function handle_accept_risk(loop$model, loop$accept) {
         return new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           remaining_bag,
+          _record.purchased_orbs,
           screen,
           _record.last_orb,
           _record.last_orb_message,
@@ -6706,7 +6963,8 @@ function handle_accept_risk(loop$model, loop$accept) {
           risk_orbs,
           toList([]),
           new RiskEffects(0, 0, 0, toList([])),
-          model.health
+          model.health,
+          _record.selected_marketplace_item
         );
       } else {
         loop$model = model;
@@ -6723,9 +6981,11 @@ function handle_accept_risk(loop$model, loop$accept) {
               return new Model(
                 _record.health,
                 _record.points,
+                _record.credits,
                 _record.level,
                 _record.milestone,
                 _record.bag,
+                _record.purchased_orbs,
                 new Testing(new Gameplay()),
                 _record.last_orb,
                 _record.last_orb_message,
@@ -6741,7 +7001,8 @@ function handle_accept_risk(loop$model, loop$accept) {
                 _record.risk_original_orbs,
                 _record.risk_pulled_orbs,
                 _record.risk_accumulated_effects,
-                _record.risk_health
+                _record.risk_health,
+                _record.selected_marketplace_item
               );
             })()
           );
@@ -6757,9 +7018,11 @@ function handle_accept_risk(loop$model, loop$accept) {
               return new Model(
                 _record.health,
                 _record.points,
+                _record.credits,
                 _record.level,
                 _record.milestone,
                 _record.bag,
+                _record.purchased_orbs,
                 new Game(new Playing()),
                 _record.last_orb,
                 _record.last_orb_message,
@@ -6775,7 +7038,8 @@ function handle_accept_risk(loop$model, loop$accept) {
                 _record.risk_original_orbs,
                 _record.risk_pulled_orbs,
                 _record.risk_accumulated_effects,
-                _record.risk_health
+                _record.risk_health,
+                _record.selected_marketplace_item
               );
             })()
           );
@@ -6813,9 +7077,11 @@ function handle_accept_fate(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -6831,7 +7097,8 @@ function handle_accept_fate(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
 }
 function handle_apply_risk_effects(model) {
@@ -6864,9 +7131,11 @@ function handle_apply_risk_effects(model) {
     return new Model(
       final_health,
       _record.points,
+      _record.credits,
       _record.level,
       _record.milestone,
       _record.bag,
+      _record.purchased_orbs,
       death_screen,
       _record.last_orb,
       _record.last_orb_message,
@@ -6882,7 +7151,8 @@ function handle_apply_risk_effects(model) {
       _record.risk_original_orbs,
       _record.risk_pulled_orbs,
       _record.risk_accumulated_effects,
-      _record.risk_health
+      _record.risk_health,
+      _record.selected_marketplace_item
     );
   } else {
     let capped_health = min(final_health, 5);
@@ -6903,9 +7173,11 @@ function handle_apply_risk_effects(model) {
             return new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -6921,7 +7193,8 @@ function handle_apply_risk_effects(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
           })(_pipe$1);
         } else if (special_orb instanceof BombImmunityOrb) {
@@ -6935,9 +7208,11 @@ function handle_apply_risk_effects(model) {
             return new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -6953,7 +7228,8 @@ function handle_apply_risk_effects(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
           })(_pipe$1);
         } else {
@@ -6985,9 +7261,11 @@ function handle_apply_risk_effects(model) {
     return new Model(
       capped_health,
       new_points,
+      _record.credits,
       _record.level,
       _record.milestone,
       _record.bag,
+      _record.purchased_orbs,
       consumption_screen,
       _record.last_orb,
       _record.last_orb_message,
@@ -7003,7 +7281,8 @@ function handle_apply_risk_effects(model) {
       _record.risk_original_orbs,
       _record.risk_pulled_orbs,
       _record.risk_accumulated_effects,
-      _record.risk_health
+      _record.risk_health,
+      _record.selected_marketplace_item
     );
   }
 }
@@ -7013,9 +7292,11 @@ function handle_continue_after_risk_consumption(model) {
   _block = new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     _record.screen,
     _record.last_orb,
     _record.last_orb_message,
@@ -7031,7 +7312,8 @@ function handle_continue_after_risk_consumption(model) {
     toList([]),
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
-    5
+    5,
+    _record.selected_marketplace_item
   );
   let clean_model = _block;
   let $ = model.screen;
@@ -7044,9 +7326,11 @@ function handle_continue_after_risk_consumption(model) {
           return new Model(
             _record$1.health,
             _record$1.points,
+            _record$1.credits,
             _record$1.level,
             _record$1.milestone,
             _record$1.bag,
+            _record$1.purchased_orbs,
             new Testing(new Gameplay()),
             _record$1.last_orb,
             _record$1.last_orb_message,
@@ -7062,7 +7346,8 @@ function handle_continue_after_risk_consumption(model) {
             _record$1.risk_original_orbs,
             _record$1.risk_pulled_orbs,
             _record$1.risk_accumulated_effects,
-            _record$1.risk_health
+            _record$1.risk_health,
+            _record$1.selected_marketplace_item
           );
         })()
       );
@@ -7078,9 +7363,11 @@ function handle_continue_after_risk_consumption(model) {
           return new Model(
             _record$1.health,
             _record$1.points,
+            _record$1.credits,
             _record$1.level,
             _record$1.milestone,
             _record$1.bag,
+            _record$1.purchased_orbs,
             new Game(new Playing()),
             _record$1.last_orb,
             _record$1.last_orb_message,
@@ -7096,7 +7383,8 @@ function handle_continue_after_risk_consumption(model) {
             _record$1.risk_original_orbs,
             _record$1.risk_pulled_orbs,
             _record$1.risk_accumulated_effects,
-            _record$1.risk_health
+            _record$1.risk_health,
+            _record$1.selected_marketplace_item
           );
         })()
       );
@@ -7112,9 +7400,11 @@ function handle_exit_risk(model) {
   return new Model(
     _record.health,
     _record.points,
+    _record.credits,
     _record.level,
     _record.milestone,
     _record.bag,
+    _record.purchased_orbs,
     new Game(new Playing()),
     _record.last_orb,
     _record.last_orb_message,
@@ -7130,7 +7420,8 @@ function handle_exit_risk(model) {
     _record.risk_original_orbs,
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
-    5
+    5,
+    new None()
   );
 }
 function accumulate_risk_orb(orb, current_effects, active_statuses) {
@@ -7213,9 +7504,11 @@ function handle_pull_risk_orb(model) {
     _block = new Model(
       _record.health,
       _record.points,
+      _record.credits,
       _record.level,
       _record.milestone,
       _record.bag,
+      _record.purchased_orbs,
       _record.screen,
       new Some(first_orb),
       new Some(orb_message),
@@ -7231,7 +7524,8 @@ function handle_pull_risk_orb(model) {
       _record.risk_original_orbs,
       prepend(first_orb, model.risk_pulled_orbs),
       new_effects,
-      _record.risk_health
+      _record.risk_health,
+      _record.selected_marketplace_item
     );
     let updated_model = _block;
     let $2 = is_empty(rest);
@@ -7260,9 +7554,11 @@ function handle_pull_risk_orb(model) {
       return new Model(
         _record$1.health,
         _record$1.points,
+        _record$1.credits,
         _record$1.level,
         _record$1.milestone,
         _record$1.bag,
+        _record$1.purchased_orbs,
         screen,
         _record$1.last_orb,
         _record$1.last_orb_message,
@@ -7278,7 +7574,8 @@ function handle_pull_risk_orb(model) {
         _record$1.risk_original_orbs,
         _record$1.risk_pulled_orbs,
         _record$1.risk_accumulated_effects,
-        _record$1.risk_health
+        _record$1.risk_health,
+        _record$1.selected_marketplace_item
       );
     } else {
       return updated_model;
@@ -7290,9 +7587,11 @@ function handle_test_game_complete(model) {
   return new Model(
     3,
     66,
+    _record.credits,
     5,
     66,
     _record.bag,
+    _record.purchased_orbs,
     new Game(new GameComplete()),
     _record.last_orb,
     _record.last_orb_message,
@@ -7308,8 +7607,154 @@ function handle_test_game_complete(model) {
     _record.risk_original_orbs,
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
-    _record.risk_health
+    _record.risk_health,
+    _record.selected_marketplace_item
   );
+}
+function handle_go_to_marketplace(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    model.credits + model.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.purchased_orbs,
+    new Game(new Marketplace()),
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health,
+    _record.selected_marketplace_item
+  );
+}
+function handle_continue_to_next_level(model) {
+  let clean_model = clear_statuses_by_persistence(
+    model,
+    new ClearOnLevel()
+  );
+  let new_level = model.level + 1;
+  let new_milestone = get_milestone_for_level(new_level);
+  let _record = clean_model;
+  return new Model(
+    5,
+    0,
+    _record.credits,
+    new_level,
+    new_milestone,
+    get_full_bag(clean_model.purchased_orbs),
+    _record.purchased_orbs,
+    new Game(new Playing()),
+    new None(),
+    new None(),
+    _record.input_value,
+    toList([]),
+    1,
+    0,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health,
+    new None()
+  );
+}
+function handle_select_marketplace_item(model, item_index) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.credits,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.purchased_orbs,
+    _record.screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health,
+    new Some(item_index)
+  );
+}
+function get_item_at_index(items, index4) {
+  let _pipe = drop(items, index4);
+  let _pipe$1 = first(_pipe);
+  return from_result(_pipe$1);
+}
+function handle_purchase_item(model, _) {
+  let $ = model.selected_marketplace_item;
+  if ($ instanceof Some) {
+    let selected_index = $[0];
+    let inventory = marketplace_inventory();
+    let $1 = get_item_at_index(inventory, selected_index);
+    if ($1 instanceof Some) {
+      let item = $1[0];
+      let $2 = model.credits >= item.price;
+      if ($2) {
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          model.credits - item.price,
+          _record.level,
+          _record.milestone,
+          _record.bag,
+          prepend(item.orb, model.purchased_orbs),
+          _record.screen,
+          _record.last_orb,
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs,
+          _record.point_multiplier,
+          _record.bomb_immunity,
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2,
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_original_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health,
+          _record.selected_marketplace_item
+        );
+      } else {
+        return model;
+      }
+    } else {
+      return model;
+    }
+  } else {
+    return model;
+  }
 }
 function handle_choice_orb_activation(model) {
   let $ = model.bag;
@@ -7324,9 +7769,11 @@ function handle_choice_orb_activation(model) {
       _block = new Model(
         _record.health,
         _record.points,
+        _record.credits,
         _record.level,
         _record.milestone,
         toList([single_orb]),
+        _record.purchased_orbs,
         _record.screen,
         _record.last_orb,
         _record.last_orb_message,
@@ -7342,7 +7789,8 @@ function handle_choice_orb_activation(model) {
         _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
-        _record.risk_health
+        _record.risk_health,
+        _record.selected_marketplace_item
       );
       let temp_model = _block;
       return handle_pull_orb(temp_model);
@@ -7375,9 +7823,11 @@ function handle_choice_orb_activation(model) {
       _block$1 = new Model(
         _record.health,
         _record.points,
+        _record.credits,
         _record.level,
         _record.milestone,
         remaining,
+        _record.purchased_orbs,
         screen,
         _record.last_orb,
         _record.last_orb_message,
@@ -7393,7 +7843,8 @@ function handle_choice_orb_activation(model) {
         _record.risk_original_orbs,
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
-        _record.risk_health
+        _record.risk_health,
+        _record.selected_marketplace_item
       );
       let choice_model = _block$1;
       return choice_model;
@@ -7421,9 +7872,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7439,7 +7892,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -7457,9 +7911,11 @@ function handle_pull_orb(model) {
             _block$12 = new Model(
               model.health - value2,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -7475,7 +7931,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -7489,9 +7946,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             new_health,
             _record2.points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7507,7 +7966,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -7521,9 +7981,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + bonus_points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7539,7 +8001,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -7556,9 +8019,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + bonus_points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7574,7 +8039,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -7591,9 +8057,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + bonus_points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7609,7 +8077,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -7630,9 +8099,11 @@ function handle_pull_orb(model) {
             return new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -7648,7 +8119,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -7666,9 +8138,11 @@ function handle_pull_orb(model) {
             return new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -7684,7 +8158,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -7711,9 +8186,11 @@ function handle_pull_orb(model) {
             _block$12 = new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -7729,7 +8206,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -7777,9 +8255,11 @@ function handle_pull_orb(model) {
         _block$3 = new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           new_bag,
+          _record.purchased_orbs,
           _record.screen,
           new Some(first_orb),
           new Some(orb_message),
@@ -7801,7 +8281,8 @@ function handle_pull_orb(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -7841,9 +8322,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7859,7 +8342,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -7877,9 +8361,11 @@ function handle_pull_orb(model) {
             _block$12 = new Model(
               model.health - value2,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -7895,7 +8381,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -7909,9 +8396,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             new_health,
             _record2.points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7927,7 +8416,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -7941,9 +8431,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + bonus_points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7959,7 +8451,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -7976,9 +8469,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + bonus_points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -7994,7 +8489,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8011,9 +8507,11 @@ function handle_pull_orb(model) {
           _block$12 = new Model(
             _record2.health,
             model.points + bonus_points,
+            _record2.credits,
             _record2.level,
             _record2.milestone,
             _record2.bag,
+            _record2.purchased_orbs,
             _record2.screen,
             _record2.last_orb,
             _record2.last_orb_message,
@@ -8029,7 +8527,8 @@ function handle_pull_orb(model) {
             _record2.risk_original_orbs,
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
-            _record2.risk_health
+            _record2.risk_health,
+            _record2.selected_marketplace_item
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8050,9 +8549,11 @@ function handle_pull_orb(model) {
             return new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -8068,7 +8569,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -8086,9 +8588,11 @@ function handle_pull_orb(model) {
             return new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -8104,7 +8608,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -8131,9 +8636,11 @@ function handle_pull_orb(model) {
             _block$12 = new Model(
               _record2.health,
               _record2.points,
+              _record2.credits,
               _record2.level,
               _record2.milestone,
               _record2.bag,
+              _record2.purchased_orbs,
               _record2.screen,
               _record2.last_orb,
               _record2.last_orb_message,
@@ -8149,7 +8656,8 @@ function handle_pull_orb(model) {
               _record2.risk_original_orbs,
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
-              _record2.risk_health
+              _record2.risk_health,
+              _record2.selected_marketplace_item
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -8197,9 +8705,11 @@ function handle_pull_orb(model) {
         _block$3 = new Model(
           _record.health,
           _record.points,
+          _record.credits,
           _record.level,
           _record.milestone,
           new_bag,
+          _record.purchased_orbs,
           _record.screen,
           new Some(first_orb),
           new Some(orb_message),
@@ -8221,7 +8731,8 @@ function handle_pull_orb(model) {
           _record.risk_original_orbs,
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
-          _record.risk_health
+          _record.risk_health,
+          _record.selected_marketplace_item
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -8277,9 +8788,11 @@ function handle_choose_orb(model, choice_index) {
           _block$2 = new Model(
             _record.health,
             _record.points,
+            _record.credits,
             _record.level,
             _record.milestone,
             prepend(chosen_orb, new_bag),
+            _record.purchased_orbs,
             new Testing(new Gameplay()),
             _record.last_orb,
             _record.last_orb_message,
@@ -8295,7 +8808,8 @@ function handle_choose_orb(model, choice_index) {
             _record.risk_original_orbs,
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
-            _record.risk_health
+            _record.risk_health,
+            _record.selected_marketplace_item
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -8327,9 +8841,11 @@ function handle_choose_orb(model, choice_index) {
           _block$2 = new Model(
             _record.health,
             _record.points,
+            _record.credits,
             _record.level,
             _record.milestone,
             prepend(chosen_orb, new_bag),
+            _record.purchased_orbs,
             new Game(new Playing()),
             _record.last_orb,
             _record.last_orb_message,
@@ -8345,7 +8861,8 @@ function handle_choose_orb(model, choice_index) {
             _record.risk_original_orbs,
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
-            _record.risk_health
+            _record.risk_health,
+            _record.selected_marketplace_item
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -8422,8 +8939,18 @@ function update2(model, msg) {
     return handle_continue_after_risk_consumption(model);
   } else if (msg instanceof ExitRisk) {
     return handle_exit_risk(model);
-  } else {
+  } else if (msg instanceof TestGameComplete) {
     return handle_test_game_complete(model);
+  } else if (msg instanceof GoToMarketplace) {
+    return handle_go_to_marketplace(model);
+  } else if (msg instanceof ContinueToNextLevel) {
+    return handle_continue_to_next_level(model);
+  } else if (msg instanceof SelectMarketplaceItem) {
+    let item_index = msg[0];
+    return handle_select_marketplace_item(model, item_index);
+  } else {
+    let item_index = msg[0];
+    return handle_purchase_item(model, item_index);
   }
 }
 
@@ -9570,9 +10097,145 @@ function risk_effects_summary(risk_effects) {
     ])
   );
 }
+function purchase_button_large(can_afford, msg) {
+  let _block;
+  if (can_afford) {
+    _block = "bg-purple-600 hover:bg-purple-700 text-white border-purple-500 hover:border-purple-600 hover:scale-[1.02]";
+  } else {
+    _block = "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed";
+  }
+  let button_classes = _block;
+  return button(
+    toList([
+      class$(
+        "w-full font-medium py-4 px-6 rounded-lg transition-all duration-200 text-lg tracking-wide border-2 " + button_classes
+      ),
+      disabled(!can_afford),
+      on_click(msg)
+    ]),
+    toList([text3("PURCHASE")])
+  );
+}
+function marketplace_item_detail(item_name, description, price, rarity_name, rarity_color, can_afford, purchase_msg) {
+  return div(
+    toList([class$("border rounded-lg p-6 bg-white h-full")]),
+    toList([
+      div(
+        toList([class$("mb-4")]),
+        toList([
+          div(
+            toList([class$("flex items-center gap-2 mb-2")]),
+            toList([
+              div(
+                toList([
+                  class$("w-4 h-4 rounded-full " + rarity_color)
+                ]),
+                toList([])
+              ),
+              span(
+                toList([
+                  class$("text-sm font-medium " + rarity_color)
+                ]),
+                toList([text3(rarity_name)])
+              )
+            ])
+          ),
+          h2(
+            toList([class$("text-xl font-semibold text-gray-900")]),
+            toList([text3(item_name)])
+          )
+        ])
+      ),
+      p(
+        toList([class$("text-gray-600 mb-6 leading-relaxed")]),
+        toList([text3(description)])
+      ),
+      div(
+        toList([class$("mt-auto")]),
+        toList([
+          div(
+            toList([class$("flex items-center justify-between mb-4")]),
+            toList([
+              span(
+                toList([
+                  class$("text-lg font-semibold text-gray-900")
+                ]),
+                toList([text3(to_string(price) + " CREDITS")])
+              )
+            ])
+          ),
+          purchase_button_large(can_afford, purchase_msg)
+        ])
+      )
+    ])
+  );
+}
+function marketplace_default_detail() {
+  return div(
+    toList([
+      class$(
+        "border rounded-lg p-6 bg-gray-50 h-full flex items-center justify-center"
+      )
+    ]),
+    toList([
+      div(
+        toList([class$("text-center text-gray-500")]),
+        toList([
+          div(
+            toList([class$("text-4xl mb-4")]),
+            toList([text3("\u{1F4E6}")])
+          ),
+          h3(
+            toList([class$("text-lg font-medium mb-2")]),
+            toList([text3("Select an Item")])
+          ),
+          p(
+            toList([class$("text-sm")]),
+            toList([
+              text3(
+                "Choose an item from the catalog to view details and purchase."
+              )
+            ])
+          )
+        ])
+      )
+    ])
+  );
+}
+function ultra_compact_marketplace_item(item_code, rarity_bg_color, can_afford, is_selected, msg) {
+  let base_classes = "relative w-14 h-14 flex-shrink-0 rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center text-white font-bold text-sm border-2 ";
+  let _block;
+  if (is_selected) {
+    _block = "border-white shadow-lg scale-110 ";
+  } else {
+    _block = "border-transparent hover:border-white/50 hover:scale-105 ";
+  }
+  let selection_classes = _block;
+  let _block$1;
+  if (can_afford) {
+    _block$1 = "";
+  } else {
+    _block$1 = "opacity-40 ";
+  }
+  let affordability_classes = _block$1;
+  return div(
+    toList([
+      class$(
+        base_classes + rarity_bg_color + " " + selection_classes + affordability_classes
+      ),
+      on_click(msg)
+    ]),
+    toList([
+      div(
+        toList([class$("text-center leading-none")]),
+        toList([text3(item_code)])
+      )
+    ])
+  );
+}
 
 // build/dev/javascript/newmoon/view.mjs
-function render_game_stats(health, points, milestone, level) {
+function render_game_stats(health, points, milestone, level, credits) {
   return stats_grid(
     toList([
       stat_card(
@@ -9598,6 +10261,12 @@ function render_game_stats(health, points, milestone, level) {
         sector_label,
         to_string(level),
         "text-gray-500"
+      ),
+      stat_card(
+        "\u25C7",
+        credits_label,
+        to_string(credits),
+        "text-purple-600"
       )
     ])
   );
@@ -9611,6 +10280,237 @@ function render_game_complete_view(_, _1, _2, _3, _4) {
         "bg-green-50 border-green-200"
       ),
       primary_button(play_again_text, new RestartGame())
+    ])
+  );
+}
+function get_item_at_index_view(items, index4) {
+  let _pipe = drop(items, index4);
+  let _pipe$1 = first(_pipe);
+  return from_result(_pipe$1);
+}
+function get_rarity_bg_color(rarity) {
+  if (rarity instanceof Common) {
+    return "bg-gray-400";
+  } else if (rarity instanceof Rare) {
+    return "bg-blue-500";
+  } else {
+    return "bg-purple-500";
+  }
+}
+function get_item_code(index4) {
+  if (index4 === 0) {
+    return "C1";
+  } else if (index4 === 1) {
+    return "C2";
+  } else if (index4 === 2) {
+    return "C3";
+  } else if (index4 === 3) {
+    return "C4";
+  } else if (index4 === 4) {
+    return "C5";
+  } else if (index4 === 5) {
+    return "C6";
+  } else if (index4 === 6) {
+    return "C7";
+  } else if (index4 === 7) {
+    return "R1";
+  } else if (index4 === 8) {
+    return "R2";
+  } else if (index4 === 9) {
+    return "X1";
+  } else if (index4 === 10) {
+    return "X2";
+  } else {
+    return "??";
+  }
+}
+function get_marketplace_inventory() {
+  return toList([
+    new MarketplaceItem(
+      new PointOrb(5),
+      5,
+      new Common(),
+      "Data Sample",
+      "+5 points when extracted"
+    ),
+    new MarketplaceItem(
+      new RiskOrb(),
+      5,
+      new Common(),
+      "Fate Sample",
+      "High-risk, high-reward extraction"
+    ),
+    new MarketplaceItem(
+      new BombSurvivorOrb(2),
+      6,
+      new Common(),
+      "Bomb Survivor",
+      "+2 points per bomb pulled"
+    ),
+    new MarketplaceItem(
+      new HealthOrb(1),
+      9,
+      new Common(),
+      "Health Sample",
+      "+1 health when extracted"
+    ),
+    new MarketplaceItem(
+      new PointOrb(7),
+      8,
+      new Common(),
+      "Enhanced Data",
+      "+7 points when extracted"
+    ),
+    new MarketplaceItem(
+      new PointRecoveryOrb(),
+      8,
+      new Common(),
+      "Point Recovery",
+      "Returns lowest point sample to bag"
+    ),
+    new MarketplaceItem(
+      new PointCollectorOrb(2),
+      9,
+      new Common(),
+      "Point Collector",
+      "+2 points per data sample in bag"
+    ),
+    new MarketplaceItem(
+      new PointOrb(8),
+      11,
+      new Rare(),
+      "Premium Data",
+      "+8 points when extracted"
+    ),
+    new MarketplaceItem(
+      new PointOrb(9),
+      13,
+      new Rare(),
+      "Elite Data",
+      "+9 points when extracted"
+    ),
+    new MarketplaceItem(
+      new HealthOrb(3),
+      21,
+      new Cosmic(),
+      "Cosmic Health",
+      "+3 health when extracted"
+    ),
+    new MarketplaceItem(
+      new BombImmunityOrb(),
+      23,
+      new Cosmic(),
+      "Hazard Shield",
+      "Immunity to next 3 bomb samples"
+    )
+  ]);
+}
+function render_marketplace_catalog(credits, selected_item) {
+  let inventory = get_marketplace_inventory();
+  return div(
+    toList([
+      class$(
+        "flex gap-3 overflow-x-auto overflow-y-hidden pt-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 w-[396px]"
+      )
+    ]),
+    index_map(
+      inventory,
+      (item, index4) => {
+        let can_afford = credits >= item.price;
+        let _block;
+        if (selected_item instanceof Some) {
+          let selected_index = selected_item[0];
+          _block = selected_index === index4;
+        } else {
+          _block = false;
+        }
+        let is_selected = _block;
+        let rarity_color = get_rarity_bg_color(item.rarity);
+        let item_code = get_item_code(index4);
+        return ultra_compact_marketplace_item(
+          item_code,
+          rarity_color,
+          can_afford,
+          is_selected,
+          new SelectMarketplaceItem(index4)
+        );
+      }
+    )
+  );
+}
+function render_marketplace_detail_panel(credits, selected_item) {
+  if (selected_item instanceof Some) {
+    let index4 = selected_item[0];
+    let inventory = get_marketplace_inventory();
+    let $ = get_item_at_index_view(inventory, index4);
+    if ($ instanceof Some) {
+      let item = $[0];
+      let can_afford = credits >= item.price;
+      let rarity_color = rarity_color_class(item.rarity);
+      let rarity_name = rarity_display_name(item.rarity);
+      return marketplace_item_detail(
+        item.name,
+        item.description,
+        item.price,
+        rarity_name,
+        rarity_color,
+        can_afford,
+        new PurchaseItem(0)
+      );
+    } else {
+      return marketplace_default_detail();
+    }
+  } else {
+    return marketplace_default_detail();
+  }
+}
+function render_marketplace_two_panel(credits, selected_item) {
+  return div(
+    toList([class$("space-y-4")]),
+    toList([
+      render_marketplace_catalog(credits, selected_item),
+      div(
+        toList([class$("min-h-[200px]")]),
+        toList([render_marketplace_detail_panel(credits, selected_item)])
+      )
+    ])
+  );
+}
+function render_marketplace_stats(earned_points, total_credits) {
+  return stats_grid(
+    toList([
+      stat_card(
+        "\u25CF",
+        earned_label,
+        to_string(earned_points),
+        "text-green-600"
+      ),
+      stat_card(
+        "\u25C7",
+        credits_label,
+        to_string(total_credits),
+        "text-purple-600"
+      )
+    ])
+  );
+}
+function render_marketplace_view(model) {
+  return fragment2(
+    toList([
+      status_panel(
+        marketplace_title,
+        "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
+        "bg-purple-50 border-purple-200"
+      ),
+      render_marketplace_stats(model.points, model.credits),
+      render_marketplace_two_panel(
+        model.credits,
+        model.selected_marketplace_item
+      ),
+      primary_button(
+        continue_to_next_sector_text,
+        new ContinueToNextLevel()
+      )
     ])
   );
 }
@@ -9931,7 +10831,7 @@ function render_won_view(last_orb, last_orb_message, bag, active_statuses, miles
       orb_result_display(last_orb, last_orb_message),
       status_effects_display(status_effects),
       container_display(orbs_left),
-      success_button(advance_button_text, new NextLevel()),
+      success_button(advance_button_text, new GoToMarketplace()),
       status_panel(
         sector_complete_title,
         message,
@@ -10329,7 +11229,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_testing_mode_view(
               model.last_orb,
@@ -10351,7 +11252,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_testing_won_view(
               model.last_orb,
@@ -10374,7 +11276,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_testing_lost_view(
               model.last_orb,
@@ -10396,7 +11299,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_testing_choosing_view(
               model.last_orb,
@@ -10496,7 +11400,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_playing_view(
               model.last_orb,
@@ -10517,7 +11422,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_won_view(
               model.last_orb,
@@ -10539,7 +11445,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_lost_view(
               model.last_orb,
@@ -10566,6 +11473,12 @@ function view(model) {
           ])
         )
       );
+    } else if ($1 instanceof Marketplace) {
+      _block = app_container(
+        game_card(
+          toList([game_header(), render_marketplace_view(model)])
+        )
+      );
     } else if ($1 instanceof Choosing) {
       _block = app_container(
         game_card(
@@ -10575,7 +11488,8 @@ function view(model) {
               model.health,
               model.points,
               model.milestone,
-              model.level
+              model.level,
+              model.credits
             ),
             render_choosing_view(
               model.last_orb,

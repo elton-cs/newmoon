@@ -320,6 +320,44 @@ pub fn failure_button(text: String, msg: Msg) -> Element(Msg) {
   )
 }
 
+pub fn purchase_button(
+  item_name: String,
+  cost_text: String,
+  can_afford: Bool,
+  msg: Msg,
+) -> Element(Msg) {
+  let button_classes = case can_afford {
+    True ->
+      "bg-purple-600 hover:bg-purple-700 text-white border-purple-500 hover:border-purple-600"
+    False -> "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
+  }
+
+  html.button(
+    [
+      attribute.class(
+        string.concat([
+          "w-full font-light py-4 px-6 rounded transition transform text-sm tracking-wider border-2 ",
+          button_classes,
+          case can_afford {
+            True -> " hover:scale-[1.02]"
+            False -> ""
+          },
+        ]),
+      ),
+      attribute.disabled(!can_afford),
+      event.on_click(msg),
+    ],
+    [
+      html.div([attribute.class("flex justify-between items-center")], [
+        html.span([], [html.text(item_name)]),
+        html.span([attribute.class("text-xs opacity-75")], [
+          html.text(cost_text),
+        ]),
+      ]),
+    ],
+  )
+}
+
 // Status Display Components
 
 pub fn status_panel(
@@ -1011,6 +1049,170 @@ pub fn risk_effects_summary(risk_effects: types.RiskEffects) -> Element(Msg) {
               ),
             ])
         },
+      ]),
+    ],
+  )
+}
+
+// Marketplace Components
+
+// Compact item card for catalog grid
+pub fn compact_marketplace_item(
+  item_name: String,
+  price: Int,
+  rarity_color: String,
+  can_afford: Bool,
+  is_selected: Bool,
+  msg: Msg,
+) -> Element(Msg) {
+  let base_classes =
+    "border rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-md "
+  let selection_classes = case is_selected {
+    True -> "border-purple-500 bg-purple-50 "
+    False -> "border-gray-200 bg-white hover:border-gray-300 "
+  }
+  let affordability_classes = case can_afford {
+    True -> ""
+    False -> "opacity-50 "
+  }
+
+  html.div(
+    [
+      attribute.class(
+        base_classes <> selection_classes <> affordability_classes,
+      ),
+      event.on_click(msg),
+    ],
+    [
+      html.div([attribute.class("flex items-center justify-between mb-2")], [
+        html.div([attribute.class("w-3 h-3 rounded-full " <> rarity_color)], []),
+        html.div([attribute.class("text-xs font-medium text-gray-600")], [
+          html.text(int.to_string(price) <> "C"),
+        ]),
+      ]),
+      html.h3(
+        [attribute.class("text-sm font-medium text-gray-900 leading-tight")],
+        [html.text(item_name)],
+      ),
+    ],
+  )
+}
+
+// Detailed item view panel
+pub fn marketplace_item_detail(
+  item_name: String,
+  description: String,
+  price: Int,
+  rarity_name: String,
+  rarity_color: String,
+  can_afford: Bool,
+  purchase_msg: Msg,
+) -> Element(Msg) {
+  html.div([attribute.class("border rounded-lg p-6 bg-white h-full")], [
+    html.div([attribute.class("mb-4")], [
+      html.div([attribute.class("flex items-center gap-2 mb-2")], [
+        html.div([attribute.class("w-4 h-4 rounded-full " <> rarity_color)], []),
+        html.span([attribute.class("text-sm font-medium " <> rarity_color)], [
+          html.text(rarity_name),
+        ]),
+      ]),
+      html.h2([attribute.class("text-xl font-semibold text-gray-900")], [
+        html.text(item_name),
+      ]),
+    ]),
+    html.p([attribute.class("text-gray-600 mb-6 leading-relaxed")], [
+      html.text(description),
+    ]),
+    html.div([attribute.class("mt-auto")], [
+      html.div([attribute.class("flex items-center justify-between mb-4")], [
+        html.span([attribute.class("text-lg font-semibold text-gray-900")], [
+          html.text(int.to_string(price) <> " CREDITS"),
+        ]),
+      ]),
+      purchase_button_large(can_afford, purchase_msg),
+    ]),
+  ])
+}
+
+// Large purchase button for detail view
+pub fn purchase_button_large(can_afford: Bool, msg: Msg) -> Element(Msg) {
+  let button_classes = case can_afford {
+    True ->
+      "bg-purple-600 hover:bg-purple-700 text-white border-purple-500 hover:border-purple-600 hover:scale-[1.02]"
+    False -> "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
+  }
+
+  html.button(
+    [
+      attribute.class(
+        "w-full font-medium py-4 px-6 rounded-lg transition-all duration-200 text-lg tracking-wide border-2 "
+        <> button_classes,
+      ),
+      attribute.disabled(!can_afford),
+      event.on_click(msg),
+    ],
+    [html.text("PURCHASE")],
+  )
+}
+
+// Default detail view when no item is selected
+pub fn marketplace_default_detail() -> Element(Msg) {
+  html.div(
+    [
+      attribute.class(
+        "border rounded-lg p-6 bg-gray-50 h-full flex items-center justify-center",
+      ),
+    ],
+    [
+      html.div([attribute.class("text-center text-gray-500")], [
+        html.div([attribute.class("text-4xl mb-4")], [html.text("📦")]),
+        html.h3([attribute.class("text-lg font-medium mb-2")], [
+          html.text("Select an Item"),
+        ]),
+        html.p([attribute.class("text-sm")], [
+          html.text(
+            "Choose an item from the catalog to view details and purchase.",
+          ),
+        ]),
+      ]),
+    ],
+  )
+}
+
+// Ultra-compact marketplace item for horizontal scrolling
+pub fn ultra_compact_marketplace_item(
+  item_code: String,
+  rarity_bg_color: String,
+  can_afford: Bool,
+  is_selected: Bool,
+  msg: Msg,
+) -> Element(Msg) {
+  let base_classes =
+    "relative w-14 h-14 flex-shrink-0 rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center text-white font-bold text-sm border-2 "
+  let selection_classes = case is_selected {
+    True -> "border-white shadow-lg scale-110 "
+    False -> "border-transparent hover:border-white/50 hover:scale-105 "
+  }
+  let affordability_classes = case can_afford {
+    True -> ""
+    False -> "opacity-40 "
+  }
+
+  html.div(
+    [
+      attribute.class(
+        base_classes
+        <> rarity_bg_color
+        <> " "
+        <> selection_classes
+        <> affordability_classes,
+      ),
+      event.on_click(msg),
+    ],
+    [
+      // Item code in center
+      html.div([attribute.class("text-center leading-none")], [
+        html.text(item_code),
       ]),
     ],
   )

@@ -1,5 +1,21 @@
 import gleam/option.{type Option}
 
+pub type Rarity {
+  Common
+  Rare
+  Cosmic
+}
+
+pub type MarketplaceItem {
+  MarketplaceItem(
+    orb: Orb,
+    price: Int,
+    rarity: Rarity,
+    name: String,
+    description: String,
+  )
+}
+
 pub type StatusDuration {
   Permanent
   Countdown(Int)
@@ -64,6 +80,7 @@ pub type GameScreen {
   Victory
   Defeat
   GameComplete
+  Marketplace
   Choosing
   RiskAccept
   RiskReveal
@@ -97,9 +114,11 @@ pub type Model {
   Model(
     health: Int,
     points: Int,
+    credits: Int,
     level: Int,
     milestone: Int,
     bag: List(Orb),
+    purchased_orbs: List(Orb),
     screen: Screen,
     last_orb: Option(Orb),
     last_orb_message: Option(String),
@@ -116,6 +135,7 @@ pub type Model {
     risk_pulled_orbs: List(Orb),
     risk_accumulated_effects: RiskEffects,
     risk_health: Int,
+    selected_marketplace_item: Option(Int),
   )
 }
 
@@ -148,4 +168,8 @@ pub type Msg {
   ContinueAfterRiskConsumption
   ExitRisk
   TestGameComplete
+  GoToMarketplace
+  ContinueToNextLevel
+  SelectMarketplaceItem(Int)
+  PurchaseItem(Int)
 }

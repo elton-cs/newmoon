@@ -4,34 +4,37 @@ import gleam/list
 import gleam/option.{None, Some}
 import status
 import types.{
-  type Model, type Msg, type Orb, type OrbType, AcceptFate, AcceptRisk,
-  AllCollectorOrb, AllCollectorSample, ApplyRiskEffects, BackToMainMenu,
-  BackToOrbTesting, BombImmunityOrb, BombImmunitySample, BombOrb,
+  type Model, type Msg, type Orb, type OrbType, type Rarity, AcceptFate,
+  AcceptRisk, AllCollectorOrb, AllCollectorSample, ApplyRiskEffects,
+  BackToMainMenu, BackToOrbTesting, BombImmunityOrb, BombImmunitySample, BombOrb,
   BombSurvivorOrb, BombSurvivorSample, ChoiceOrb, ChoiceSample, ChooseOrb,
-  Choosing, ClearOnGame, ClearOnLevel, ConfirmOrbValue,
-  ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
-  Failure, Game, GameComplete, Gameplay, GoToOrbTesting, HazardSample, HealthOrb,
-  HealthSample, Main, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel,
+  Choosing, ClearOnGame, ClearOnLevel, Common, ConfirmOrbValue,
+  ContinueAfterRiskConsumption, ContinueToNextLevel, Cosmic, DataSample, Defeat,
+  ExitRisk, ExitTesting, Failure, Game, GameComplete, Gameplay, GoToMarketplace,
+  GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Marketplace,
+  MarketplaceItem, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel,
   OrbSelection, Playing, PointCollectorOrb, PointCollectorSample, PointOrb,
-  PointRecoveryOrb, PointRecoverySample, PullOrb, PullRiskOrb, ResetTesting,
-  RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying,
-  RiskReveal, RiskSample, RiskSurvived, SelectOrbType, StartGame,
-  StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
-  StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
-  TestGameComplete, Testing, TestingChoosing, TestingRiskAccept,
-  TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
-  TestingRiskSurvived, ToggleDevMode, UpdateInputValue, ValueConfiguration,
-  Victory,
+  PointRecoveryOrb, PointRecoverySample, PullOrb, PullRiskOrb, PurchaseItem,
+  Rare, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskOrb,
+  RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectMarketplaceItem,
+  SelectOrbType, StartGame, StartTestingPointRecoveryActive,
+  StartTestingPointRecoveryFirst, StartTestingRiskContinue,
+  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
+  StartTestingWithTripleChoice, Success, TestGameComplete, Testing,
+  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
+  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ToggleDevMode,
+  UpdateInputValue, ValueConfiguration, Victory,
 }
 
 pub fn init(_) -> Model {
   Model(
     health: 5,
     points: 0,
+    credits: 0,
     level: 1,
     milestone: 12,
     bag: starter_orbs(),
+    purchased_orbs: [],
     screen: Menu(Main),
     last_orb: None,
     last_orb_message: None,
@@ -53,6 +56,7 @@ pub fn init(_) -> Model {
       special_orbs: [],
     ),
     risk_health: 5,
+    selected_marketplace_item: None,
   )
 }
 
@@ -79,6 +83,94 @@ fn starter_orbs() -> List(Orb) {
     PointOrb(7),
     PointOrb(8),
     PointOrb(10),
+  ]
+}
+
+// Combine starter orbs with purchased orbs for full bag
+fn get_full_bag(purchased_orbs: List(Orb)) -> List(Orb) {
+  list.append(starter_orbs(), purchased_orbs)
+}
+
+// Marketplace inventory with all available items
+fn marketplace_inventory() -> List(types.MarketplaceItem) {
+  [
+    types.MarketplaceItem(
+      orb: PointOrb(5),
+      price: 5,
+      rarity: types.Common,
+      name: "Data Sample",
+      description: "+5 points when extracted",
+    ),
+    types.MarketplaceItem(
+      orb: RiskOrb,
+      price: 5,
+      rarity: types.Common,
+      name: "Fate Sample",
+      description: "High-risk, high-reward extraction",
+    ),
+    types.MarketplaceItem(
+      orb: BombSurvivorOrb(2),
+      price: 6,
+      rarity: types.Common,
+      name: "Bomb Survivor",
+      description: "+2 points per bomb pulled",
+    ),
+    types.MarketplaceItem(
+      orb: HealthOrb(1),
+      price: 9,
+      rarity: types.Common,
+      name: "Health Sample",
+      description: "+1 health when extracted",
+    ),
+    types.MarketplaceItem(
+      orb: PointOrb(7),
+      price: 8,
+      rarity: types.Common,
+      name: "Enhanced Data",
+      description: "+7 points when extracted",
+    ),
+    types.MarketplaceItem(
+      orb: PointRecoveryOrb,
+      price: 8,
+      rarity: types.Common,
+      name: "Point Recovery",
+      description: "Returns lowest point sample to bag",
+    ),
+    types.MarketplaceItem(
+      orb: PointCollectorOrb(2),
+      price: 9,
+      rarity: types.Common,
+      name: "Point Collector",
+      description: "+2 points per data sample in bag",
+    ),
+    types.MarketplaceItem(
+      orb: PointOrb(8),
+      price: 11,
+      rarity: types.Rare,
+      name: "Premium Data",
+      description: "+8 points when extracted",
+    ),
+    types.MarketplaceItem(
+      orb: PointOrb(9),
+      price: 13,
+      rarity: types.Rare,
+      name: "Elite Data",
+      description: "+9 points when extracted",
+    ),
+    types.MarketplaceItem(
+      orb: HealthOrb(3),
+      price: 21,
+      rarity: types.Cosmic,
+      name: "Cosmic Health",
+      description: "+3 health when extracted",
+    ),
+    types.MarketplaceItem(
+      orb: BombImmunityOrb,
+      price: 23,
+      rarity: types.Cosmic,
+      name: "Hazard Shield",
+      description: "Immunity to next 3 bomb samples",
+    ),
   ]
 }
 
@@ -184,6 +276,11 @@ pub fn update(model: Model, msg: Msg) -> Model {
       handle_continue_after_risk_consumption(model)
     ExitRisk -> handle_exit_risk(model)
     TestGameComplete -> handle_test_game_complete(model)
+    GoToMarketplace -> handle_go_to_marketplace(model)
+    ContinueToNextLevel -> handle_continue_to_next_level(model)
+    SelectMarketplaceItem(item_index) ->
+      handle_select_marketplace_item(model, item_index)
+    PurchaseItem(item_index) -> handle_purchase_item(model, item_index)
   }
 }
 
@@ -192,7 +289,7 @@ fn handle_start_game(model: Model) -> Model {
   Model(
     ..clean_model,
     screen: Game(Playing),
-    bag: starter_orbs(),
+    bag: get_full_bag(clean_model.purchased_orbs),
     health: 5,
     points: 0,
     last_orb: None,
@@ -647,9 +744,11 @@ fn handle_restart_game(model: Model) -> Model {
   Model(
     health: 5,
     points: 0,
+    credits: 0,
     level: 1,
     milestone: 5,
     bag: starter_orbs(),
+    purchased_orbs: [],
     screen: Menu(Main),
     last_orb: None,
     last_orb_message: None,
@@ -671,6 +770,7 @@ fn handle_restart_game(model: Model) -> Model {
       special_orbs: [],
     ),
     risk_health: 5,
+    selected_marketplace_item: None,
   )
 }
 
@@ -702,9 +802,11 @@ fn handle_exit_testing(model: Model) -> Model {
   Model(
     health: 5,
     points: 0,
+    credits: 0,
     level: 1,
     milestone: 5,
     bag: starter_orbs(),
+    purchased_orbs: [],
     screen: Menu(Main),
     last_orb: None,
     last_orb_message: None,
@@ -726,6 +828,7 @@ fn handle_exit_testing(model: Model) -> Model {
       special_orbs: [],
     ),
     risk_health: 5,
+    selected_marketplace_item: None,
   )
 }
 
@@ -1038,6 +1141,7 @@ fn handle_exit_risk(model: Model) -> Model {
       special_orbs: [],
     ),
     risk_health: 5,
+    selected_marketplace_item: None,
   )
 }
 
@@ -1103,4 +1207,73 @@ fn handle_test_game_complete(model: Model) -> Model {
     milestone: 66,
     health: 3,
   )
+}
+
+// Transition to marketplace after completing a level
+fn handle_go_to_marketplace(model: Model) -> Model {
+  Model(
+    ..model,
+    screen: Game(Marketplace),
+    credits: model.credits + model.points,
+  )
+}
+
+// Continue from marketplace to next level
+fn handle_continue_to_next_level(model: Model) -> Model {
+  let clean_model = status.clear_statuses_by_persistence(model, ClearOnLevel)
+  let new_level = model.level + 1
+  let new_milestone = get_milestone_for_level(new_level)
+  Model(
+    ..clean_model,
+    health: 5,
+    points: 0,
+    level: new_level,
+    milestone: new_milestone,
+    bag: get_full_bag(clean_model.purchased_orbs),
+    selected_marketplace_item: None,
+    screen: Game(Playing),
+    last_orb: None,
+    last_orb_message: None,
+    pulled_orbs: [],
+    point_multiplier: 1,
+    bomb_immunity: 0,
+  )
+}
+
+// Select item in marketplace for detailed view
+fn handle_select_marketplace_item(model: Model, item_index: Int) -> Model {
+  Model(..model, selected_marketplace_item: Some(item_index))
+}
+
+// Purchase currently selected item from marketplace
+fn handle_purchase_item(model: Model, _item_index: Int) -> Model {
+  case model.selected_marketplace_item {
+    Some(selected_index) -> {
+      let inventory = marketplace_inventory()
+      case get_item_at_index(inventory, selected_index) {
+        Some(item) ->
+          case model.credits >= item.price {
+            True ->
+              Model(
+                ..model,
+                credits: model.credits - item.price,
+                purchased_orbs: [item.orb, ..model.purchased_orbs],
+              )
+            False -> model
+          }
+        None -> model
+      }
+    }
+    None -> model
+  }
+}
+
+// Helper function to get item at index
+fn get_item_at_index(
+  items: List(types.MarketplaceItem),
+  index: Int,
+) -> option.Option(types.MarketplaceItem) {
+  list.drop(items, index)
+  |> list.first
+  |> option.from_result
 }

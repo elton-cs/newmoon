@@ -2,21 +2,24 @@ import display
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/string
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import status
 import types.{
-  type Model, type Msg, type OrbType, AcceptFate, AcceptRisk, AllCollectorSample,
-  ApplyRiskEffects, BackToMainMenu, BackToOrbTesting, BombImmunitySample,
-  BombSurvivorSample, ChoiceSample, ChooseOrb, Choosing, ConfirmOrbValue,
-  ContinueAfterRiskConsumption, DataSample, Defeat, ExitRisk, ExitTesting,
-  Failure, Game, GameComplete, Gameplay, GoToOrbTesting, HazardSample,
-  HealthSample, Main, Menu, MultiplierSample, NextLevel, OrbSelection, Playing,
-  PointCollectorSample, PointRecoverySample, PullRiskOrb, ResetTesting,
+  type MarketplaceItem, type Model, type Msg, type OrbType, type Rarity,
+  AcceptFate, AcceptRisk, AllCollectorSample, ApplyRiskEffects, BackToMainMenu,
+  BackToOrbTesting, BombImmunitySample, BombSurvivorSample, ChoiceSample,
+  ChooseOrb, Choosing, Common, ConfirmOrbValue, ContinueAfterRiskConsumption,
+  ContinueToNextLevel, Cosmic, DataSample, Defeat, ExitRisk, ExitTesting,
+  Failure, Game, GameComplete, Gameplay, GoToMarketplace, GoToOrbTesting,
+  HazardSample, HealthSample, Main, Marketplace, MarketplaceItem, Menu,
+  MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
+  PointRecoverySample, PullRiskOrb, PurchaseItem, Rare, ResetTesting,
   RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskPlaying, RiskReveal,
-  RiskSample, RiskSurvived, SelectOrbType, StartGame,
+  RiskSample, RiskSurvived, SelectMarketplaceItem, SelectOrbType, StartGame,
   StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
   StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
   StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
@@ -54,6 +57,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_testing_mode_view(
             model.last_orb,
@@ -73,6 +77,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_playing_view(
             model.last_orb,
@@ -92,6 +97,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_won_view(
             model.last_orb,
@@ -112,6 +118,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_lost_view(
             model.last_orb,
@@ -135,6 +142,10 @@ pub fn view(model: Model) -> Element(Msg) {
           ),
         ]),
       )
+    Game(Marketplace) ->
+      ui.app_container(
+        ui.game_card([ui.game_header(), render_marketplace_view(model)]),
+      )
     Testing(Success) ->
       ui.app_container(
         ui.game_card([
@@ -145,6 +156,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_testing_won_view(
             model.last_orb,
@@ -166,6 +178,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_testing_lost_view(
             model.last_orb,
@@ -185,6 +198,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_choosing_view(
             model.last_orb,
@@ -260,6 +274,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.points,
             model.milestone,
             model.level,
+            model.credits,
           ),
           render_testing_choosing_view(
             model.last_orb,
@@ -357,6 +372,7 @@ fn render_game_stats(
   points: Int,
   milestone: Int,
   level: Int,
+  credits: Int,
 ) -> Element(Msg) {
   ui.stats_grid([
     ui.stat_card(
@@ -382,6 +398,12 @@ fn render_game_stats(
       display.sector_label,
       int.to_string(level),
       "text-gray-500",
+    ),
+    ui.stat_card(
+      "◇",
+      display.credits_label,
+      int.to_string(credits),
+      "text-purple-600",
     ),
   ])
 }
@@ -423,7 +445,7 @@ fn render_won_view(
     ui.orb_result_display(last_orb, last_orb_message),
     ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
-    ui.success_button(display.advance_button_text, NextLevel),
+    ui.success_button(display.advance_button_text, GoToMarketplace),
     ui.status_panel(
       display.sector_complete_title,
       message,
@@ -470,6 +492,240 @@ fn render_game_complete_view(
       "bg-green-50 border-green-200",
     ),
     ui.primary_button(display.play_again_text, RestartGame),
+  ])
+}
+
+// Marketplace View - orb purchasing functionality
+fn render_marketplace_view(model: types.Model) -> Element(Msg) {
+  element.fragment([
+    ui.status_panel(
+      display.marketplace_title,
+      "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
+      "bg-purple-50 border-purple-200",
+    ),
+    render_marketplace_stats(model.points, model.credits),
+    render_marketplace_two_panel(model.credits, model.selected_marketplace_item),
+    ui.primary_button(display.continue_to_next_sector_text, ContinueToNextLevel),
+  ])
+}
+
+// Mobile-first marketplace layout
+fn render_marketplace_two_panel(
+  credits: Int,
+  selected_item: option.Option(Int),
+) -> Element(Msg) {
+  html.div([attribute.class("space-y-4")], [
+    // Horizontal scrolling catalog (mobile-first)
+    render_marketplace_catalog(credits, selected_item),
+    // Detail panel below on mobile, side-by-side on larger screens
+    html.div([attribute.class("min-h-[200px]")], [
+      render_marketplace_detail_panel(credits, selected_item),
+    ]),
+  ])
+}
+
+// Horizontally scrollable compact item catalog
+fn render_marketplace_catalog(
+  credits: Int,
+  selected_item: option.Option(Int),
+) -> Element(Msg) {
+  let inventory = get_marketplace_inventory()
+  html.div(
+    [
+      attribute.class(
+        "flex gap-3 overflow-x-auto overflow-y-hidden pt-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 w-[396px]",
+      ),
+    ],
+    list.index_map(inventory, fn(item, index) {
+      let can_afford = credits >= item.price
+      let is_selected = case selected_item {
+        Some(selected_index) -> selected_index == index
+        None -> False
+      }
+      let rarity_color = get_rarity_bg_color(item.rarity)
+      let item_code = get_item_code(index)
+
+      ui.ultra_compact_marketplace_item(
+        item_code,
+        rarity_color,
+        can_afford,
+        is_selected,
+        SelectMarketplaceItem(index),
+      )
+    }),
+  )
+}
+
+// Right panel - detailed item view
+fn render_marketplace_detail_panel(
+  credits: Int,
+  selected_item: option.Option(Int),
+) -> Element(Msg) {
+  case selected_item {
+    Some(index) -> {
+      let inventory = get_marketplace_inventory()
+      case get_item_at_index_view(inventory, index) {
+        Some(item) -> {
+          let can_afford = credits >= item.price
+          let rarity_color = display.rarity_color_class(item.rarity)
+          let rarity_name = display.rarity_display_name(item.rarity)
+
+          ui.marketplace_item_detail(
+            item.name,
+            item.description,
+            item.price,
+            rarity_name,
+            rarity_color,
+            can_afford,
+            PurchaseItem(0),
+            // Index doesn't matter as purchase uses selected item
+          )
+        }
+        None -> ui.marketplace_default_detail()
+      }
+    }
+    None -> ui.marketplace_default_detail()
+  }
+}
+
+// Helper function to get item at index for view
+fn get_item_at_index_view(
+  items: List(MarketplaceItem),
+  index: Int,
+) -> option.Option(MarketplaceItem) {
+  list.drop(items, index)
+  |> list.first
+  |> option.from_result
+}
+
+// Helper function to convert rarity to background color
+fn get_rarity_bg_color(rarity: types.Rarity) -> String {
+  case rarity {
+    types.Common -> "bg-gray-400"
+    types.Rare -> "bg-blue-500"
+    types.Cosmic -> "bg-purple-500"
+  }
+}
+
+// Helper function to generate item codes based on index
+fn get_item_code(index: Int) -> String {
+  case index {
+    0 -> "C1"
+    1 -> "C2"
+    2 -> "C3"
+    3 -> "C4"
+    4 -> "C5"
+    5 -> "C6"
+    6 -> "C7"
+    7 -> "R1"
+    8 -> "R2"
+    9 -> "X1"
+    10 -> "X2"
+    _ -> "??"
+  }
+}
+
+// Get marketplace inventory (duplicate from update.gleam for view access)
+fn get_marketplace_inventory() -> List(MarketplaceItem) {
+  [
+    MarketplaceItem(
+      orb: types.PointOrb(5),
+      price: 5,
+      rarity: types.Common,
+      name: "Data Sample",
+      description: "+5 points when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.RiskOrb,
+      price: 5,
+      rarity: types.Common,
+      name: "Fate Sample",
+      description: "High-risk, high-reward extraction",
+    ),
+    MarketplaceItem(
+      orb: types.BombSurvivorOrb(2),
+      price: 6,
+      rarity: types.Common,
+      name: "Bomb Survivor",
+      description: "+2 points per bomb pulled",
+    ),
+    MarketplaceItem(
+      orb: types.HealthOrb(1),
+      price: 9,
+      rarity: types.Common,
+      name: "Health Sample",
+      description: "+1 health when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.PointOrb(7),
+      price: 8,
+      rarity: types.Common,
+      name: "Enhanced Data",
+      description: "+7 points when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.PointRecoveryOrb,
+      price: 8,
+      rarity: types.Common,
+      name: "Point Recovery",
+      description: "Returns lowest point sample to bag",
+    ),
+    MarketplaceItem(
+      orb: types.PointCollectorOrb(2),
+      price: 9,
+      rarity: types.Common,
+      name: "Point Collector",
+      description: "+2 points per data sample in bag",
+    ),
+    MarketplaceItem(
+      orb: types.PointOrb(8),
+      price: 11,
+      rarity: types.Rare,
+      name: "Premium Data",
+      description: "+8 points when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.PointOrb(9),
+      price: 13,
+      rarity: types.Rare,
+      name: "Elite Data",
+      description: "+9 points when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.HealthOrb(3),
+      price: 21,
+      rarity: types.Cosmic,
+      name: "Cosmic Health",
+      description: "+3 health when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.BombImmunityOrb,
+      price: 23,
+      rarity: types.Cosmic,
+      name: "Hazard Shield",
+      description: "Immunity to next 3 bomb samples",
+    ),
+  ]
+}
+
+// Marketplace Stats - shows earned points and total credits
+fn render_marketplace_stats(
+  earned_points: Int,
+  total_credits: Int,
+) -> Element(Msg) {
+  ui.stats_grid([
+    ui.stat_card(
+      "●",
+      display.earned_label,
+      int.to_string(earned_points),
+      "text-green-600",
+    ),
+    ui.stat_card(
+      "◇",
+      display.credits_label,
+      int.to_string(total_credits),
+      "text-purple-600",
+    ),
   ])
 }
 
