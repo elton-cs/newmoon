@@ -331,7 +331,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
   case orb_type {
     MultiplierSample -> {
       case float.parse(model.input_value) {
-        Ok(multiplier_value) if multiplier_value >. 0.0 -> {
+        Ok(multiplier_value) if multiplier_value >=. 1.0 -> {
           let test_orb = MultiplierOrb(multiplier_value)
           let clean_model =
             status.clear_statuses_by_persistence(model, ClearOnGame)
@@ -348,6 +348,18 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             bomb_immunity: 0,
             choice_orb_1: None,
             choice_orb_2: None,
+            input_value: "",
+            risk_orbs: [],
+            risk_original_orbs: [],
+            risk_pulled_orbs: [],
+            risk_accumulated_effects: types.RiskEffects(
+              health_gained: 0,
+              points_gained: 0,
+              damage_taken: 0,
+              special_orbs: [],
+            ),
+            risk_health: 5,
+            selected_marketplace_item: None,
           )
         }
         _ -> model
@@ -355,7 +367,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
     }
     NextPointMultiplierSample -> {
       case float.parse(model.input_value) {
-        Ok(multiplier_value) if multiplier_value >. 0.0 -> {
+        Ok(multiplier_value) if multiplier_value >=. 1.0 -> {
           let test_orb = NextPointMultiplierOrb(multiplier_value)
           let clean_model =
             status.clear_statuses_by_persistence(model, ClearOnGame)
@@ -372,6 +384,18 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             bomb_immunity: 0,
             choice_orb_1: None,
             choice_orb_2: None,
+            input_value: "",
+            risk_orbs: [],
+            risk_original_orbs: [],
+            risk_pulled_orbs: [],
+            risk_accumulated_effects: types.RiskEffects(
+              health_gained: 0,
+              points_gained: 0,
+              damage_taken: 0,
+              special_orbs: [],
+            ),
+            risk_health: 5,
+            selected_marketplace_item: None,
           )
         }
         _ -> model
@@ -411,6 +435,18 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             bomb_immunity: 0,
             choice_orb_1: None,
             choice_orb_2: None,
+            input_value: "",
+            risk_orbs: [],
+            risk_original_orbs: [],
+            risk_pulled_orbs: [],
+            risk_accumulated_effects: types.RiskEffects(
+              health_gained: 0,
+              points_gained: 0,
+              damage_taken: 0,
+              special_orbs: [],
+            ),
+            risk_health: 5,
+            selected_marketplace_item: None,
           )
         }
         _ -> model

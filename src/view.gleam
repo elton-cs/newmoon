@@ -855,8 +855,6 @@ fn render_orb_value_selection_view(
     DataSample
     | HazardSample
     | HealthSample
-    | MultiplierSample
-    | NextPointMultiplierSample
     | AllCollectorSample
     | PointCollectorSample
     | BombSurvivorSample ->
@@ -867,6 +865,17 @@ fn render_orb_value_selection_view(
           "bg-blue-50 border-blue-200",
         ),
         ui.number_input(input_value),
+        ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
+        ui.secondary_button("Back to Selection", BackToOrbTesting),
+      ])
+    MultiplierSample | NextPointMultiplierSample ->
+      element.fragment([
+        ui.status_panel(
+          orb_name <> " Configuration",
+          description,
+          "bg-blue-50 border-blue-200",
+        ),
+        ui.float_input(input_value),
         ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
         ui.secondary_button("Back to Selection", BackToOrbTesting),
       ])

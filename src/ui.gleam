@@ -440,6 +440,31 @@ pub fn number_input(value: String) -> Element(Msg) {
   ])
 }
 
+pub fn float_input(value: String) -> Element(Msg) {
+  html.div([attribute.class("mb-4")], [
+    html.label(
+      [
+        attribute.class("block text-sm font-light text-gray-700 mb-2"),
+        attribute.for("value-input"),
+      ],
+      [html.text("Multiplier Value:")],
+    ),
+    html.input([
+      attribute.id("value-input"),
+      attribute.type_("number"),
+      attribute.value(value),
+      attribute.min("1"),
+      attribute.max("10"),
+      attribute.step("0.5"),
+      attribute.placeholder("Enter multiplier (e.g., 1.0, 1.5, 2.0, 2.5, 3.0)"),
+      attribute.class(
+        "w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg",
+      ),
+      event.on_input(UpdateInputValue),
+    ]),
+  ])
+}
+
 pub fn testing_mode_indicator() -> Element(Msg) {
   html.div(
     [attribute.class("p-2 bg-yellow-50 border border-yellow-200 rounded")],

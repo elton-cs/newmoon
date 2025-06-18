@@ -2346,11 +2346,17 @@ function disabled(is_disabled) {
 function for$(id2) {
   return attribute2("for", id2);
 }
+function max2(value2) {
+  return attribute2("max", value2);
+}
 function min2(value2) {
   return attribute2("min", value2);
 }
 function placeholder(text4) {
   return attribute2("placeholder", text4);
+}
+function step(value2) {
+  return attribute2("step", value2);
 }
 function type_(control_type) {
   return attribute2("type", control_type);
@@ -6225,7 +6231,7 @@ function handle_confirm_orb_value(model, orb_type) {
     let $ = parse_float(model.input_value);
     if ($ instanceof Ok) {
       let multiplier_value = $[0];
-      if (multiplier_value > 0) {
+      if (multiplier_value >= 1) {
         let test_orb = new MultiplierOrb(multiplier_value);
         let clean_model = clear_statuses_by_persistence(
           model,
@@ -6243,7 +6249,7 @@ function handle_confirm_orb_value(model, orb_type) {
           new Testing(new Gameplay()),
           new None(),
           new None(),
-          _record.input_value,
+          "",
           toList([]),
           1,
           0,
@@ -6251,12 +6257,12 @@ function handle_confirm_orb_value(model, orb_type) {
           new None(),
           new None(),
           _record.dev_mode,
-          _record.risk_orbs,
-          _record.risk_original_orbs,
-          _record.risk_pulled_orbs,
-          _record.risk_accumulated_effects,
-          _record.risk_health,
-          _record.selected_marketplace_item
+          toList([]),
+          toList([]),
+          toList([]),
+          new RiskEffects(0, 0, 0, toList([])),
+          5,
+          new None()
         );
       } else {
         return model;
@@ -6268,7 +6274,7 @@ function handle_confirm_orb_value(model, orb_type) {
     let $ = parse_float(model.input_value);
     if ($ instanceof Ok) {
       let multiplier_value = $[0];
-      if (multiplier_value > 0) {
+      if (multiplier_value >= 1) {
         let test_orb = new NextPointMultiplierOrb(multiplier_value);
         let clean_model = clear_statuses_by_persistence(
           model,
@@ -6286,7 +6292,7 @@ function handle_confirm_orb_value(model, orb_type) {
           new Testing(new Gameplay()),
           new None(),
           new None(),
-          _record.input_value,
+          "",
           toList([]),
           1,
           0,
@@ -6294,12 +6300,12 @@ function handle_confirm_orb_value(model, orb_type) {
           new None(),
           new None(),
           _record.dev_mode,
-          _record.risk_orbs,
-          _record.risk_original_orbs,
-          _record.risk_pulled_orbs,
-          _record.risk_accumulated_effects,
-          _record.risk_health,
-          _record.selected_marketplace_item
+          toList([]),
+          toList([]),
+          toList([]),
+          new RiskEffects(0, 0, 0, toList([])),
+          5,
+          new None()
         );
       } else {
         return model;
@@ -6355,7 +6361,7 @@ function handle_confirm_orb_value(model, orb_type) {
           new Testing(new Gameplay()),
           new None(),
           new None(),
-          _record.input_value,
+          "",
           toList([]),
           1,
           0,
@@ -6363,12 +6369,12 @@ function handle_confirm_orb_value(model, orb_type) {
           new None(),
           new None(),
           _record.dev_mode,
-          _record.risk_orbs,
-          _record.risk_original_orbs,
-          _record.risk_pulled_orbs,
-          _record.risk_accumulated_effects,
-          _record.risk_health,
-          _record.selected_marketplace_item
+          toList([]),
+          toList([]),
+          toList([]),
+          new RiskEffects(0, 0, 0, toList([])),
+          5,
+          new None()
         );
       } else {
         return model;
@@ -9635,6 +9641,39 @@ function number_input(value2) {
     ])
   );
 }
+function float_input(value2) {
+  return div(
+    toList([class$("mb-4")]),
+    toList([
+      label(
+        toList([
+          class$("block text-sm font-light text-gray-700 mb-2"),
+          for$("value-input")
+        ]),
+        toList([text3("Multiplier Value:")])
+      ),
+      input(
+        toList([
+          id("value-input"),
+          type_("number"),
+          value(value2),
+          min2("1"),
+          max2("10"),
+          step("0.5"),
+          placeholder(
+            "Enter multiplier (e.g., 1.0, 1.5, 2.0, 2.5, 3.0)"
+          ),
+          class$(
+            "w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg"
+          ),
+          on_input((var0) => {
+            return new UpdateInputValue(var0);
+          })
+        ])
+      )
+    ])
+  );
+}
 function testing_mode_indicator2() {
   return div(
     toList([
@@ -10974,7 +11013,7 @@ function render_orb_value_selection_view(orb_type, input_value) {
           description,
           "bg-blue-50 border-blue-200"
         ),
-        number_input(input_value),
+        float_input(input_value),
         primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
         secondary_button("Back to Selection", new BackToOrbTesting())
       ])
@@ -10987,7 +11026,7 @@ function render_orb_value_selection_view(orb_type, input_value) {
           description,
           "bg-blue-50 border-blue-200"
         ),
-        number_input(input_value),
+        float_input(input_value),
         primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
         secondary_button("Back to Selection", new BackToOrbTesting())
       ])
