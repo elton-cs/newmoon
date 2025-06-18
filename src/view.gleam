@@ -620,8 +620,9 @@ fn get_item_code(index: Int) -> String {
     7 -> "R1"
     8 -> "R2"
     9 -> "R3"
-    10 -> "X1"
-    11 -> "X2"
+    10 -> "R4"
+    11 -> "X1"
+    12 -> "X2"
     _ -> "??"
   }
 }
@@ -691,6 +692,13 @@ fn get_marketplace_inventory() -> List(MarketplaceItem) {
       rarity: types.Rare,
       name: "Elite Data",
       description: "+9 points when extracted",
+    ),
+    MarketplaceItem(
+      orb: types.NextPointMultiplierOrb(2.0),
+      price: 14,
+      rarity: types.Rare,
+      name: "Boost Signal",
+      description: "2x multiplier for next point extraction",
     ),
     MarketplaceItem(
       orb: types.MultiplierOrb(1.5),

@@ -5998,6 +5998,13 @@ function marketplace_inventory() {
       "+9 points when extracted"
     ),
     new MarketplaceItem(
+      new NextPointMultiplierOrb(2),
+      14,
+      new Rare(),
+      "Boost Signal",
+      "2x multiplier for next point extraction"
+    ),
+    new MarketplaceItem(
       new MultiplierOrb(1.5),
       16,
       new Rare(),
@@ -10602,8 +10609,10 @@ function get_item_code(index4) {
   } else if (index4 === 9) {
     return "R3";
   } else if (index4 === 10) {
-    return "X1";
+    return "R4";
   } else if (index4 === 11) {
+    return "X1";
+  } else if (index4 === 12) {
     return "X2";
   } else {
     return "??";
@@ -10673,6 +10682,13 @@ function get_marketplace_inventory() {
       new Rare(),
       "Elite Data",
       "+9 points when extracted"
+    ),
+    new MarketplaceItem(
+      new NextPointMultiplierOrb(2),
+      14,
+      new Rare(),
+      "Boost Signal",
+      "2x multiplier for next point extraction"
     ),
     new MarketplaceItem(
       new MultiplierOrb(1.5),
