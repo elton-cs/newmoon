@@ -159,6 +159,13 @@ fn marketplace_inventory() -> List(types.MarketplaceItem) {
       description: "+9 points when extracted",
     ),
     types.MarketplaceItem(
+      orb: MultiplierOrb(1.5),
+      price: 16,
+      rarity: types.Rare,
+      name: "Signal Amplifier",
+      description: "1.5x multiplier for all point extraction",
+    ),
+    types.MarketplaceItem(
       orb: HealthOrb(3),
       price: 21,
       rarity: types.Cosmic,

@@ -5878,6 +5878,13 @@ function marketplace_inventory() {
       "+9 points when extracted"
     ),
     new MarketplaceItem(
+      new MultiplierOrb(1.5),
+      16,
+      new Rare(),
+      "Signal Amplifier",
+      "1.5x multiplier for all point extraction"
+    ),
+    new MarketplaceItem(
       new HealthOrb(3),
       21,
       new Cosmic(),
@@ -10334,8 +10341,10 @@ function get_item_code(index4) {
   } else if (index4 === 8) {
     return "R2";
   } else if (index4 === 9) {
-    return "X1";
+    return "R3";
   } else if (index4 === 10) {
+    return "X1";
+  } else if (index4 === 11) {
     return "X2";
   } else {
     return "??";
@@ -10405,6 +10414,13 @@ function get_marketplace_inventory() {
       new Rare(),
       "Elite Data",
       "+9 points when extracted"
+    ),
+    new MarketplaceItem(
+      new MultiplierOrb(1.5),
+      16,
+      new Rare(),
+      "Signal Amplifier",
+      "1.5x multiplier for all point extraction"
     ),
     new MarketplaceItem(
       new HealthOrb(3),
