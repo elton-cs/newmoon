@@ -1005,24 +1005,18 @@ fn handle_select_marketplace_item(model: Model, item_index: Int) -> Model {
   Model(..model, selected_marketplace_item: Some(item_index))
 }
 
-// Purchase currently selected item from marketplace
-fn handle_purchase_item(model: Model, _item_index: Int) -> Model {
-  case model.selected_marketplace_item {
-    Some(selected_index) -> {
-      case get_item_at_index(model.marketplace_selection, selected_index) {
-        Some(item) ->
-          case model.credits >= item.price {
-            True ->
-              Model(
-                ..model,
-                credits: model.credits - item.price,
-                purchased_orbs: [item.orb, ..model.purchased_orbs],
-              )
-            False -> model
-          }
-        None -> model
+// Purchase item directly by index from marketplace
+fn handle_purchase_item(model: Model, item_index: Int) -> Model {
+  case get_item_at_index(model.marketplace_selection, item_index) {
+    Some(item) ->
+      case model.credits >= item.price {
+        True ->
+          Model(..model, credits: model.credits - item.price, purchased_orbs: [
+            item.orb,
+            ..model.purchased_orbs
+          ])
+        False -> model
       }
-    }
     None -> model
   }
 }

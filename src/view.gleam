@@ -323,138 +323,51 @@ fn render_marketplace_view(model: types.Model) -> Element(Msg) {
     ui.status_panel(
       display.marketplace_title,
       "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
-      "bg-purple-50 border-purple-200",
+      "bg-gray-50 border-gray-200",
     ),
     render_marketplace_stats(model.points, model.credits),
-    render_marketplace_two_panel(
-      model.credits,
-      model.selected_marketplace_item,
-      model.marketplace_selection,
-    ),
+    render_marketplace_grid(model.credits, model.marketplace_selection),
     ui.primary_button(display.continue_to_next_sector_text, ContinueToNextLevel),
   ])
 }
 
-// Mobile-first marketplace layout
-fn render_marketplace_two_panel(
+// Grid-based marketplace layout matching game stats
+fn render_marketplace_grid(
   credits: Int,
-  selected_item: option.Option(Int),
   marketplace_selection: List(MarketplaceItem),
 ) -> Element(Msg) {
-  html.div([attribute.class("space-y-4")], [
-    // Horizontal scrolling catalog (mobile-first)
-    render_marketplace_catalog(credits, selected_item, marketplace_selection),
-    // Detail panel below on mobile, side-by-side on larger screens
-    html.div([attribute.class("min-h-[200px]")], [
-      render_marketplace_detail_panel(
-        credits,
-        selected_item,
-        marketplace_selection,
-      ),
-    ]),
-  ])
-}
-
-// Horizontally scrollable compact item catalog
-fn render_marketplace_catalog(
-  credits: Int,
-  selected_item: option.Option(Int),
-  marketplace_selection: List(MarketplaceItem),
-) -> Element(Msg) {
-  html.div(
-    [
-      attribute.class(
-        "flex gap-3 overflow-x-auto overflow-y-hidden pt-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 w-[396px]",
-      ),
-    ],
+  let item_cards =
     list.index_map(marketplace_selection, fn(item, index) {
       let can_afford = credits >= item.price
-      let is_selected = case selected_item {
-        Some(selected_index) -> selected_index == index
-        None -> False
-      }
-      let rarity_color = get_rarity_bg_color(item.rarity)
-      let item_code = get_item_code(index)
+      let symbol = get_marketplace_symbol(item.orb)
 
-      ui.ultra_compact_marketplace_item(
-        item_code,
-        rarity_color,
+      ui.marketplace_item_card(
+        symbol,
+        item.name,
+        item.price,
         can_afford,
-        is_selected,
-        SelectMarketplaceItem(index),
+        PurchaseItem(index),
       )
-    }),
-  )
+    })
+
+  ui.marketplace_grid(item_cards)
 }
 
-// Right panel - detailed item view
-fn render_marketplace_detail_panel(
-  credits: Int,
-  selected_item: option.Option(Int),
-  marketplace_selection: List(MarketplaceItem),
-) -> Element(Msg) {
-  case selected_item {
-    Some(index) -> {
-      case get_item_at_index_view(marketplace_selection, index) {
-        Some(item) -> {
-          let can_afford = credits >= item.price
-          let rarity_color = display.rarity_color_class(item.rarity)
-          let rarity_name = display.rarity_display_name(item.rarity)
-
-          ui.marketplace_item_detail(
-            item.name,
-            item.description,
-            item.price,
-            rarity_name,
-            rarity_color,
-            can_afford,
-            PurchaseItem(0),
-            // Index doesn't matter as purchase uses selected item
-          )
-        }
-        None -> ui.marketplace_default_detail()
-      }
-    }
-    None -> ui.marketplace_default_detail()
-  }
-}
-
-// Helper function to get item at index for view
-fn get_item_at_index_view(
-  items: List(MarketplaceItem),
-  index: Int,
-) -> option.Option(MarketplaceItem) {
-  list.drop(items, index)
-  |> list.first
-  |> option.from_result
-}
-
-// Helper function to convert rarity to background color
-fn get_rarity_bg_color(rarity: types.Rarity) -> String {
-  case rarity {
-    types.Common -> "bg-gray-400"
-    types.Rare -> "bg-blue-500"
-    types.Cosmic -> "bg-purple-500"
-  }
-}
-
-// Helper function to generate item codes based on index
-fn get_item_code(index: Int) -> String {
-  case index {
-    0 -> "C1"
-    1 -> "C2"
-    2 -> "C3"
-    3 -> "C4"
-    4 -> "C5"
-    5 -> "C6"
-    6 -> "C7"
-    7 -> "R1"
-    8 -> "R2"
-    9 -> "R3"
-    10 -> "R4"
-    11 -> "X1"
-    12 -> "X2"
-    _ -> "??"
+// Helper function to get marketplace symbols for orbs
+fn get_marketplace_symbol(orb: types.Orb) -> String {
+  case orb {
+    types.PointOrb(_) -> "●"
+    types.BombOrb(_) -> "○"
+    types.HealthOrb(_) -> "◇"
+    types.AllCollectorOrb(_) -> "◎"
+    types.PointCollectorOrb(_) -> "◉"
+    types.BombSurvivorOrb(_) -> "◆"
+    types.MultiplierOrb(_) -> "◈"
+    types.NextPointMultiplierOrb(_) -> "◆"
+    types.BombImmunityOrb -> "◇"
+    types.ChoiceOrb -> "◈"
+    types.RiskOrb -> "⚠"
+    types.PointRecoveryOrb -> "◎"
   }
 }
 

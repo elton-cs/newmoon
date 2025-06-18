@@ -62,6 +62,10 @@ pub fn stats_grid(stats: List(Element(Msg))) -> Element(Msg) {
   html.div([attribute.class("grid grid-cols-2 grid-rows-3 gap-3")], stats)
 }
 
+pub fn marketplace_grid(items: List(Element(Msg))) -> Element(Msg) {
+  html.div([attribute.class("grid grid-cols-3 grid-rows-2 gap-3")], items)
+}
+
 pub fn stat_card(
   symbol: String,
   label: String,
@@ -107,6 +111,42 @@ pub fn status_stat_card(status_effects: List(String)) -> Element(Msg) {
     html.div(
       [attribute.class("text-sm font-light text-gray-600 leading-tight")],
       [html.text(status_text)],
+    ),
+  ])
+}
+
+pub fn marketplace_item_card(
+  symbol: String,
+  name: String,
+  price: Int,
+  can_afford: Bool,
+  purchase_msg: Msg,
+) -> Element(Msg) {
+  let purchase_classes = case can_afford {
+    True -> "bg-gray-700 hover:bg-black text-white cursor-pointer"
+    False -> "bg-gray-300 text-gray-500 cursor-not-allowed"
+  }
+
+  html.div([attribute.class("bg-gray-50 rounded border border-gray-100 p-4")], [
+    html.div([attribute.class("text-lg font-light mb-1")], [html.text(symbol)]),
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-gray-400 uppercase tracking-widest mb-2 font-light",
+        ),
+      ],
+      [html.text(name)],
+    ),
+    html.button(
+      [
+        attribute.class(
+          "w-full text-xs font-light uppercase tracking-wider py-2 px-3 rounded transition-colors "
+          <> purchase_classes,
+        ),
+        attribute.disabled(!can_afford),
+        event.on_click(purchase_msg),
+      ],
+      [html.text(int.to_string(price) <> " CREDITS")],
     ),
   ])
 }
@@ -1036,7 +1076,7 @@ pub fn risk_effects_summary(risk_effects: types.RiskEffects) -> Element(Msg) {
 
 // Marketplace Components
 
-// Compact item card for catalog grid
+// Compact item card for catalog grid - matches stat card design
 pub fn compact_marketplace_item(
   item_name: String,
   price: Int,
@@ -1046,10 +1086,11 @@ pub fn compact_marketplace_item(
   msg: Msg,
 ) -> Element(Msg) {
   let base_classes =
-    "border rounded-lg p-3 cursor-pointer transition-all duration-200 hover:shadow-md "
+    "rounded border cursor-pointer transition-all duration-200 p-4 "
   let selection_classes = case is_selected {
-    True -> "border-purple-500 bg-purple-50 "
-    False -> "border-gray-200 bg-white hover:border-gray-300 "
+    True -> "border-purple-500 bg-purple-50 hover:bg-purple-100 "
+    False ->
+      "border-gray-100 bg-gray-50 hover:bg-gray-100 hover:border-gray-200 "
   }
   let affordability_classes = case can_afford {
     True -> ""
@@ -1064,15 +1105,23 @@ pub fn compact_marketplace_item(
       event.on_click(msg),
     ],
     [
-      html.div([attribute.class("flex items-center justify-between mb-2")], [
+      // Rarity indicator at top
+      html.div([attribute.class("flex justify-center mb-2")], [
         html.div([attribute.class("w-3 h-3 rounded-full " <> rarity_color)], []),
-        html.div([attribute.class("text-xs font-medium text-gray-600")], [
-          html.text(int.to_string(price) <> "C"),
-        ]),
       ]),
-      html.h3(
-        [attribute.class("text-sm font-medium text-gray-900 leading-tight")],
+      // Item name (centered like stat labels)
+      html.div(
+        [
+          attribute.class(
+            "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light text-center",
+          ),
+        ],
         [html.text(item_name)],
+      ),
+      // Price (larger like stat values)
+      html.div(
+        [attribute.class("text-lg font-light text-gray-600 text-center")],
+        [html.text(int.to_string(price) <> "C")],
       ),
     ],
   )

@@ -4697,9 +4697,6 @@ function h1(attrs, children) {
 function h2(attrs, children) {
   return element2("h2", attrs, children);
 }
-function h3(attrs, children) {
-  return element2("h3", attrs, children);
-}
 function div(attrs, children) {
   return element2("div", attrs, children);
 }
@@ -5178,24 +5175,6 @@ function collector_result_message(orb, bonus_points) {
     return "\u25C6 SURVIVAL BONUS +" + to_string(bonus_points);
   } else {
     return orb_result_message(orb);
-  }
-}
-function rarity_display_name(rarity) {
-  if (rarity instanceof Common) {
-    return "COMMON";
-  } else if (rarity instanceof Rare) {
-    return "RARE";
-  } else {
-    return "COSMIC";
-  }
-}
-function rarity_color_class(rarity) {
-  if (rarity instanceof Common) {
-    return "text-gray-600";
-  } else if (rarity instanceof Rare) {
-    return "text-blue-600";
-  } else {
-    return "text-purple-600";
   }
 }
 function data_target_message(milestone) {
@@ -6787,45 +6766,39 @@ function get_item_at_index(items, index3) {
   let _pipe$1 = first(_pipe);
   return from_result(_pipe$1);
 }
-function handle_purchase_item(model, _) {
-  let $ = model.selected_marketplace_item;
+function handle_purchase_item(model, item_index) {
+  let $ = get_item_at_index(model.marketplace_selection, item_index);
   if ($ instanceof Some) {
-    let selected_index = $[0];
-    let $1 = get_item_at_index(model.marketplace_selection, selected_index);
-    if ($1 instanceof Some) {
-      let item = $1[0];
-      let $2 = model.credits >= item.price;
-      if ($2) {
-        let _record = model;
-        return new Model(
-          _record.health,
-          _record.points,
-          model.credits - item.price,
-          _record.level,
-          _record.milestone,
-          _record.bag,
-          prepend(item.orb, model.purchased_orbs),
-          _record.screen,
-          _record.last_orb,
-          _record.last_orb_message,
-          _record.pulled_orbs,
-          _record.point_multiplier,
-          _record.bomb_immunity,
-          _record.active_statuses,
-          _record.choice_orb_1,
-          _record.choice_orb_2,
-          _record.dev_mode,
-          _record.risk_orbs,
-          _record.risk_original_orbs,
-          _record.risk_pulled_orbs,
-          _record.risk_accumulated_effects,
-          _record.risk_health,
-          _record.selected_marketplace_item,
-          _record.marketplace_selection
-        );
-      } else {
-        return model;
-      }
+    let item = $[0];
+    let $1 = model.credits >= item.price;
+    if ($1) {
+      let _record = model;
+      return new Model(
+        _record.health,
+        _record.points,
+        model.credits - item.price,
+        _record.level,
+        _record.milestone,
+        _record.bag,
+        prepend(item.orb, model.purchased_orbs),
+        _record.screen,
+        _record.last_orb,
+        _record.last_orb_message,
+        _record.pulled_orbs,
+        _record.point_multiplier,
+        _record.bomb_immunity,
+        _record.active_statuses,
+        _record.choice_orb_1,
+        _record.choice_orb_2,
+        _record.dev_mode,
+        _record.risk_orbs,
+        _record.risk_original_orbs,
+        _record.risk_pulled_orbs,
+        _record.risk_accumulated_effects,
+        _record.risk_health,
+        _record.selected_marketplace_item,
+        _record.marketplace_selection
+      );
     } else {
       return model;
     }
@@ -7698,6 +7671,12 @@ function stats_grid(stats) {
     stats
   );
 }
+function marketplace_grid(items) {
+  return div(
+    toList([class$("grid grid-cols-3 grid-rows-2 gap-3")]),
+    items
+  );
+}
 function stat_card(symbol, label, value, color_class) {
   return div(
     toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
@@ -7756,6 +7735,42 @@ function status_stat_card(status_effects) {
           class$("text-sm font-light text-gray-600 leading-tight")
         ]),
         toList([text3(status_text)])
+      )
+    ])
+  );
+}
+function marketplace_item_card(symbol, name, price, can_afford, purchase_msg) {
+  let _block;
+  if (can_afford) {
+    _block = "bg-gray-700 hover:bg-black text-white cursor-pointer";
+  } else {
+    _block = "bg-gray-300 text-gray-500 cursor-not-allowed";
+  }
+  let purchase_classes = _block;
+  return div(
+    toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
+    toList([
+      div(
+        toList([class$("text-lg font-light mb-1")]),
+        toList([text3(symbol)])
+      ),
+      div(
+        toList([
+          class$(
+            "text-xs text-gray-400 uppercase tracking-widest mb-2 font-light"
+          )
+        ]),
+        toList([text3(name)])
+      ),
+      button(
+        toList([
+          class$(
+            "w-full text-xs font-light uppercase tracking-wider py-2 px-3 rounded transition-colors " + purchase_classes
+          ),
+          disabled(!can_afford),
+          on_click(purchase_msg)
+        ]),
+        toList([text3(to_string(price) + " CREDITS")])
       )
     ])
   );
@@ -8670,142 +8685,6 @@ function risk_effects_summary(risk_effects) {
     ])
   );
 }
-function purchase_button_large(can_afford, msg) {
-  let _block;
-  if (can_afford) {
-    _block = "bg-purple-600 hover:bg-purple-700 text-white border-purple-500 hover:border-purple-600 hover:scale-[1.02]";
-  } else {
-    _block = "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed";
-  }
-  let button_classes = _block;
-  return button(
-    toList([
-      class$(
-        "w-full font-medium py-4 px-6 rounded-lg transition-all duration-200 text-lg tracking-wide border-2 " + button_classes
-      ),
-      disabled(!can_afford),
-      on_click(msg)
-    ]),
-    toList([text3("PURCHASE")])
-  );
-}
-function marketplace_item_detail(item_name, description, price, rarity_name, rarity_color, can_afford, purchase_msg) {
-  return div(
-    toList([class$("border rounded-lg p-6 bg-white h-full")]),
-    toList([
-      div(
-        toList([class$("mb-4")]),
-        toList([
-          div(
-            toList([class$("flex items-center gap-2 mb-2")]),
-            toList([
-              div(
-                toList([
-                  class$("w-4 h-4 rounded-full " + rarity_color)
-                ]),
-                toList([])
-              ),
-              span(
-                toList([
-                  class$("text-sm font-medium " + rarity_color)
-                ]),
-                toList([text3(rarity_name)])
-              )
-            ])
-          ),
-          h2(
-            toList([class$("text-xl font-semibold text-gray-900")]),
-            toList([text3(item_name)])
-          )
-        ])
-      ),
-      p(
-        toList([class$("text-gray-600 mb-6 leading-relaxed")]),
-        toList([text3(description)])
-      ),
-      div(
-        toList([class$("mt-auto")]),
-        toList([
-          div(
-            toList([class$("flex items-center justify-between mb-4")]),
-            toList([
-              span(
-                toList([
-                  class$("text-lg font-semibold text-gray-900")
-                ]),
-                toList([text3(to_string(price) + " CREDITS")])
-              )
-            ])
-          ),
-          purchase_button_large(can_afford, purchase_msg)
-        ])
-      )
-    ])
-  );
-}
-function marketplace_default_detail() {
-  return div(
-    toList([
-      class$(
-        "border rounded-lg p-6 bg-gray-50 h-full flex items-center justify-center"
-      )
-    ]),
-    toList([
-      div(
-        toList([class$("text-center text-gray-500")]),
-        toList([
-          div(
-            toList([class$("text-4xl mb-4")]),
-            toList([text3("\u{1F4E6}")])
-          ),
-          h3(
-            toList([class$("text-lg font-medium mb-2")]),
-            toList([text3("Select an Item")])
-          ),
-          p(
-            toList([class$("text-sm")]),
-            toList([
-              text3(
-                "Choose an item from the catalog to view details and purchase."
-              )
-            ])
-          )
-        ])
-      )
-    ])
-  );
-}
-function ultra_compact_marketplace_item(item_code, rarity_bg_color, can_afford, is_selected, msg) {
-  let base_classes = "relative w-14 h-14 flex-shrink-0 rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center text-white font-bold text-sm border-2 ";
-  let _block;
-  if (is_selected) {
-    _block = "border-white shadow-lg scale-110 ";
-  } else {
-    _block = "border-transparent hover:border-white/50 hover:scale-105 ";
-  }
-  let selection_classes = _block;
-  let _block$1;
-  if (can_afford) {
-    _block$1 = "";
-  } else {
-    _block$1 = "opacity-40 ";
-  }
-  let affordability_classes = _block$1;
-  return div(
-    toList([
-      class$(
-        base_classes + rarity_bg_color + " " + selection_classes + affordability_classes
-      ),
-      on_click(msg)
-    ]),
-    toList([
-      div(
-        toList([class$("text-center leading-none")]),
-        toList([text3(item_code)])
-      )
-    ])
-  );
-}
 
 // build/dev/javascript/newmoon/view.mjs
 function render_playing_view(last_orb, last_orb_message, bag, active_statuses, _, choice_orb_1, choice_orb_2) {
@@ -8878,125 +8757,49 @@ function render_game_complete_view(_, _1, _2, _3, _4) {
     ])
   );
 }
-function get_item_at_index_view(items, index3) {
-  let _pipe = drop(items, index3);
-  let _pipe$1 = first(_pipe);
-  return from_result(_pipe$1);
+function get_marketplace_symbol(orb) {
+  if (orb instanceof PointOrb) {
+    return "\u25CF";
+  } else if (orb instanceof BombOrb) {
+    return "\u25CB";
+  } else if (orb instanceof HealthOrb) {
+    return "\u25C7";
+  } else if (orb instanceof AllCollectorOrb) {
+    return "\u25CE";
+  } else if (orb instanceof PointCollectorOrb) {
+    return "\u25C9";
+  } else if (orb instanceof BombSurvivorOrb) {
+    return "\u25C6";
+  } else if (orb instanceof MultiplierOrb) {
+    return "\u25C8";
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    return "\u25C6";
+  } else if (orb instanceof BombImmunityOrb) {
+    return "\u25C7";
+  } else if (orb instanceof ChoiceOrb) {
+    return "\u25C8";
+  } else if (orb instanceof RiskOrb) {
+    return "\u26A0";
+  } else {
+    return "\u25CE";
+  }
 }
-function render_marketplace_detail_panel(credits, selected_item, marketplace_selection) {
-  if (selected_item instanceof Some) {
-    let index3 = selected_item[0];
-    let $ = get_item_at_index_view(marketplace_selection, index3);
-    if ($ instanceof Some) {
-      let item = $[0];
+function render_marketplace_grid(credits, marketplace_selection) {
+  let item_cards = index_map(
+    marketplace_selection,
+    (item, index3) => {
       let can_afford = credits >= item.price;
-      let rarity_color = rarity_color_class(item.rarity);
-      let rarity_name = rarity_display_name(item.rarity);
-      return marketplace_item_detail(
+      let symbol = get_marketplace_symbol(item.orb);
+      return marketplace_item_card(
+        symbol,
         item.name,
-        item.description,
         item.price,
-        rarity_name,
-        rarity_color,
         can_afford,
-        new PurchaseItem(0)
+        new PurchaseItem(index3)
       );
-    } else {
-      return marketplace_default_detail();
     }
-  } else {
-    return marketplace_default_detail();
-  }
-}
-function get_rarity_bg_color(rarity) {
-  if (rarity instanceof Common) {
-    return "bg-gray-400";
-  } else if (rarity instanceof Rare) {
-    return "bg-blue-500";
-  } else {
-    return "bg-purple-500";
-  }
-}
-function get_item_code(index3) {
-  if (index3 === 0) {
-    return "C1";
-  } else if (index3 === 1) {
-    return "C2";
-  } else if (index3 === 2) {
-    return "C3";
-  } else if (index3 === 3) {
-    return "C4";
-  } else if (index3 === 4) {
-    return "C5";
-  } else if (index3 === 5) {
-    return "C6";
-  } else if (index3 === 6) {
-    return "C7";
-  } else if (index3 === 7) {
-    return "R1";
-  } else if (index3 === 8) {
-    return "R2";
-  } else if (index3 === 9) {
-    return "R3";
-  } else if (index3 === 10) {
-    return "R4";
-  } else if (index3 === 11) {
-    return "X1";
-  } else if (index3 === 12) {
-    return "X2";
-  } else {
-    return "??";
-  }
-}
-function render_marketplace_catalog(credits, selected_item, marketplace_selection) {
-  return div(
-    toList([
-      class$(
-        "flex gap-3 overflow-x-auto overflow-y-hidden pt-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 w-[396px]"
-      )
-    ]),
-    index_map(
-      marketplace_selection,
-      (item, index3) => {
-        let can_afford = credits >= item.price;
-        let _block;
-        if (selected_item instanceof Some) {
-          let selected_index = selected_item[0];
-          _block = selected_index === index3;
-        } else {
-          _block = false;
-        }
-        let is_selected = _block;
-        let rarity_color = get_rarity_bg_color(item.rarity);
-        let item_code = get_item_code(index3);
-        return ultra_compact_marketplace_item(
-          item_code,
-          rarity_color,
-          can_afford,
-          is_selected,
-          new SelectMarketplaceItem(index3)
-        );
-      }
-    )
   );
-}
-function render_marketplace_two_panel(credits, selected_item, marketplace_selection) {
-  return div(
-    toList([class$("space-y-4")]),
-    toList([
-      render_marketplace_catalog(credits, selected_item, marketplace_selection),
-      div(
-        toList([class$("min-h-[200px]")]),
-        toList([
-          render_marketplace_detail_panel(
-            credits,
-            selected_item,
-            marketplace_selection
-          )
-        ])
-      )
-    ])
-  );
+  return marketplace_grid(item_cards);
 }
 function render_marketplace_stats(earned_points, total_credits) {
   return stats_grid(
@@ -9022,14 +8825,10 @@ function render_marketplace_view(model) {
       status_panel(
         marketplace_title,
         "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
-        "bg-purple-50 border-purple-200"
+        "bg-gray-50 border-gray-200"
       ),
       render_marketplace_stats(model.points, model.credits),
-      render_marketplace_two_panel(
-        model.credits,
-        model.selected_marketplace_item,
-        model.marketplace_selection
-      ),
+      render_marketplace_grid(model.credits, model.marketplace_selection),
       primary_button(
         continue_to_next_sector_text,
         new ContinueToNextLevel()
