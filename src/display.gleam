@@ -1,7 +1,7 @@
 import types.{
-  type Orb, type Rarity, AllCollectorOrb, BombImmunityOrb, BombOrb,
-  BombSurvivorOrb, ChoiceOrb, Common, Cosmic, HealthOrb, MultiplierOrb,
-  NextPointMultiplierOrb, PointCollectorOrb, PointOrb, PointRecoveryOrb, Rare,
+  type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb,
+  BombSurvivorOrb, ChoiceOrb, HealthOrb, MultiplierOrb,
+  NextPointMultiplierOrb, PointCollectorOrb, PointOrb, PointRecoveryOrb,
   RiskOrb,
 }
 
@@ -71,26 +71,9 @@ pub const specimens_suffix = " SPECIMENS"
 // Main Menu Messages
 pub const start_game_button_text = "START MISSION"
 
-pub const orb_testing_button_text = "SAMPLE TESTING"
-
 pub const main_menu_subtitle = "PREPARE FOR DEEP SPACE EXPLORATION"
 
-// Orb Testing Messages
-pub const orb_testing_title = "SAMPLE TESTING PROTOCOL"
-
-pub const orb_testing_subtitle = "SELECT A SAMPLE TYPE FOR CONTROLLED TESTING"
-
 pub const back_to_menu_text = "BACK TO MENU"
-
-pub const testing_mode_indicator = "TESTING MODE ACTIVE"
-
-pub const test_data_sample_text = "TEST DATA SAMPLE"
-
-pub const test_hazard_sample_text = "TEST HAZARD SAMPLE"
-
-pub const reset_testing_text = "RESET TEST"
-
-pub const exit_testing_text = "EXIT TO MENU"
 
 // Game Status Messages
 pub const sector_complete_title = "SECTOR COMPLETE"

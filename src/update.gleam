@@ -5,27 +5,15 @@ import gleam/list
 import gleam/option.{None, Some}
 import status
 import types.{
-  type Model, type Msg, type Orb, type OrbType, type Rarity, AcceptFate,
-  AcceptRisk, AllCollectorOrb, AllCollectorSample, ApplyRiskEffects,
-  BackToMainMenu, BackToOrbTesting, BombImmunityOrb, BombImmunitySample, BombOrb,
-  BombSurvivorOrb, BombSurvivorSample, ChoiceOrb, ChoiceSample, ChooseOrb,
-  Choosing, ClearOnGame, ClearOnLevel, Common, ConfirmOrbValue,
-  ContinueAfterRiskConsumption, ContinueToNextLevel, Cosmic, DataSample, Defeat,
-  ExitRisk, ExitTesting, Failure, Game, GameComplete, Gameplay, GoToMarketplace,
-  GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Marketplace,
-  MarketplaceItem, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel,
-  NextPointMultiplierOrb, NextPointMultiplierSample, OrbSelection, Playing,
-  PointCollectorOrb, PointCollectorSample, PointOrb, PointRecoveryOrb,
-  PointRecoverySample, PullOrb, PullRiskOrb, PurchaseItem, Rare, ResetTesting,
-  RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying,
-  RiskReveal, RiskSample, RiskSurvived, SelectMarketplaceItem, SelectOrbType,
-  StartGame, StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
-  StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
-  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
-  TestGameComplete, Testing, TestingChoosing, TestingRiskAccept,
-  TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
-  TestingRiskSurvived, ToggleDevMode, UpdateInputValue, ValueConfiguration,
-  Victory,
+  type Model, type Msg, type Orb, AcceptFate, AcceptRisk, AllCollectorOrb,
+  ApplyRiskEffects, BackToMainMenu, BombImmunityOrb, BombOrb, BombSurvivorOrb,
+  ChoiceOrb, ChooseOrb, Choosing, ClearOnGame, ClearOnLevel,
+  ContinueAfterRiskConsumption, ContinueToNextLevel, Defeat, ExitRisk, Game,
+  GameComplete, GoToMarketplace, HealthOrb, Main, Marketplace, Menu, Model,
+  MultiplierOrb, NextLevel, NextPointMultiplierOrb, Playing, PointCollectorOrb,
+  PointOrb, PointRecoveryOrb, PullOrb, PullRiskOrb, PurchaseItem, RestartGame,
+  RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying, RiskReveal,
+  RiskSurvived, SelectMarketplaceItem, StartGame, ToggleDevMode, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -40,7 +28,6 @@ pub fn init(_) -> Model {
     screen: Menu(Main),
     last_orb: None,
     last_orb_message: None,
-    input_value: "",
     pulled_orbs: [],
     point_multiplier: 1,
     bomb_immunity: 0,
@@ -224,11 +211,6 @@ fn generate_marketplace_selection() -> List(types.MarketplaceItem) {
   |> list.flatten
 }
 
-// Test bag that includes the test orb plus the standard starter orbs
-fn create_test_bag(test_orb: Orb) -> List(Orb) {
-  [test_orb] |> list.append(starter_orbs())
-}
-
 // Helper function to count PointOrbs in a list
 fn count_point_orbs(orbs: List(Orb)) -> Int {
   list.fold(orbs, 0, fn(count, orb) {
@@ -294,29 +276,11 @@ fn find_lowest_point_orb(pulled_orbs: List(Orb)) -> option.Option(Orb) {
 pub fn update(model: Model, msg: Msg) -> Model {
   case msg {
     StartGame -> handle_start_game(model)
-    GoToOrbTesting -> handle_go_to_orb_testing(model)
-    SelectOrbType(orb_type) -> handle_select_orb_type(model, orb_type)
-    UpdateInputValue(value) -> handle_update_input_value(model, value)
-    ConfirmOrbValue(orb_type) -> handle_confirm_orb_value(model, orb_type)
     BackToMainMenu -> handle_back_to_main_menu(model)
-    BackToOrbTesting -> handle_back_to_orb_testing(model)
-    StartTestingWithBothStatuses ->
-      handle_start_testing_with_both_statuses(model)
-    StartTestingWithTripleChoice ->
-      handle_start_testing_with_triple_choice(model)
-    StartTestingRiskSuccess -> handle_start_testing_risk_success(model)
-    StartTestingRiskFailure -> handle_start_testing_risk_failure(model)
-    StartTestingRiskContinue -> handle_start_testing_risk_continue(model)
-    StartTestingPointRecoveryFirst ->
-      handle_start_testing_point_recovery_first(model)
-    StartTestingPointRecoveryActive ->
-      handle_start_testing_point_recovery_active(model)
     ChooseOrb(choice_index) -> handle_choose_orb(model, choice_index)
     PullOrb -> handle_pull_orb(model)
     NextLevel -> handle_next_level(model)
     RestartGame -> handle_restart_game(model)
-    ResetTesting -> handle_reset_testing(model)
-    ExitTesting -> handle_exit_testing(model)
     ToggleDevMode -> handle_toggle_dev_mode(model)
     AcceptRisk(accept) -> handle_accept_risk(model, accept)
     AcceptFate -> handle_accept_fate(model)
@@ -325,7 +289,6 @@ pub fn update(model: Model, msg: Msg) -> Model {
     ContinueAfterRiskConsumption ->
       handle_continue_after_risk_consumption(model)
     ExitRisk -> handle_exit_risk(model)
-    TestGameComplete -> handle_test_game_complete(model)
     GoToMarketplace -> handle_go_to_marketplace(model)
     ContinueToNextLevel -> handle_continue_to_next_level(model)
     SelectMarketplaceItem(item_index) ->
@@ -352,330 +315,8 @@ fn handle_start_game(model: Model) -> Model {
   )
 }
 
-fn handle_go_to_orb_testing(model: Model) -> Model {
-  Model(..model, screen: Testing(OrbSelection))
-}
-
-fn handle_select_orb_type(model: Model, orb_type: OrbType) -> Model {
-  Model(
-    ..model,
-    screen: Testing(ValueConfiguration(orb_type)),
-    input_value: "1",
-  )
-}
-
-fn handle_update_input_value(model: Model, value: String) -> Model {
-  Model(..model, input_value: value)
-}
-
-fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
-  case orb_type {
-    MultiplierSample -> {
-      case float.parse(model.input_value) {
-        Ok(multiplier_value) if multiplier_value >=. 1.0 -> {
-          let test_orb = MultiplierOrb(multiplier_value)
-          let clean_model =
-            status.clear_statuses_by_persistence(model, ClearOnGame)
-          Model(
-            ..clean_model,
-            screen: Testing(Gameplay),
-            bag: create_test_bag(test_orb),
-            health: 5,
-            points: 0,
-            last_orb: None,
-            last_orb_message: None,
-            pulled_orbs: [],
-            point_multiplier: 1,
-            bomb_immunity: 0,
-            choice_orb_1: None,
-            choice_orb_2: None,
-            input_value: "",
-            risk_orbs: [],
-            risk_original_orbs: [],
-            risk_pulled_orbs: [],
-            risk_accumulated_effects: types.RiskEffects(
-              health_gained: 0,
-              points_gained: 0,
-              damage_taken: 0,
-              special_orbs: [],
-            ),
-            risk_health: 5,
-            selected_marketplace_item: None,
-            marketplace_selection: [],
-          )
-        }
-        _ -> model
-      }
-    }
-    NextPointMultiplierSample -> {
-      case float.parse(model.input_value) {
-        Ok(multiplier_value) if multiplier_value >=. 1.0 -> {
-          let test_orb = NextPointMultiplierOrb(multiplier_value)
-          let clean_model =
-            status.clear_statuses_by_persistence(model, ClearOnGame)
-          Model(
-            ..clean_model,
-            screen: Testing(Gameplay),
-            bag: create_test_bag(test_orb),
-            health: 5,
-            points: 0,
-            last_orb: None,
-            last_orb_message: None,
-            pulled_orbs: [],
-            point_multiplier: 1,
-            bomb_immunity: 0,
-            choice_orb_1: None,
-            choice_orb_2: None,
-            input_value: "",
-            risk_orbs: [],
-            risk_original_orbs: [],
-            risk_pulled_orbs: [],
-            risk_accumulated_effects: types.RiskEffects(
-              health_gained: 0,
-              points_gained: 0,
-              damage_taken: 0,
-              special_orbs: [],
-            ),
-            risk_health: 5,
-            selected_marketplace_item: None,
-            marketplace_selection: [],
-          )
-        }
-        _ -> model
-      }
-    }
-    _ -> {
-      case int.parse(model.input_value) {
-        Ok(value) if value > 0 -> {
-          let test_orb = case orb_type {
-            DataSample -> PointOrb(value)
-            HazardSample -> BombOrb(value)
-            HealthSample -> HealthOrb(value)
-            AllCollectorSample -> AllCollectorOrb(value)
-            PointCollectorSample -> PointCollectorOrb(value)
-            BombSurvivorSample -> BombSurvivorOrb(value)
-            BombImmunitySample -> BombImmunityOrb
-            ChoiceSample -> ChoiceOrb
-            RiskSample -> RiskOrb
-            PointRecoverySample -> PointRecoveryOrb
-            MultiplierSample -> MultiplierOrb(2.0)
-            // This case won't be reached
-            NextPointMultiplierSample -> NextPointMultiplierOrb(2.0)
-            // This case won't be reached
-          }
-          let clean_model =
-            status.clear_statuses_by_persistence(model, ClearOnGame)
-          Model(
-            ..clean_model,
-            screen: Testing(Gameplay),
-            bag: create_test_bag(test_orb),
-            health: 5,
-            points: 0,
-            last_orb: None,
-            last_orb_message: None,
-            pulled_orbs: [],
-            point_multiplier: 1,
-            bomb_immunity: 0,
-            choice_orb_1: None,
-            choice_orb_2: None,
-            input_value: "",
-            risk_orbs: [],
-            risk_original_orbs: [],
-            risk_pulled_orbs: [],
-            risk_accumulated_effects: types.RiskEffects(
-              health_gained: 0,
-              points_gained: 0,
-              damage_taken: 0,
-              special_orbs: [],
-            ),
-            risk_health: 5,
-            selected_marketplace_item: None,
-            marketplace_selection: [],
-          )
-        }
-        _ -> model
-        // Invalid input, stay on current screen
-      }
-    }
-  }
-}
-
-fn handle_back_to_orb_testing(model: Model) -> Model {
-  Model(..model, screen: Testing(OrbSelection))
-}
-
-fn handle_start_testing_with_both_statuses(model: Model) -> Model {
-  let test_bag =
-    [MultiplierOrb(2.0), BombImmunityOrb] |> list.append(starter_orbs())
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
-}
-
-fn handle_start_testing_with_triple_choice(model: Model) -> Model {
-  let test_bag =
-    [ChoiceOrb, ChoiceOrb, ChoiceOrb] |> list.append(starter_orbs())
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
-}
-
 fn handle_back_to_main_menu(model: Model) -> Model {
   Model(..model, screen: Menu(Main))
-}
-
-fn handle_start_testing_risk_success(model: Model) -> Model {
-  // Test bag for risk success: RiskOrb first, then mixed rewards/damage with health to survive
-  // PointOrb(3) → 6 points (2× bonus), BombOrb(1) → 4 health, PointOrb(2) → 4 points (2× bonus),
-  // HealthOrb(2) → 6 health (full), PointOrb(1) → 2 points (2× bonus)
-  // Total: 12 enhanced points, survives with full health after taking damage
-  let risk_orbs = [
-    PointOrb(3),
-    BombOrb(1),
-    PointOrb(2),
-    HealthOrb(2),
-    PointOrb(1),
-  ]
-  let test_bag =
-    [RiskOrb] |> list.append(risk_orbs) |> list.append(starter_orbs())
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
-}
-
-fn handle_start_testing_risk_failure(model: Model) -> Model {
-  // Test bag for risk failure: RiskOrb first, then bombs to kill player
-  // BombOrb(2) → 3 health, BombOrb(2) → 1 health, BombOrb(2) → -1 health (death)
-  // Dies on 3rd extraction, shows "YOU RISKED OUT" screen
-  let risk_orbs = [BombOrb(2), BombOrb(2), BombOrb(2), BombOrb(1)]
-  let test_bag =
-    [RiskOrb] |> list.append(risk_orbs) |> list.append(starter_orbs())
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
-}
-
-fn handle_start_testing_risk_continue(model: Model) -> Model {
-  // Test bag for risk continue: RiskOrb first, then small rewards that won't reach milestone
-  // PointOrb(1) → 2 points (2× bonus), PointOrb(1) → 2 points (2× bonus), 
-  // PointOrb(1) → 2 points (2× bonus), PointOrb(1) → 2 points (2× bonus)
-  // Total: 8 enhanced points, survives but doesn't reach the high milestone (50)
-  let risk_orbs = [
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(1),
-  ]
-  let test_bag =
-    [RiskOrb] |> list.append(risk_orbs) |> list.append(starter_orbs())
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    milestone: 50,
-    // Much higher milestone to test continue case
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
-}
-
-fn handle_start_testing_point_recovery_first(model: Model) -> Model {
-  // Test bag for point recovery first: PointRecoveryOrb first, then PointOrbs
-  // Tests scenario where PointRecoveryOrb is pulled when no PointOrbs have been pulled yet
-  let test_bag = [PointRecoveryOrb, PointOrb(1), PointOrb(2), PointOrb(3)]
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
-}
-
-fn handle_start_testing_point_recovery_active(model: Model) -> Model {
-  // Test bag for point recovery active: 2 PointOrbs, then PointRecoveryOrb, then 1 PointOrb
-  // Tests scenario where PointRecoveryOrb can recover the lowest pulled PointOrb
-  let test_bag = [PointOrb(1), PointOrb(3), PointRecoveryOrb, PointOrb(2)]
-  let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-  Model(
-    ..clean_model,
-    screen: Testing(Gameplay),
-    bag: test_bag,
-    health: 5,
-    points: 0,
-    last_orb: None,
-    last_orb_message: None,
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    choice_orb_1: None,
-    choice_orb_2: None,
-  )
 }
 
 // Helper function to apply both next point multiplier and regular multiplier to points
@@ -705,7 +346,7 @@ fn apply_point_multipliers(model: Model, base_points: Int) -> #(Model, Int) {
 
 fn handle_pull_orb(model: Model) -> Model {
   case model.screen {
-    Game(Playing) | Testing(Gameplay) -> {
+    Game(Playing) -> {
       case model.bag {
         [] -> check_game_status(model)
         [first_orb, ..rest] -> {
@@ -913,7 +554,6 @@ fn handle_choice_orb_activation(model: Model) -> Model {
       // Present choice between the next two orbs
       let screen = case model.screen {
         Game(Playing) -> Game(Choosing)
-        Testing(Gameplay) -> Testing(TestingChoosing)
         _ -> model.screen
       }
       let choice_model =
@@ -941,7 +581,6 @@ fn handle_restart_game(model: Model) -> Model {
     screen: Menu(Main),
     last_orb: None,
     last_orb_message: None,
-    input_value: "",
     pulled_orbs: [],
     point_multiplier: 1,
     bomb_immunity: 0,
@@ -984,58 +623,8 @@ fn handle_next_level(model: Model) -> Model {
   )
 }
 
-fn handle_reset_testing(model: Model) -> Model {
-  Model(..model, screen: Testing(OrbSelection))
-}
-
-fn handle_exit_testing(model: Model) -> Model {
-  Model(
-    health: 5,
-    points: 0,
-    credits: 0,
-    level: 1,
-    milestone: get_milestone_for_level(1),
-    bag: starter_orbs(),
-    purchased_orbs: [],
-    screen: Menu(Main),
-    last_orb: None,
-    last_orb_message: None,
-    input_value: "",
-    pulled_orbs: [],
-    point_multiplier: 1,
-    bomb_immunity: 0,
-    active_statuses: [],
-    choice_orb_1: None,
-    choice_orb_2: None,
-    dev_mode: model.dev_mode,
-    risk_orbs: [],
-    risk_original_orbs: [],
-    risk_pulled_orbs: [],
-    risk_accumulated_effects: types.RiskEffects(
-      health_gained: 0,
-      points_gained: 0,
-      damage_taken: 0,
-      special_orbs: [],
-    ),
-    risk_health: 5,
-    selected_marketplace_item: None,
-    marketplace_selection: [],
-  )
-}
-
 fn check_game_status(model: Model) -> Model {
   case model.screen {
-    Testing(Gameplay) ->
-      case
-        model.health <= 0,
-        model.points >= model.milestone,
-        list.is_empty(model.bag)
-      {
-        True, _, _ -> Model(..model, screen: Testing(Failure))
-        False, True, _ -> Model(..model, screen: Testing(Success))
-        False, False, True -> Model(..model, screen: Testing(Failure))
-        False, False, False -> model
-      }
     Game(Playing) ->
       case
         model.health <= 0,
@@ -1083,32 +672,6 @@ fn handle_choose_orb(model: Model, choice_index: Int) -> Model {
       // Process the chosen orb (this handles ChoiceOrb -> ChoiceOrb chains naturally)
       handle_pull_orb(temp_model)
     }
-    Testing(TestingChoosing), Some(first_choice), Some(second_choice) -> {
-      let chosen_orb = case choice_index {
-        0 -> first_choice
-        _ -> second_choice
-      }
-      let unchosen_orb = case choice_index {
-        0 -> second_choice
-        _ -> first_choice
-      }
-
-      // Put the unchosen orb back to the end of the bag
-      let new_bag = list.append(model.bag, [unchosen_orb])
-
-      // Clear choice state and set up to process the chosen orb
-      let temp_model =
-        Model(
-          ..model,
-          bag: [chosen_orb, ..new_bag],
-          screen: Testing(Gameplay),
-          choice_orb_1: None,
-          choice_orb_2: None,
-        )
-
-      // Process the chosen orb (this handles ChoiceOrb -> ChoiceOrb chains naturally)
-      handle_pull_orb(temp_model)
-    }
     _, _, _ -> model
   }
 }
@@ -1121,7 +684,6 @@ fn handle_risk_orb_activation(model: Model) -> Model {
   // Transition to risk accept screen
   let screen = case model.screen {
     Game(Playing) -> Game(RiskAccept)
-    Testing(Gameplay) -> Testing(TestingRiskAccept)
     _ -> model.screen
   }
   Model(..model, screen: screen)
@@ -1134,8 +696,6 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
       case model.screen {
         Game(RiskAccept) ->
           check_game_status(Model(..model, screen: Game(Playing)))
-        Testing(TestingRiskAccept) ->
-          check_game_status(Model(..model, screen: Testing(Gameplay)))
         _ -> model
       }
     }
@@ -1147,7 +707,6 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
           let remaining_bag = list.drop(model.bag, 5)
           let screen = case model.screen {
             Game(RiskAccept) -> Game(RiskReveal)
-            Testing(TestingRiskAccept) -> Testing(TestingRiskReveal)
             _ -> model.screen
           }
           Model(
@@ -1179,7 +738,6 @@ fn handle_accept_fate(model: Model) -> Model {
   // Transition from reveal to playing the risk mini-game
   let screen = case model.screen {
     Game(RiskReveal) -> Game(RiskPlaying)
-    Testing(TestingRiskReveal) -> Testing(TestingRiskPlaying)
     _ -> model.screen
   }
   Model(..model, screen: screen)
@@ -1217,7 +775,6 @@ fn handle_pull_risk_orb(model: Model) -> Model {
         True -> {
           let screen = case model.screen {
             Game(RiskPlaying) -> Game(RiskSurvived)
-            Testing(TestingRiskPlaying) -> Testing(TestingRiskSurvived)
             _ -> model.screen
           }
           Model(..updated_model, screen: screen)
@@ -1241,7 +798,6 @@ fn handle_apply_risk_effects(model: Model) -> Model {
       // Player risked out - show special death screen
       let death_screen = case model.screen {
         Game(RiskSurvived) -> Game(RiskDied)
-        Testing(TestingRiskSurvived) -> Testing(TestingRiskDied)
         _ -> model.screen
       }
       Model(..model, screen: death_screen, health: final_health)
@@ -1276,7 +832,6 @@ fn handle_apply_risk_effects(model: Model) -> Model {
       // Show consumption success screen first
       let consumption_screen = case model.screen {
         Game(RiskSurvived) -> Game(RiskConsumed)
-        Testing(TestingRiskSurvived) -> Testing(TestingRiskConsumed)
         _ -> model.screen
       }
 
@@ -1313,8 +868,6 @@ fn handle_continue_after_risk_consumption(model: Model) -> Model {
   case model.screen {
     Game(RiskConsumed) ->
       check_game_status(Model(..clean_model, screen: Game(Playing)))
-    Testing(TestingRiskConsumed) ->
-      check_game_status(Model(..clean_model, screen: Testing(Gameplay)))
     _ -> clean_model
   }
 }
@@ -1389,18 +942,6 @@ fn accumulate_risk_orb(
       #(new_effects, display.orb_result_message(special_orb))
     }
   }
-}
-
-// Test function to jump directly to GameComplete screen
-fn handle_test_game_complete(model: Model) -> Model {
-  Model(
-    ..model,
-    screen: Game(GameComplete),
-    level: 5,
-    points: 66,
-    milestone: 66,
-    health: 3,
-  )
 }
 
 // Transition to marketplace after completing a level

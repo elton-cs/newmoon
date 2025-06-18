@@ -14,7 +14,7 @@ import types.{
   ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb,
   NextPointMultiplier, NextPointMultiplierOrb, Permanent, PointCollectorOrb,
   PointMultiplier, PointOrb, PointRecoveryOrb, PullOrb, PullRiskOrb, RiskOrb,
-  Testing, TestingChoosing, ToggleDevMode, Triggered, UpdateInputValue,
+  ToggleDevMode, Triggered,
 }
 
 // Layout Components
@@ -401,82 +401,6 @@ pub fn failure_panel(title: String, message: String) -> Element(Msg) {
   ])
 }
 
-// Orb Testing Components
-
-pub fn orb_selection_button(text: String, msg: Msg) -> Element(Msg) {
-  html.button(
-    [
-      attribute.class(
-        "w-full bg-purple-600 hover:bg-purple-700 text-white font-light py-3 px-6 rounded transition transform hover:scale-[1.02] text-sm tracking-wider",
-      ),
-      event.on_click(msg),
-    ],
-    [html.text(text)],
-  )
-}
-
-// Input Components
-
-pub fn number_input(value: String) -> Element(Msg) {
-  html.div([attribute.class("mb-4")], [
-    html.label(
-      [
-        attribute.class("block text-sm font-light text-gray-700 mb-2"),
-        attribute.for("value-input"),
-      ],
-      [html.text("Value:")],
-    ),
-    html.input([
-      attribute.id("value-input"),
-      attribute.type_("number"),
-      attribute.value(value),
-      attribute.min("1"),
-      attribute.placeholder("Enter a positive number"),
-      attribute.class(
-        "w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg",
-      ),
-      event.on_input(UpdateInputValue),
-    ]),
-  ])
-}
-
-pub fn float_input(value: String) -> Element(Msg) {
-  html.div([attribute.class("mb-4")], [
-    html.label(
-      [
-        attribute.class("block text-sm font-light text-gray-700 mb-2"),
-        attribute.for("value-input"),
-      ],
-      [html.text("Multiplier Value:")],
-    ),
-    html.input([
-      attribute.id("value-input"),
-      attribute.type_("number"),
-      attribute.value(value),
-      attribute.min("1"),
-      attribute.max("10"),
-      attribute.step("0.5"),
-      attribute.placeholder("Enter multiplier (e.g., 1.0, 1.5, 2.0, 2.5, 3.0)"),
-      attribute.class(
-        "w-full px-4 py-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg",
-      ),
-      event.on_input(UpdateInputValue),
-    ]),
-  ])
-}
-
-pub fn testing_mode_indicator() -> Element(Msg) {
-  html.div(
-    [attribute.class("p-2 bg-yellow-50 border border-yellow-200 rounded")],
-    [
-      html.p(
-        [attribute.class("text-yellow-700 font-medium text-xs tracking-wider")],
-        [html.text(display.testing_mode_indicator)],
-      ),
-    ],
-  )
-}
-
 // Status Effects Components
 
 pub fn status_effects_display(status_effects: List(String)) -> Element(Msg) {
@@ -694,7 +618,7 @@ fn render_dev_mode_content(
   }
 
   let choice_section = case screen {
-    Game(Choosing) | Testing(TestingChoosing) -> [
+    Game(Choosing) -> [
       render_choice_mode_info(choice_orb_1, choice_orb_2),
       html.div([attribute.class("mt-3 pt-3 border-t border-yellow-300")], []),
     ]

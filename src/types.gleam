@@ -62,21 +62,6 @@ pub type MenuScreen {
   Main
 }
 
-pub type TestingScreen {
-  OrbSelection
-  ValueConfiguration(OrbType)
-  Gameplay
-  Success
-  Failure
-  TestingChoosing
-  TestingRiskAccept
-  TestingRiskReveal
-  TestingRiskPlaying
-  TestingRiskSurvived
-  TestingRiskConsumed
-  TestingRiskDied
-}
-
 pub type GameScreen {
   Playing
   Victory
@@ -94,23 +79,7 @@ pub type GameScreen {
 
 pub type Screen {
   Menu(MenuScreen)
-  Testing(TestingScreen)
   Game(GameScreen)
-}
-
-pub type OrbType {
-  DataSample
-  HazardSample
-  HealthSample
-  MultiplierSample
-  NextPointMultiplierSample
-  AllCollectorSample
-  PointCollectorSample
-  BombSurvivorSample
-  BombImmunitySample
-  ChoiceSample
-  RiskSample
-  PointRecoverySample
 }
 
 pub type Model {
@@ -125,7 +94,6 @@ pub type Model {
     screen: Screen,
     last_orb: Option(Orb),
     last_orb_message: Option(String),
-    input_value: String,
     pulled_orbs: List(Orb),
     point_multiplier: Int,
     bomb_immunity: Int,
@@ -145,24 +113,10 @@ pub type Model {
 
 pub type Msg {
   StartGame
-  GoToOrbTesting
-  SelectOrbType(OrbType)
-  UpdateInputValue(String)
-  ConfirmOrbValue(OrbType)
   BackToMainMenu
-  BackToOrbTesting
-  StartTestingWithBothStatuses
-  StartTestingWithTripleChoice
-  StartTestingRiskSuccess
-  StartTestingRiskFailure
-  StartTestingRiskContinue
-  StartTestingPointRecoveryFirst
-  StartTestingPointRecoveryActive
   PullOrb
   NextLevel
   RestartGame
-  ResetTesting
-  ExitTesting
   ChooseOrb(Int)
   ToggleDevMode
   AcceptRisk(Bool)
@@ -171,7 +125,6 @@ pub type Msg {
   ApplyRiskEffects
   ContinueAfterRiskConsumption
   ExitRisk
-  TestGameComplete
   GoToMarketplace
   ContinueToNextLevel
   SelectMarketplaceItem(Int)
