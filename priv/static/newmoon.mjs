@@ -1111,6 +1111,19 @@ function compare(a, b) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function compare2(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
+}
 function min(a, b) {
   let $ = a < b;
   if ($) {
@@ -1721,6 +1734,28 @@ function sort(list4, compare4) {
       return merge_all(sequences$1, new Ascending(), compare4);
     }
   }
+}
+function range_loop(loop$start, loop$stop, loop$acc) {
+  while (true) {
+    let start4 = loop$start;
+    let stop = loop$stop;
+    let acc = loop$acc;
+    let $ = compare2(start4, stop);
+    if ($ instanceof Lt) {
+      loop$start = start4;
+      loop$stop = stop - 1;
+      loop$acc = prepend(stop, acc);
+    } else if ($ instanceof Eq) {
+      return prepend(stop, acc);
+    } else {
+      loop$start = start4;
+      loop$stop = stop + 1;
+      loop$acc = prepend(stop, acc);
+    }
+  }
+}
+function range(start4, stop) {
+  return range_loop(start4, stop, toList([]));
 }
 function shuffle_pair_unwrap_loop(loop$list, loop$acc) {
   while (true) {
@@ -5955,29 +5990,24 @@ function add_status(model, new_status) {
 }
 
 // build/dev/javascript/newmoon/update.mjs
+function repeat_orb(orb, count) {
+  let _pipe = range(0, count - 1);
+  return map(_pipe, (_) => {
+    return orb;
+  });
+}
 function starter_orbs() {
-  return toList([
-    new PointOrb(1),
-    new PointOrb(1),
-    new PointOrb(1),
-    new PointOrb(1),
-    new PointOrb(2),
-    new PointOrb(2),
-    new PointOrb(2),
-    new PointOrb(2),
-    new PointOrb(3),
-    new PointOrb(3),
-    new PointOrb(3),
-    new PointOrb(4),
-    new PointOrb(4),
-    new PointOrb(5),
-    new PointOrb(5),
-    new PointOrb(6),
-    new PointOrb(6),
-    new PointOrb(7),
-    new PointOrb(8),
-    new PointOrb(10)
+  let _pipe = toList([
+    repeat_orb(new BombOrb(1), 3),
+    repeat_orb(new BombOrb(2), 2),
+    repeat_orb(new BombOrb(3), 1),
+    repeat_orb(new PointOrb(5), 2),
+    toList([new MultiplierOrb(2)]),
+    toList([new AllCollectorOrb(1)]),
+    toList([new BombSurvivorOrb(1)]),
+    toList([new ChoiceOrb()])
   ]);
+  return flatten(_pipe);
 }
 function init(_) {
   return new Model(

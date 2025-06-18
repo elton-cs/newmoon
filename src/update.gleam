@@ -63,30 +63,33 @@ pub fn init(_) -> Model {
   )
 }
 
+// Helper function to create multiple instances of the same orb
+fn repeat_orb(orb: Orb, count: Int) -> List(Orb) {
+  list.range(0, count - 1)
+  |> list.map(fn(_) { orb })
+}
+
 // Single consistent orb bag used for all levels
 fn starter_orbs() -> List(Orb) {
   [
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(1),
-    PointOrb(2),
-    PointOrb(2),
-    PointOrb(2),
-    PointOrb(2),
-    PointOrb(3),
-    PointOrb(3),
-    PointOrb(3),
-    PointOrb(4),
-    PointOrb(4),
-    PointOrb(5),
-    PointOrb(5),
-    PointOrb(6),
-    PointOrb(6),
-    PointOrb(7),
-    PointOrb(8),
-    PointOrb(10),
+    repeat_orb(BombOrb(1), 3),
+    // 3x Bomb (1 damage each)
+    repeat_orb(BombOrb(2), 2),
+    // 2x Double Bomb (2 damage each)
+    repeat_orb(BombOrb(3), 1),
+    // 1x Triple Bomb (3 damage)
+    repeat_orb(PointOrb(5), 2),
+    // 2x 5 points
+    [MultiplierOrb(2.0)],
+    // 1x x2 all future points
+    [AllCollectorOrb(1)],
+    // 1x 1 per item remaining in bag
+    [BombSurvivorOrb(1)],
+    // 1x 1 per bomb item pulled
+    [ChoiceOrb],
+    // 1x Choose between next 2 orbs
   ]
+  |> list.flatten
 }
 
 // Combine starter orbs with purchased orbs for full bag
