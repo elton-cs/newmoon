@@ -59,7 +59,7 @@ pub fn game_header() -> Element(Msg) {
 // Stat Display Components
 
 pub fn stats_grid(stats: List(Element(Msg))) -> Element(Msg) {
-  html.div([attribute.class("grid grid-cols-2 gap-3")], stats)
+  html.div([attribute.class("grid grid-cols-2 grid-rows-3 gap-3")], stats)
 }
 
 pub fn stat_card(
@@ -81,6 +81,32 @@ pub fn stat_card(
     html.div(
       [attribute.class(string.concat(["text-2xl font-light ", color_class]))],
       [html.text(value)],
+    ),
+  ])
+}
+
+pub fn status_stat_card(status_effects: List(String)) -> Element(Msg) {
+  let status_text = case status_effects {
+    [] -> "NONE"
+    effects ->
+      effects
+      |> list.take(2)
+      |> string.join(" • ")
+  }
+
+  html.div([attribute.class("bg-gray-50 rounded border border-gray-100 p-4")], [
+    html.div([attribute.class("text-lg font-light mb-1")], [html.text("◈")]),
+    html.div(
+      [
+        attribute.class(
+          "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light",
+        ),
+      ],
+      [html.text("STATUS")],
+    ),
+    html.div(
+      [attribute.class("text-sm font-light text-gray-600 leading-tight")],
+      [html.text(status_text)],
     ),
   ])
 }

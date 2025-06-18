@@ -1810,6 +1810,31 @@ function concat_loop(loop$strings, loop$accumulator) {
 function concat2(strings) {
   return concat_loop(strings, "");
 }
+function join_loop(loop$strings, loop$separator, loop$accumulator) {
+  while (true) {
+    let strings = loop$strings;
+    let separator = loop$separator;
+    let accumulator = loop$accumulator;
+    if (strings instanceof Empty) {
+      return accumulator;
+    } else {
+      let string5 = strings.head;
+      let strings$1 = strings.tail;
+      loop$strings = strings$1;
+      loop$separator = separator;
+      loop$accumulator = accumulator + separator + string5;
+    }
+  }
+}
+function join(strings, separator) {
+  if (strings instanceof Empty) {
+    return "";
+  } else {
+    let first$1 = strings.head;
+    let rest = strings.tail;
+    return join_loop(rest, separator, first$1);
+  }
+}
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic/decode.mjs
 var Decoder = class extends CustomType {
@@ -7668,7 +7693,10 @@ function game_header() {
   );
 }
 function stats_grid(stats) {
-  return div(toList([class$("grid grid-cols-2 gap-3")]), stats);
+  return div(
+    toList([class$("grid grid-cols-2 grid-rows-3 gap-3")]),
+    stats
+  );
 }
 function stat_card(symbol, label, value, color_class) {
   return div(
@@ -7693,6 +7721,41 @@ function stat_card(symbol, label, value, color_class) {
           )
         ]),
         toList([text3(value)])
+      )
+    ])
+  );
+}
+function status_stat_card(status_effects) {
+  let _block;
+  if (status_effects instanceof Empty) {
+    _block = "NONE";
+  } else {
+    let effects = status_effects;
+    let _pipe = effects;
+    let _pipe$1 = take(_pipe, 2);
+    _block = join(_pipe$1, " \u2022 ");
+  }
+  let status_text = _block;
+  return div(
+    toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
+    toList([
+      div(
+        toList([class$("text-lg font-light mb-1")]),
+        toList([text3("\u25C8")])
+      ),
+      div(
+        toList([
+          class$(
+            "text-xs text-gray-400 uppercase tracking-widest mb-1 font-light"
+          )
+        ]),
+        toList([text3("STATUS")])
+      ),
+      div(
+        toList([
+          class$("text-sm font-light text-gray-600 leading-tight")
+        ]),
+        toList([text3(status_text)])
       )
     ])
   );
@@ -8074,29 +8137,6 @@ function failure_panel(title, message) {
       )
     ])
   );
-}
-function status_effects_display(status_effects) {
-  if (status_effects instanceof Empty) {
-    return div(toList([class$("h-0")]), toList([]));
-  } else {
-    let effects = status_effects;
-    return div(
-      toList([class$("flex flex-wrap gap-2")]),
-      map(
-        effects,
-        (effect_text) => {
-          return div(
-            toList([
-              class$(
-                "px-3 py-2 bg-blue-100 border border-blue-300 rounded-lg text-blue-800 text-xs font-medium shadow-sm"
-              )
-            ]),
-            toList([text3(effect_text)])
-          );
-        }
-      )
-    );
-  }
 }
 function get_orb_style_classes(orb) {
   if (orb instanceof PointOrb) {
@@ -8768,38 +8808,60 @@ function ultra_compact_marketplace_item(item_code, rarity_bg_color, can_afford, 
 }
 
 // build/dev/javascript/newmoon/view.mjs
-function render_game_stats(health, points, milestone, level, credits) {
-  return stats_grid(
+function render_playing_view(last_orb, last_orb_message, bag, active_statuses, _, choice_orb_1, choice_orb_2) {
+  let orbs_left = length(bag);
+  let is_disabled = is_empty(bag);
+  let _block;
+  if (choice_orb_2 instanceof Some) {
+    if (choice_orb_1 instanceof Some) {
+      _block = true;
+    } else {
+      _block = false;
+    }
+  } else {
+    _block = false;
+  }
+  let is_choosing = _block;
+  return fragment2(
     toList([
-      stat_card(
-        "\u25CB",
-        systems_label,
-        to_string(health),
-        "text-black"
-      ),
-      stat_card(
-        "\u25CF",
-        data_label,
-        to_string(points),
-        "text-gray-700"
-      ),
-      stat_card(
-        "\u25CE",
-        target_label,
-        to_string(milestone),
-        "text-gray-600"
-      ),
-      stat_card(
-        "\u25C9",
-        sector_label,
-        to_string(level),
-        "text-gray-500"
-      ),
-      stat_card(
-        "\u25C7",
-        credits_label,
-        to_string(credits),
-        "text-purple-600"
+      (() => {
+        if (is_choosing) {
+          return choice_orb_display(choice_orb_1, choice_orb_2);
+        } else {
+          return orb_result_display(last_orb, last_orb_message);
+        }
+      })(),
+      container_display(orbs_left),
+      extract_button(is_disabled || is_choosing)
+    ])
+  );
+}
+function render_won_view(last_orb, last_orb_message, bag, active_statuses, milestone, _) {
+  let orbs_left = length(bag);
+  let message = data_target_message(milestone);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      container_display(orbs_left),
+      success_button(advance_button_text, new GoToMarketplace()),
+      status_panel(
+        sector_complete_title,
+        message,
+        "bg-green-50 border-green-200"
+      )
+    ])
+  );
+}
+function render_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
+  let orbs_left = length(bag);
+  return fragment2(
+    toList([
+      orb_result_display(last_orb, last_orb_message),
+      container_display(orbs_left),
+      failure_button(play_again_text, new RestartGame()),
+      failure_panel(
+        mission_failed_title,
+        mission_failed_message
       )
     ])
   );
@@ -8990,67 +9052,41 @@ function render_main_menu_view() {
 function extract_active_status_effects(active_statuses) {
   return map(active_statuses, status_to_display_text);
 }
-function render_playing_view(last_orb, last_orb_message, bag, active_statuses, _, choice_orb_1, choice_orb_2) {
-  let orbs_left = length(bag);
-  let is_disabled = is_empty(bag);
+function render_game_stats(health, points, milestone, level, credits, active_statuses) {
   let status_effects = extract_active_status_effects(active_statuses);
-  let _block;
-  if (choice_orb_2 instanceof Some) {
-    if (choice_orb_1 instanceof Some) {
-      _block = true;
-    } else {
-      _block = false;
-    }
-  } else {
-    _block = false;
-  }
-  let is_choosing = _block;
-  return fragment2(
+  return stats_grid(
     toList([
-      (() => {
-        if (is_choosing) {
-          return choice_orb_display(choice_orb_1, choice_orb_2);
-        } else {
-          return orb_result_display(last_orb, last_orb_message);
-        }
-      })(),
-      status_effects_display(status_effects),
-      container_display(orbs_left),
-      extract_button(is_disabled || is_choosing)
-    ])
-  );
-}
-function render_won_view(last_orb, last_orb_message, bag, active_statuses, milestone, _) {
-  let orbs_left = length(bag);
-  let status_effects = extract_active_status_effects(active_statuses);
-  let message = data_target_message(milestone);
-  return fragment2(
-    toList([
-      orb_result_display(last_orb, last_orb_message),
-      status_effects_display(status_effects),
-      container_display(orbs_left),
-      success_button(advance_button_text, new GoToMarketplace()),
-      status_panel(
-        sector_complete_title,
-        message,
-        "bg-green-50 border-green-200"
-      )
-    ])
-  );
-}
-function render_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
-  let orbs_left = length(bag);
-  let status_effects = extract_active_status_effects(active_statuses);
-  return fragment2(
-    toList([
-      orb_result_display(last_orb, last_orb_message),
-      status_effects_display(status_effects),
-      container_display(orbs_left),
-      failure_button(play_again_text, new RestartGame()),
-      failure_panel(
-        mission_failed_title,
-        mission_failed_message
-      )
+      stat_card(
+        "\u25C9",
+        sector_label,
+        to_string(level),
+        "text-gray-500"
+      ),
+      stat_card(
+        "\u25C7",
+        credits_label,
+        to_string(credits),
+        "text-gray-600"
+      ),
+      stat_card(
+        "\u25CF",
+        data_label,
+        to_string(points),
+        "text-gray-700"
+      ),
+      stat_card(
+        "\u25CE",
+        target_label,
+        to_string(milestone),
+        "text-gray-600"
+      ),
+      stat_card(
+        "\u25CB",
+        systems_label,
+        to_string(health),
+        "text-black"
+      ),
+      status_stat_card(status_effects)
     ])
   );
 }
@@ -9172,7 +9208,8 @@ function view(model) {
               model.points,
               model.milestone,
               model.level,
-              model.credits
+              model.credits,
+              model.active_statuses
             ),
             render_playing_view(
               model.last_orb,
@@ -9196,7 +9233,8 @@ function view(model) {
               model.points,
               model.milestone,
               model.level,
-              model.credits
+              model.credits,
+              model.active_statuses
             ),
             render_won_view(
               model.last_orb,
@@ -9219,7 +9257,8 @@ function view(model) {
               model.points,
               model.milestone,
               model.level,
-              model.credits
+              model.credits,
+              model.active_statuses
             ),
             render_lost_view(
               model.last_orb,

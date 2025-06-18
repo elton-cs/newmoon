@@ -32,6 +32,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
             model.credits,
+            model.active_statuses,
           ),
           render_playing_view(
             model.last_orb,
@@ -54,6 +55,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
             model.credits,
+            model.active_statuses,
           ),
           render_won_view(
             model.last_orb,
@@ -75,6 +77,7 @@ pub fn view(model: Model) -> Element(Msg) {
             model.milestone,
             model.level,
             model.credits,
+            model.active_statuses,
           ),
           render_lost_view(
             model.last_orb,
@@ -179,14 +182,25 @@ fn render_game_stats(
   milestone: Int,
   level: Int,
   credits: Int,
+  active_statuses: List(types.StatusEffect),
 ) -> Element(Msg) {
+  let status_effects = extract_active_status_effects(active_statuses)
+
   ui.stats_grid([
+    // Row 1: SECTOR, CREDITS
     ui.stat_card(
-      "○",
-      display.systems_label,
-      int.to_string(health),
-      "text-black",
+      "◉",
+      display.sector_label,
+      int.to_string(level),
+      "text-gray-500",
     ),
+    ui.stat_card(
+      "◇",
+      display.credits_label,
+      int.to_string(credits),
+      "text-gray-600",
+    ),
+    // Row 2: DATA, TARGET
     ui.stat_card(
       "●",
       display.data_label,
@@ -199,18 +213,14 @@ fn render_game_stats(
       int.to_string(milestone),
       "text-gray-600",
     ),
+    // Row 3: SYSTEMS, STATUS
     ui.stat_card(
-      "◉",
-      display.sector_label,
-      int.to_string(level),
-      "text-gray-500",
+      "○",
+      display.systems_label,
+      int.to_string(health),
+      "text-black",
     ),
-    ui.stat_card(
-      "◇",
-      display.credits_label,
-      int.to_string(credits),
-      "text-purple-600",
-    ),
+    ui.status_stat_card(status_effects),
   ])
 }
 
@@ -226,7 +236,6 @@ fn render_playing_view(
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
-  let status_effects = extract_active_status_effects(active_statuses)
 
   // Check if we're in choice state
   let is_choosing = case choice_orb_1, choice_orb_2 {
@@ -239,7 +248,6 @@ fn render_playing_view(
       True -> ui.choice_orb_display(choice_orb_1, choice_orb_2)
       False -> ui.orb_result_display(last_orb, last_orb_message)
     },
-    ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
     ui.extract_button(is_disabled || is_choosing),
     // Disable extract button during choice
@@ -256,12 +264,10 @@ fn render_won_view(
   _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
-  let status_effects = extract_active_status_effects(active_statuses)
   let message = display.data_target_message(milestone)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
-    ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
     ui.success_button(display.advance_button_text, GoToMarketplace),
     ui.status_panel(
@@ -281,11 +287,9 @@ fn render_lost_view(
   _pulled_orbs: List(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
-  let status_effects = extract_active_status_effects(active_statuses)
 
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
-    ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
     ui.failure_button(display.play_again_text, RestartGame),
     ui.failure_panel(
