@@ -6007,36 +6007,8 @@ function starter_orbs() {
     toList([new BombSurvivorOrb(1)]),
     toList([new ChoiceOrb()])
   ]);
-  return flatten(_pipe);
-}
-function init(_) {
-  return new Model(
-    5,
-    0,
-    0,
-    1,
-    12,
-    starter_orbs(),
-    toList([]),
-    new Menu(new Main()),
-    new None(),
-    new None(),
-    "",
-    toList([]),
-    1,
-    0,
-    toList([]),
-    new None(),
-    new None(),
-    false,
-    toList([]),
-    toList([]),
-    toList([]),
-    new RiskEffects(0, 0, 0, toList([])),
-    5,
-    new None(),
-    toList([])
-  );
+  let _pipe$1 = flatten(_pipe);
+  return shuffle(_pipe$1);
 }
 function get_full_bag(purchased_orbs) {
   return append(starter_orbs(), purchased_orbs);
@@ -6085,6 +6057,35 @@ function get_milestone_for_level(level) {
   } else {
     return 12;
   }
+}
+function init(_) {
+  return new Model(
+    5,
+    0,
+    0,
+    1,
+    get_milestone_for_level(1),
+    starter_orbs(),
+    toList([]),
+    new Menu(new Main()),
+    new None(),
+    new None(),
+    "",
+    toList([]),
+    1,
+    0,
+    toList([]),
+    new None(),
+    new None(),
+    false,
+    toList([]),
+    toList([]),
+    toList([]),
+    new RiskEffects(0, 0, 0, toList([])),
+    5,
+    new None(),
+    toList([])
+  );
 }
 function find_lowest_point_orb(pulled_orbs) {
   let point_orbs = filter(
@@ -6792,7 +6793,7 @@ function handle_restart_game(model) {
     0,
     0,
     1,
-    5,
+    get_milestone_for_level(1),
     starter_orbs(),
     toList([]),
     new Menu(new Main()),
@@ -6887,7 +6888,7 @@ function handle_exit_testing(model) {
     0,
     0,
     1,
-    5,
+    get_milestone_for_level(1),
     starter_orbs(),
     toList([]),
     new Menu(new Main()),

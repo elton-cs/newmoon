@@ -34,7 +34,7 @@ pub fn init(_) -> Model {
     points: 0,
     credits: 0,
     level: 1,
-    milestone: 12,
+    milestone: get_milestone_for_level(1),
     bag: starter_orbs(),
     purchased_orbs: [],
     screen: Menu(Main),
@@ -69,7 +69,7 @@ fn repeat_orb(orb: Orb, count: Int) -> List(Orb) {
   |> list.map(fn(_) { orb })
 }
 
-// Single consistent orb bag used for all levels
+// Shuffled orb bag for each new game - different order every time
 fn starter_orbs() -> List(Orb) {
   [
     repeat_orb(BombOrb(1), 3),
@@ -90,6 +90,7 @@ fn starter_orbs() -> List(Orb) {
     // 1x Choose between next 2 orbs
   ]
   |> list.flatten
+  |> list.shuffle
 }
 
 // Combine starter orbs with purchased orbs for full bag
@@ -932,7 +933,7 @@ fn handle_restart_game(model: Model) -> Model {
     points: 0,
     credits: 0,
     level: 1,
-    milestone: 5,
+    milestone: get_milestone_for_level(1),
     bag: starter_orbs(),
     purchased_orbs: [],
     screen: Menu(Main),
@@ -991,7 +992,7 @@ fn handle_exit_testing(model: Model) -> Model {
     points: 0,
     credits: 0,
     level: 1,
-    milestone: 5,
+    milestone: get_milestone_for_level(1),
     bag: starter_orbs(),
     purchased_orbs: [],
     screen: Menu(Main),
