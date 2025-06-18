@@ -6011,7 +6011,9 @@ function starter_orbs() {
   return shuffle(_pipe$1);
 }
 function get_full_bag(purchased_orbs) {
-  return append(starter_orbs(), purchased_orbs);
+  let _pipe = starter_orbs();
+  let _pipe$1 = append(_pipe, purchased_orbs);
+  return shuffle(_pipe$1);
 }
 function create_test_bag(test_orb) {
   let _pipe = toList([test_orb]);

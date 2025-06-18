@@ -93,9 +93,11 @@ fn starter_orbs() -> List(Orb) {
   |> list.shuffle
 }
 
-// Combine starter orbs with purchased orbs for full bag
+// Combine starter orbs with purchased orbs and shuffle for random positioning
 fn get_full_bag(purchased_orbs: List(Orb)) -> List(Orb) {
-  list.append(starter_orbs(), purchased_orbs)
+  starter_orbs()
+  |> list.append(purchased_orbs)
+  |> list.shuffle
 }
 
 // Common marketplace items
