@@ -1281,6 +1281,23 @@ function append_loop(loop$first, loop$second) {
 function append(first2, second) {
   return append_loop(reverse(first2), second);
 }
+function flatten_loop(loop$lists, loop$acc) {
+  while (true) {
+    let lists = loop$lists;
+    let acc = loop$acc;
+    if (lists instanceof Empty) {
+      return reverse(acc);
+    } else {
+      let list4 = lists.head;
+      let further_lists = lists.tail;
+      loop$lists = further_lists;
+      loop$acc = reverse_and_prepend(list4, acc);
+    }
+  }
+}
+function flatten(lists) {
+  return flatten_loop(lists, toList([]));
+}
 function fold(loop$list, loop$initial, loop$fun) {
   while (true) {
     let list4 = loop$list;
@@ -5932,101 +5949,6 @@ function init(_) {
 function get_full_bag(purchased_orbs) {
   return append(starter_orbs(), purchased_orbs);
 }
-function marketplace_inventory() {
-  return toList([
-    new MarketplaceItem(
-      new PointOrb(5),
-      5,
-      new Common(),
-      "Data Sample",
-      "+5 points when extracted"
-    ),
-    new MarketplaceItem(
-      new RiskOrb(),
-      5,
-      new Common(),
-      "Fate Sample",
-      "High-risk, high-reward extraction"
-    ),
-    new MarketplaceItem(
-      new BombSurvivorOrb(2),
-      6,
-      new Common(),
-      "Bomb Survivor",
-      "+2 points per bomb pulled"
-    ),
-    new MarketplaceItem(
-      new HealthOrb(1),
-      9,
-      new Common(),
-      "Health Sample",
-      "+1 health when extracted"
-    ),
-    new MarketplaceItem(
-      new PointOrb(7),
-      8,
-      new Common(),
-      "Enhanced Data",
-      "+7 points when extracted"
-    ),
-    new MarketplaceItem(
-      new PointRecoveryOrb(),
-      8,
-      new Common(),
-      "Point Recovery",
-      "Returns lowest point sample to bag"
-    ),
-    new MarketplaceItem(
-      new PointCollectorOrb(2),
-      9,
-      new Common(),
-      "Point Collector",
-      "+2 points per data sample in bag"
-    ),
-    new MarketplaceItem(
-      new PointOrb(8),
-      11,
-      new Rare(),
-      "Premium Data",
-      "+8 points when extracted"
-    ),
-    new MarketplaceItem(
-      new PointOrb(9),
-      13,
-      new Rare(),
-      "Elite Data",
-      "+9 points when extracted"
-    ),
-    new MarketplaceItem(
-      new NextPointMultiplierOrb(2),
-      14,
-      new Rare(),
-      "Boost Signal",
-      "2x multiplier for next point extraction"
-    ),
-    new MarketplaceItem(
-      new MultiplierOrb(1.5),
-      16,
-      new Rare(),
-      "Signal Amplifier",
-      "1.5x multiplier for all point extraction"
-    ),
-    new MarketplaceItem(
-      new HealthOrb(3),
-      21,
-      new Cosmic(),
-      "Cosmic Health",
-      "+3 health when extracted"
-    ),
-    new MarketplaceItem(
-      new BombImmunityOrb(),
-      23,
-      new Cosmic(),
-      "Hazard Shield",
-      "Immunity to next 3 bomb samples"
-    )
-  ]);
-}
 function create_test_bag(test_orb) {
   let _pipe = toList([test_orb]);
   return append(_pipe, starter_orbs());
@@ -7958,6 +7880,112 @@ function get_item_at_index(items, index4) {
   let _pipe = drop(items, index4);
   let _pipe$1 = first(_pipe);
   return from_result(_pipe$1);
+}
+var common_marketplace_items = /* @__PURE__ */ toList([
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new PointOrb(5),
+    5,
+    /* @__PURE__ */ new Common(),
+    "Data Sample",
+    "+5 points when extracted"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new RiskOrb(),
+    5,
+    /* @__PURE__ */ new Common(),
+    "Fate Sample",
+    "High-risk, high-reward extraction"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new BombSurvivorOrb(2),
+    6,
+    /* @__PURE__ */ new Common(),
+    "Bomb Survivor",
+    "+2 points per bomb pulled"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new HealthOrb(1),
+    9,
+    /* @__PURE__ */ new Common(),
+    "Health Sample",
+    "+1 health when extracted"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new PointOrb(7),
+    8,
+    /* @__PURE__ */ new Common(),
+    "Enhanced Data",
+    "+7 points when extracted"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new PointRecoveryOrb(),
+    8,
+    /* @__PURE__ */ new Common(),
+    "Point Recovery",
+    "Returns lowest point sample to bag"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new PointCollectorOrb(2),
+    9,
+    /* @__PURE__ */ new Common(),
+    "Point Collector",
+    "+2 points per data sample in bag"
+  )
+]);
+var rare_marketplace_items = /* @__PURE__ */ toList([
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new PointOrb(8),
+    11,
+    /* @__PURE__ */ new Rare(),
+    "Premium Data",
+    "+8 points when extracted"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new PointOrb(9),
+    13,
+    /* @__PURE__ */ new Rare(),
+    "Elite Data",
+    "+9 points when extracted"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new NextPointMultiplierOrb(2),
+    14,
+    /* @__PURE__ */ new Rare(),
+    "Boost Signal",
+    "2x multiplier for next point extraction"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new MultiplierOrb(1.5),
+    16,
+    /* @__PURE__ */ new Rare(),
+    "Signal Amplifier",
+    "1.5x multiplier for all point extraction"
+  )
+]);
+var cosmic_marketplace_items = /* @__PURE__ */ toList([
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new HealthOrb(3),
+    21,
+    /* @__PURE__ */ new Cosmic(),
+    "Cosmic Health",
+    "+3 health when extracted"
+  ),
+  /* @__PURE__ */ new MarketplaceItem(
+    /* @__PURE__ */ new BombImmunityOrb(),
+    23,
+    /* @__PURE__ */ new Cosmic(),
+    "Hazard Shield",
+    "Immunity to next 3 bomb samples"
+  )
+]);
+function marketplace_inventory() {
+  return flatten(
+    toList([
+      common_marketplace_items,
+      rare_marketplace_items,
+      cosmic_marketplace_items
+    ])
+  );
 }
 function handle_purchase_item(model, _) {
   let $ = model.selected_marketplace_item;
@@ -10619,99 +10647,13 @@ function get_item_code(index4) {
   }
 }
 function get_marketplace_inventory() {
-  return toList([
-    new MarketplaceItem(
-      new PointOrb(5),
-      5,
-      new Common(),
-      "Data Sample",
-      "+5 points when extracted"
-    ),
-    new MarketplaceItem(
-      new RiskOrb(),
-      5,
-      new Common(),
-      "Fate Sample",
-      "High-risk, high-reward extraction"
-    ),
-    new MarketplaceItem(
-      new BombSurvivorOrb(2),
-      6,
-      new Common(),
-      "Bomb Survivor",
-      "+2 points per bomb pulled"
-    ),
-    new MarketplaceItem(
-      new HealthOrb(1),
-      9,
-      new Common(),
-      "Health Sample",
-      "+1 health when extracted"
-    ),
-    new MarketplaceItem(
-      new PointOrb(7),
-      8,
-      new Common(),
-      "Enhanced Data",
-      "+7 points when extracted"
-    ),
-    new MarketplaceItem(
-      new PointRecoveryOrb(),
-      8,
-      new Common(),
-      "Point Recovery",
-      "Returns lowest point sample to bag"
-    ),
-    new MarketplaceItem(
-      new PointCollectorOrb(2),
-      9,
-      new Common(),
-      "Point Collector",
-      "+2 points per data sample in bag"
-    ),
-    new MarketplaceItem(
-      new PointOrb(8),
-      11,
-      new Rare(),
-      "Premium Data",
-      "+8 points when extracted"
-    ),
-    new MarketplaceItem(
-      new PointOrb(9),
-      13,
-      new Rare(),
-      "Elite Data",
-      "+9 points when extracted"
-    ),
-    new MarketplaceItem(
-      new NextPointMultiplierOrb(2),
-      14,
-      new Rare(),
-      "Boost Signal",
-      "2x multiplier for next point extraction"
-    ),
-    new MarketplaceItem(
-      new MultiplierOrb(1.5),
-      16,
-      new Rare(),
-      "Signal Amplifier",
-      "1.5x multiplier for all point extraction"
-    ),
-    new MarketplaceItem(
-      new HealthOrb(3),
-      21,
-      new Cosmic(),
-      "Cosmic Health",
-      "+3 health when extracted"
-    ),
-    new MarketplaceItem(
-      new BombImmunityOrb(),
-      23,
-      new Cosmic(),
-      "Hazard Shield",
-      "Immunity to next 3 bomb samples"
-    )
-  ]);
+  return flatten(
+    toList([
+      common_marketplace_items,
+      rare_marketplace_items,
+      cosmic_marketplace_items
+    ])
+  );
 }
 function render_marketplace_catalog(credits, selected_item) {
   let inventory = get_marketplace_inventory();

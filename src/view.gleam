@@ -28,6 +28,9 @@ import types.{
   TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
+import update.{
+  common_marketplace_items, cosmic_marketplace_items, rare_marketplace_items,
+}
 
 pub fn view(model: Model) -> Element(Msg) {
   // Clear pattern matching on model fields to determine view
@@ -627,101 +630,13 @@ fn get_item_code(index: Int) -> String {
   }
 }
 
-// Get marketplace inventory (duplicate from update.gleam for view access)
+// Get marketplace inventory (using constants from update.gleam)
 fn get_marketplace_inventory() -> List(MarketplaceItem) {
-  [
-    MarketplaceItem(
-      orb: types.PointOrb(5),
-      price: 5,
-      rarity: types.Common,
-      name: "Data Sample",
-      description: "+5 points when extracted",
-    ),
-    MarketplaceItem(
-      orb: types.RiskOrb,
-      price: 5,
-      rarity: types.Common,
-      name: "Fate Sample",
-      description: "High-risk, high-reward extraction",
-    ),
-    MarketplaceItem(
-      orb: types.BombSurvivorOrb(2),
-      price: 6,
-      rarity: types.Common,
-      name: "Bomb Survivor",
-      description: "+2 points per bomb pulled",
-    ),
-    MarketplaceItem(
-      orb: types.HealthOrb(1),
-      price: 9,
-      rarity: types.Common,
-      name: "Health Sample",
-      description: "+1 health when extracted",
-    ),
-    MarketplaceItem(
-      orb: types.PointOrb(7),
-      price: 8,
-      rarity: types.Common,
-      name: "Enhanced Data",
-      description: "+7 points when extracted",
-    ),
-    MarketplaceItem(
-      orb: types.PointRecoveryOrb,
-      price: 8,
-      rarity: types.Common,
-      name: "Point Recovery",
-      description: "Returns lowest point sample to bag",
-    ),
-    MarketplaceItem(
-      orb: types.PointCollectorOrb(2),
-      price: 9,
-      rarity: types.Common,
-      name: "Point Collector",
-      description: "+2 points per data sample in bag",
-    ),
-    MarketplaceItem(
-      orb: types.PointOrb(8),
-      price: 11,
-      rarity: types.Rare,
-      name: "Premium Data",
-      description: "+8 points when extracted",
-    ),
-    MarketplaceItem(
-      orb: types.PointOrb(9),
-      price: 13,
-      rarity: types.Rare,
-      name: "Elite Data",
-      description: "+9 points when extracted",
-    ),
-    MarketplaceItem(
-      orb: types.NextPointMultiplierOrb(2.0),
-      price: 14,
-      rarity: types.Rare,
-      name: "Boost Signal",
-      description: "2x multiplier for next point extraction",
-    ),
-    MarketplaceItem(
-      orb: types.MultiplierOrb(1.5),
-      price: 16,
-      rarity: types.Rare,
-      name: "Signal Amplifier",
-      description: "1.5x multiplier for all point extraction",
-    ),
-    MarketplaceItem(
-      orb: types.HealthOrb(3),
-      price: 21,
-      rarity: types.Cosmic,
-      name: "Cosmic Health",
-      description: "+3 health when extracted",
-    ),
-    MarketplaceItem(
-      orb: types.BombImmunityOrb,
-      price: 23,
-      rarity: types.Cosmic,
-      name: "Hazard Shield",
-      description: "Immunity to next 3 bomb samples",
-    ),
-  ]
+  list.flatten([
+    common_marketplace_items,
+    rare_marketplace_items,
+    cosmic_marketplace_items,
+  ])
 }
 
 // Marketplace Stats - shows earned points and total credits

@@ -93,101 +93,116 @@ fn get_full_bag(purchased_orbs: List(Orb)) -> List(Orb) {
   list.append(starter_orbs(), purchased_orbs)
 }
 
+// Common marketplace items
+pub const common_marketplace_items = [
+  types.MarketplaceItem(
+    orb: PointOrb(5),
+    price: 5,
+    rarity: types.Common,
+    name: "Data Sample",
+    description: "+5 points when extracted",
+  ),
+  types.MarketplaceItem(
+    orb: RiskOrb,
+    price: 5,
+    rarity: types.Common,
+    name: "Fate Sample",
+    description: "High-risk, high-reward extraction",
+  ),
+  types.MarketplaceItem(
+    orb: BombSurvivorOrb(2),
+    price: 6,
+    rarity: types.Common,
+    name: "Bomb Survivor",
+    description: "+2 points per bomb pulled",
+  ),
+  types.MarketplaceItem(
+    orb: HealthOrb(1),
+    price: 9,
+    rarity: types.Common,
+    name: "Health Sample",
+    description: "+1 health when extracted",
+  ),
+  types.MarketplaceItem(
+    orb: PointOrb(7),
+    price: 8,
+    rarity: types.Common,
+    name: "Enhanced Data",
+    description: "+7 points when extracted",
+  ),
+  types.MarketplaceItem(
+    orb: PointRecoveryOrb,
+    price: 8,
+    rarity: types.Common,
+    name: "Point Recovery",
+    description: "Returns lowest point sample to bag",
+  ),
+  types.MarketplaceItem(
+    orb: PointCollectorOrb(2),
+    price: 9,
+    rarity: types.Common,
+    name: "Point Collector",
+    description: "+2 points per data sample in bag",
+  ),
+]
+
+// Rare marketplace items
+pub const rare_marketplace_items = [
+  types.MarketplaceItem(
+    orb: PointOrb(8),
+    price: 11,
+    rarity: types.Rare,
+    name: "Premium Data",
+    description: "+8 points when extracted",
+  ),
+  types.MarketplaceItem(
+    orb: PointOrb(9),
+    price: 13,
+    rarity: types.Rare,
+    name: "Elite Data",
+    description: "+9 points when extracted",
+  ),
+  types.MarketplaceItem(
+    orb: NextPointMultiplierOrb(2.0),
+    price: 14,
+    rarity: types.Rare,
+    name: "Boost Signal",
+    description: "2x multiplier for next point extraction",
+  ),
+  types.MarketplaceItem(
+    orb: MultiplierOrb(1.5),
+    price: 16,
+    rarity: types.Rare,
+    name: "Signal Amplifier",
+    description: "1.5x multiplier for all point extraction",
+  ),
+]
+
+// Cosmic marketplace items
+pub const cosmic_marketplace_items = [
+  types.MarketplaceItem(
+    orb: HealthOrb(3),
+    price: 21,
+    rarity: types.Cosmic,
+    name: "Cosmic Health",
+    description: "+3 health when extracted",
+  ),
+  types.MarketplaceItem(
+    orb: BombImmunityOrb,
+    price: 23,
+    rarity: types.Cosmic,
+    name: "Hazard Shield",
+    description: "Immunity to next 3 bomb samples",
+  ),
+]
+
 // Marketplace inventory with all available items
 fn marketplace_inventory() -> List(types.MarketplaceItem) {
-  [
-    types.MarketplaceItem(
-      orb: PointOrb(5),
-      price: 5,
-      rarity: types.Common,
-      name: "Data Sample",
-      description: "+5 points when extracted",
-    ),
-    types.MarketplaceItem(
-      orb: RiskOrb,
-      price: 5,
-      rarity: types.Common,
-      name: "Fate Sample",
-      description: "High-risk, high-reward extraction",
-    ),
-    types.MarketplaceItem(
-      orb: BombSurvivorOrb(2),
-      price: 6,
-      rarity: types.Common,
-      name: "Bomb Survivor",
-      description: "+2 points per bomb pulled",
-    ),
-    types.MarketplaceItem(
-      orb: HealthOrb(1),
-      price: 9,
-      rarity: types.Common,
-      name: "Health Sample",
-      description: "+1 health when extracted",
-    ),
-    types.MarketplaceItem(
-      orb: PointOrb(7),
-      price: 8,
-      rarity: types.Common,
-      name: "Enhanced Data",
-      description: "+7 points when extracted",
-    ),
-    types.MarketplaceItem(
-      orb: PointRecoveryOrb,
-      price: 8,
-      rarity: types.Common,
-      name: "Point Recovery",
-      description: "Returns lowest point sample to bag",
-    ),
-    types.MarketplaceItem(
-      orb: PointCollectorOrb(2),
-      price: 9,
-      rarity: types.Common,
-      name: "Point Collector",
-      description: "+2 points per data sample in bag",
-    ),
-    types.MarketplaceItem(
-      orb: PointOrb(8),
-      price: 11,
-      rarity: types.Rare,
-      name: "Premium Data",
-      description: "+8 points when extracted",
-    ),
-    types.MarketplaceItem(
-      orb: PointOrb(9),
-      price: 13,
-      rarity: types.Rare,
-      name: "Elite Data",
-      description: "+9 points when extracted",
-    ),
-    types.MarketplaceItem(
-      orb: NextPointMultiplierOrb(2.0),
-      price: 14,
-      rarity: types.Rare,
-      name: "Boost Signal",
-      description: "2x multiplier for next point extraction",
-    ),
-    types.MarketplaceItem(
-      orb: MultiplierOrb(1.5),
-      price: 16,
-      rarity: types.Rare,
-      name: "Signal Amplifier",
-      description: "1.5x multiplier for all point extraction",
-    ),
-    types.MarketplaceItem(
-      orb: HealthOrb(3),
-      price: 21,
-      rarity: types.Cosmic,
-      name: "Cosmic Health",
-      description: "+3 health when extracted",
-    ),
-    types.MarketplaceItem(
-      orb: BombImmunityOrb,
-      price: 23,
-      rarity: types.Cosmic,
-      name: "Hazard Shield",
-      description: "Immunity to next 3 bomb samples",
-    ),
-  ]
+  list.flatten([
+    common_marketplace_items,
+    rare_marketplace_items,
+    cosmic_marketplace_items,
+  ])
 }
 
 // Test bag that includes the test orb plus the standard starter orbs
