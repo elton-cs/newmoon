@@ -254,36 +254,51 @@ pub fn choice_orb_display(
   case choice_orb_1, choice_orb_2 {
     Some(first_choice), Some(second_choice) ->
       html.div(
-        [attribute.class("p-3 bg-blue-50 rounded border border-blue-200")],
+        [attribute.class("p-3 bg-gray-50 rounded border border-gray-200")],
         [
-          html.p([attribute.class("text-blue-700 font-light text-sm mb-3")], [
-            html.text("◈ CHOICE PORTAL ACTIVATED"),
-          ]),
+          html.p(
+            [
+              attribute.class(
+                "text-gray-700 font-light text-sm uppercase tracking-wider mb-3",
+              ),
+            ],
+            [html.text("◈ CHOICE PORTAL ACTIVATED")],
+          ),
           html.div([attribute.class("grid grid-cols-2 gap-2")], [
             html.button(
               [
                 attribute.class(
-                  "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors",
+                  "p-3 bg-white hover:bg-gray-100 rounded border border-gray-300 text-left transition-colors",
                 ),
                 event.on_click(ChooseOrb(0)),
               ],
               [
-                html.p([attribute.class("text-sm font-medium text-blue-900")], [
-                  html.text(display.orb_choice_display(first_choice)),
-                ]),
+                html.p(
+                  [
+                    attribute.class(
+                      "text-sm font-light text-gray-900 uppercase tracking-wider",
+                    ),
+                  ],
+                  [html.text(display.orb_choice_display(first_choice))],
+                ),
               ],
             ),
             html.button(
               [
                 attribute.class(
-                  "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors",
+                  "p-3 bg-white hover:bg-gray-100 rounded border border-gray-300 text-left transition-colors",
                 ),
                 event.on_click(ChooseOrb(1)),
               ],
               [
-                html.p([attribute.class("text-sm font-medium text-blue-900")], [
-                  html.text(display.orb_choice_display(second_choice)),
-                ]),
+                html.p(
+                  [
+                    attribute.class(
+                      "text-sm font-light text-gray-900 uppercase tracking-wider",
+                    ),
+                  ],
+                  [html.text(display.orb_choice_display(second_choice))],
+                ),
               ],
             ),
           ]),
@@ -760,19 +775,19 @@ fn format_duration_for_dev(duration: StatusDuration) -> String {
 
 fn format_orb_for_dev_display(orb: Orb) -> String {
   case orb {
-    PointOrb(value) -> "Point(" <> int.to_string(value) <> ")"
-    BombOrb(value) -> "Bomb(" <> int.to_string(value) <> ")"
+    PointOrb(value) -> "Data(" <> int.to_string(value) <> ")"
+    BombOrb(value) -> "Hazard(" <> int.to_string(value) <> ")"
     HealthOrb(value) -> "Health(" <> int.to_string(value) <> ")"
     AllCollectorOrb(value) -> "AllCollector(" <> int.to_string(value) <> ")"
     PointCollectorOrb(value) -> "PointCollector(" <> int.to_string(value) <> ")"
     BombSurvivorOrb(value) -> "BombSurvivor(" <> int.to_string(value) <> ")"
     MultiplierOrb(multiplier) ->
-      "Multiplier(" <> float.to_string(multiplier) <> ")"
+      "FullAmplifier(" <> float.to_string(multiplier) <> ")"
     NextPointMultiplierOrb(multiplier) ->
-      "NextPointMultiplier(" <> float.to_string(multiplier) <> ")"
-    BombImmunityOrb -> "BombImmunity"
-    ChoiceOrb -> "Choice"
-    RiskOrb -> "Risk"
+      "SingleAmplifier(" <> float.to_string(multiplier) <> ")"
+    BombImmunityOrb -> "ShieldGenerator"
+    ChoiceOrb -> "ChoicePortal"
+    RiskOrb -> "VoidPortal"
     PointRecoveryOrb -> "PointRecovery"
   }
 }

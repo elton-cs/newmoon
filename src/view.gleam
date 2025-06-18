@@ -499,12 +499,12 @@ fn extract_active_status_effects(
 fn render_risk_accept_view() -> Element(Msg) {
   element.fragment([
     ui.status_panel(
-      "THE FATES HAVE SPOKEN",
-      "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
+      "THE VOID BECKONS",
+      "A Void Portal has been detected. This portal will extract 5 specimens simultaneously from the container. If you survive all extractions, any data will award double points. Do you dare enter the void?",
       "bg-red-50 border-red-200",
     ),
-    ui.primary_button("ACCEPT FATE", AcceptRisk(True)),
-    ui.secondary_button("DECLINE RISK", AcceptRisk(False)),
+    ui.primary_button("ENTER VOID", AcceptRisk(True)),
+    ui.secondary_button("AVOID VOID", AcceptRisk(False)),
   ])
 }
 

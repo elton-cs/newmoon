@@ -5052,64 +5052,64 @@ var PurchaseItem = class extends CustomType {
 // build/dev/javascript/newmoon/display.mjs
 function orb_display_name(orb) {
   if (orb instanceof PointOrb) {
-    return "Data Sample";
+    return "Data";
   } else if (orb instanceof BombOrb) {
-    return "Hazard Sample";
+    return "Hazard";
   } else if (orb instanceof HealthOrb) {
-    return "Health Sample";
+    return "Health";
   } else if (orb instanceof AllCollectorOrb) {
-    return "All Collector Sample";
+    return "All Collector";
   } else if (orb instanceof PointCollectorOrb) {
-    return "Point Collector Sample";
+    return "Point Collector";
   } else if (orb instanceof BombSurvivorOrb) {
-    return "Bomb Survivor Sample";
+    return "Bomb Survivor";
   } else if (orb instanceof MultiplierOrb) {
-    return "Multiplier Sample";
+    return "Full Amplifier";
   } else if (orb instanceof NextPointMultiplierOrb) {
-    return "Next Point Amplifier";
-  } else if (orb instanceof BombImmunityOrb) {
-    return "Shield Generator Sample";
-  } else if (orb instanceof ChoiceOrb) {
-    return "Choice Portal Sample";
-  } else if (orb instanceof RiskOrb) {
-    return "Fate Sample";
-  } else {
-    return "Point Recovery Sample";
-  }
-}
-function orb_choice_display(orb) {
-  if (orb instanceof PointOrb) {
-    let value = orb[0];
-    return "Data (+" + to_string(value) + ")";
-  } else if (orb instanceof BombOrb) {
-    let value = orb[0];
-    return "Hazard (-" + to_string(value) + ")";
-  } else if (orb instanceof HealthOrb) {
-    let value = orb[0];
-    return "Health (+" + to_string(value) + ")";
-  } else if (orb instanceof AllCollectorOrb) {
-    let value = orb[0];
-    return "All Collector (+" + to_string(value) + " per Orb)";
-  } else if (orb instanceof PointCollectorOrb) {
-    let value = orb[0];
-    return "Point Collector (+" + to_string(value) + " per Point)";
-  } else if (orb instanceof BombSurvivorOrb) {
-    let value = orb[0];
-    return "Bomb Survivor (+" + to_string(value) + " per Bomb)";
-  } else if (orb instanceof MultiplierOrb) {
-    let multiplier = orb[0];
-    return "Full Amplifier (\xD7" + float_to_string(multiplier) + ")";
-  } else if (orb instanceof NextPointMultiplierOrb) {
-    let multiplier = orb[0];
-    return "Single Amplifier (\xD7" + float_to_string(multiplier) + ")";
+    return "Single Amplifier";
   } else if (orb instanceof BombImmunityOrb) {
     return "Shield Generator";
   } else if (orb instanceof ChoiceOrb) {
     return "Choice Portal";
   } else if (orb instanceof RiskOrb) {
-    return "Fate Sample";
+    return "Void Portal";
   } else {
     return "Point Recovery";
+  }
+}
+function orb_choice_display(orb) {
+  if (orb instanceof PointOrb) {
+    let value = orb[0];
+    return "DATA (+" + to_string(value) + ")";
+  } else if (orb instanceof BombOrb) {
+    let value = orb[0];
+    return "HAZARD (-" + to_string(value) + ")";
+  } else if (orb instanceof HealthOrb) {
+    let value = orb[0];
+    return "HEALTH (+" + to_string(value) + ")";
+  } else if (orb instanceof AllCollectorOrb) {
+    let value = orb[0];
+    return "ALL COLLECTOR (+" + to_string(value) + " PER ORB)";
+  } else if (orb instanceof PointCollectorOrb) {
+    let value = orb[0];
+    return "POINT COLLECTOR (+" + to_string(value) + " PER POINT)";
+  } else if (orb instanceof BombSurvivorOrb) {
+    let value = orb[0];
+    return "BOMB SURVIVOR (+" + to_string(value) + " PER BOMB)";
+  } else if (orb instanceof MultiplierOrb) {
+    let multiplier = orb[0];
+    return "FULL AMPLIFIER (\xD7" + float_to_string(multiplier) + ")";
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    let multiplier = orb[0];
+    return "SINGLE AMPLIFIER (\xD7" + float_to_string(multiplier) + ")";
+  } else if (orb instanceof BombImmunityOrb) {
+    return "SHIELD GENERATOR";
+  } else if (orb instanceof ChoiceOrb) {
+    return "CHOICE PORTAL";
+  } else if (orb instanceof RiskOrb) {
+    return "VOID PORTAL";
+  } else {
+    return "POINT RECOVERY";
   }
 }
 function orb_result_message(orb) {
@@ -5130,16 +5130,16 @@ function orb_result_message(orb) {
     return "\u25C6 SURVIVAL BONUS +?";
   } else if (orb instanceof MultiplierOrb) {
     let multiplier = orb[0];
-    return "\u25C8 MULTIPLIER ACTIVATED \xD7" + float_to_string(multiplier);
+    return "\u25C8 FULL AMPLIFIER ACTIVATED \xD7" + float_to_string(multiplier);
   } else if (orb instanceof NextPointMultiplierOrb) {
     let multiplier = orb[0];
-    return "\u25C8 NEXT POINT AMPLIFIER ACTIVATED \xD7" + float_to_string(multiplier);
+    return "\u25C8 SINGLE AMPLIFIER ACTIVATED \xD7" + float_to_string(multiplier);
   } else if (orb instanceof BombImmunityOrb) {
     return "\u25C8 SHIELD GENERATOR ACTIVATED";
   } else if (orb instanceof ChoiceOrb) {
     return "\u25C8 CHOICE PORTAL ACTIVATED";
   } else if (orb instanceof RiskOrb) {
-    return "\u26A0 FATE SAMPLE DETECTED";
+    return "\u26A0 VOID PORTAL DETECTED";
   } else {
     return "\u25C7 DATA RECOVERY ACTIVATED";
   }
@@ -6813,15 +6813,15 @@ var common_marketplace_items = /* @__PURE__ */ toList([
     /* @__PURE__ */ new PointOrb(5),
     5,
     /* @__PURE__ */ new Common(),
-    "Data Sample",
+    "Data",
     "+5 points when extracted"
   ),
   /* @__PURE__ */ new MarketplaceItem(
     /* @__PURE__ */ new RiskOrb(),
     5,
     /* @__PURE__ */ new Common(),
-    "Fate Sample",
-    "High-risk, high-reward extraction"
+    "Void Portal",
+    "Dangerous void extraction with unknown rewards"
   ),
   /* @__PURE__ */ new MarketplaceItem(
     /* @__PURE__ */ new BombSurvivorOrb(2),
@@ -6834,7 +6834,7 @@ var common_marketplace_items = /* @__PURE__ */ toList([
     /* @__PURE__ */ new HealthOrb(1),
     9,
     /* @__PURE__ */ new Common(),
-    "Health Sample",
+    "Health",
     "+1 health when extracted"
   ),
   /* @__PURE__ */ new MarketplaceItem(
@@ -6849,14 +6849,14 @@ var common_marketplace_items = /* @__PURE__ */ toList([
     8,
     /* @__PURE__ */ new Common(),
     "Point Recovery",
-    "Returns lowest point sample to bag"
+    "Returns lowest data extraction to bag"
   ),
   /* @__PURE__ */ new MarketplaceItem(
     /* @__PURE__ */ new PointCollectorOrb(2),
     9,
     /* @__PURE__ */ new Common(),
     "Point Collector",
-    "+2 points per data sample in bag"
+    "+2 points per data in bag"
   )
 ]);
 var rare_marketplace_items = /* @__PURE__ */ toList([
@@ -6878,14 +6878,14 @@ var rare_marketplace_items = /* @__PURE__ */ toList([
     /* @__PURE__ */ new NextPointMultiplierOrb(2),
     14,
     /* @__PURE__ */ new Rare(),
-    "Boost Signal",
+    "Single Amplifier",
     "2x multiplier for next point extraction"
   ),
   /* @__PURE__ */ new MarketplaceItem(
     /* @__PURE__ */ new MultiplierOrb(1.5),
     16,
     /* @__PURE__ */ new Rare(),
-    "Signal Amplifier",
+    "Full Amplifier",
     "1.5x multiplier for all point extraction"
   )
 ]);
@@ -6901,8 +6901,8 @@ var cosmic_marketplace_items = /* @__PURE__ */ toList([
     /* @__PURE__ */ new BombImmunityOrb(),
     23,
     /* @__PURE__ */ new Cosmic(),
-    "Hazard Shield",
-    "Immunity to next 3 bomb samples"
+    "Shield Generator",
+    "Immunity to next 3 hazard extractions"
   )
 ]);
 function generate_marketplace_selection() {
@@ -7874,11 +7874,15 @@ function choice_orb_display(choice_orb_1, choice_orb_2) {
       let first_choice = choice_orb_1[0];
       return div(
         toList([
-          class$("p-3 bg-blue-50 rounded border border-blue-200")
+          class$("p-3 bg-gray-50 rounded border border-gray-200")
         ]),
         toList([
           p(
-            toList([class$("text-blue-700 font-light text-sm mb-3")]),
+            toList([
+              class$(
+                "text-gray-700 font-light text-sm uppercase tracking-wider mb-3"
+              )
+            ]),
             toList([text3("\u25C8 CHOICE PORTAL ACTIVATED")])
           ),
           div(
@@ -7887,14 +7891,16 @@ function choice_orb_display(choice_orb_1, choice_orb_2) {
               button(
                 toList([
                   class$(
-                    "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors"
+                    "p-3 bg-white hover:bg-gray-100 rounded border border-gray-300 text-left transition-colors"
                   ),
                   on_click(new ChooseOrb(0))
                 ]),
                 toList([
                   p(
                     toList([
-                      class$("text-sm font-medium text-blue-900")
+                      class$(
+                        "text-sm font-light text-gray-900 uppercase tracking-wider"
+                      )
                     ]),
                     toList([
                       text3(orb_choice_display(first_choice))
@@ -7905,14 +7911,16 @@ function choice_orb_display(choice_orb_1, choice_orb_2) {
               button(
                 toList([
                   class$(
-                    "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors"
+                    "p-3 bg-white hover:bg-gray-100 rounded border border-gray-300 text-left transition-colors"
                   ),
                   on_click(new ChooseOrb(1))
                 ]),
                 toList([
                   p(
                     toList([
-                      class$("text-sm font-medium text-blue-900")
+                      class$(
+                        "text-sm font-light text-gray-900 uppercase tracking-wider"
+                      )
                     ]),
                     toList([
                       text3(orb_choice_display(second_choice))
@@ -8196,10 +8204,10 @@ function render_active_statuses(active_statuses) {
 function format_orb_for_dev_display(orb) {
   if (orb instanceof PointOrb) {
     let value = orb[0];
-    return "Point(" + to_string(value) + ")";
+    return "Data(" + to_string(value) + ")";
   } else if (orb instanceof BombOrb) {
     let value = orb[0];
-    return "Bomb(" + to_string(value) + ")";
+    return "Hazard(" + to_string(value) + ")";
   } else if (orb instanceof HealthOrb) {
     let value = orb[0];
     return "Health(" + to_string(value) + ")";
@@ -8214,16 +8222,16 @@ function format_orb_for_dev_display(orb) {
     return "BombSurvivor(" + to_string(value) + ")";
   } else if (orb instanceof MultiplierOrb) {
     let multiplier = orb[0];
-    return "Multiplier(" + float_to_string(multiplier) + ")";
+    return "FullAmplifier(" + float_to_string(multiplier) + ")";
   } else if (orb instanceof NextPointMultiplierOrb) {
     let multiplier = orb[0];
-    return "NextPointMultiplier(" + float_to_string(multiplier) + ")";
+    return "SingleAmplifier(" + float_to_string(multiplier) + ")";
   } else if (orb instanceof BombImmunityOrb) {
-    return "BombImmunity";
+    return "ShieldGenerator";
   } else if (orb instanceof ChoiceOrb) {
-    return "Choice";
+    return "ChoicePortal";
   } else if (orb instanceof RiskOrb) {
-    return "Risk";
+    return "VoidPortal";
   } else {
     return "PointRecovery";
   }
@@ -9050,12 +9058,12 @@ function render_risk_accept_view() {
   return fragment2(
     toList([
       status_panel(
-        "THE FATES HAVE SPOKEN",
-        "A rare Fate Sample has been detected. This sample will extract 5 specimens simultaneously from the container. If you survive all extractions, any data samples will award double points. Do you dare face your destiny?",
+        "THE VOID BECKONS",
+        "A Void Portal has been detected. This portal will extract 5 specimens simultaneously from the container. If you survive all extractions, any data will award double points. Do you dare enter the void?",
         "bg-red-50 border-red-200"
       ),
-      primary_button("ACCEPT FATE", new AcceptRisk(true)),
-      secondary_button("DECLINE RISK", new AcceptRisk(false))
+      primary_button("ENTER VOID", new AcceptRisk(true)),
+      secondary_button("AVOID VOID", new AcceptRisk(false))
     ])
   );
 }

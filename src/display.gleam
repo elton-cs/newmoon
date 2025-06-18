@@ -12,44 +12,44 @@ import gleam/int
 // Internal code uses: Orb, Bag, Pull, etc.
 // Frontend displays: Sample, Container, Extract, etc.
 
-// Orb to Sample Display Names
+// Orb to Clean Display Names (consistent with choice display)
 pub fn orb_display_name(orb: Orb) -> String {
   case orb {
-    PointOrb(_) -> "Data Sample"
-    BombOrb(_) -> "Hazard Sample"
-    HealthOrb(_) -> "Health Sample"
-    AllCollectorOrb(_) -> "All Collector Sample"
-    PointCollectorOrb(_) -> "Point Collector Sample"
-    BombSurvivorOrb(_) -> "Bomb Survivor Sample"
-    MultiplierOrb(_) -> "Multiplier Sample"
-    NextPointMultiplierOrb(_) -> "Next Point Amplifier"
-    BombImmunityOrb -> "Shield Generator Sample"
-    ChoiceOrb -> "Choice Portal Sample"
-    RiskOrb -> "Fate Sample"
-    PointRecoveryOrb -> "Point Recovery Sample"
+    PointOrb(_) -> "Data"
+    BombOrb(_) -> "Hazard"
+    HealthOrb(_) -> "Health"
+    AllCollectorOrb(_) -> "All Collector"
+    PointCollectorOrb(_) -> "Point Collector"
+    BombSurvivorOrb(_) -> "Bomb Survivor"
+    MultiplierOrb(_) -> "Full Amplifier"
+    NextPointMultiplierOrb(_) -> "Single Amplifier"
+    BombImmunityOrb -> "Shield Generator"
+    ChoiceOrb -> "Choice Portal"
+    RiskOrb -> "Void Portal"
+    PointRecoveryOrb -> "Point Recovery"
   }
 }
 
-// Orb Choice Display Names - for choice selection (no "Sample" suffix, shows values)
+// Orb Choice Display Names - for choice selection (no "Sample" suffix, shows values, UPPERCASE)
 pub fn orb_choice_display(orb: Orb) -> String {
   case orb {
-    PointOrb(value) -> "Data (+" <> int.to_string(value) <> ")"
-    BombOrb(value) -> "Hazard (-" <> int.to_string(value) <> ")"
-    HealthOrb(value) -> "Health (+" <> int.to_string(value) <> ")"
+    PointOrb(value) -> "DATA (+" <> int.to_string(value) <> ")"
+    BombOrb(value) -> "HAZARD (-" <> int.to_string(value) <> ")"
+    HealthOrb(value) -> "HEALTH (+" <> int.to_string(value) <> ")"
     AllCollectorOrb(value) ->
-      "All Collector (+" <> int.to_string(value) <> " per Orb)"
+      "ALL COLLECTOR (+" <> int.to_string(value) <> " PER ORB)"
     PointCollectorOrb(value) ->
-      "Point Collector (+" <> int.to_string(value) <> " per Point)"
+      "POINT COLLECTOR (+" <> int.to_string(value) <> " PER POINT)"
     BombSurvivorOrb(value) ->
-      "Bomb Survivor (+" <> int.to_string(value) <> " per Bomb)"
+      "BOMB SURVIVOR (+" <> int.to_string(value) <> " PER BOMB)"
     MultiplierOrb(multiplier) ->
-      "Full Amplifier (×" <> float.to_string(multiplier) <> ")"
+      "FULL AMPLIFIER (×" <> float.to_string(multiplier) <> ")"
     NextPointMultiplierOrb(multiplier) ->
-      "Single Amplifier (×" <> float.to_string(multiplier) <> ")"
-    BombImmunityOrb -> "Shield Generator"
-    ChoiceOrb -> "Choice Portal"
-    RiskOrb -> "Fate Sample"
-    PointRecoveryOrb -> "Point Recovery"
+      "SINGLE AMPLIFIER (×" <> float.to_string(multiplier) <> ")"
+    BombImmunityOrb -> "SHIELD GENERATOR"
+    ChoiceOrb -> "CHOICE PORTAL"
+    RiskOrb -> "VOID PORTAL"
+    PointRecoveryOrb -> "POINT RECOVERY"
   }
 }
 
@@ -63,12 +63,12 @@ pub fn orb_result_message(orb: Orb) -> String {
     PointCollectorOrb(_) -> "◉ DATA COLLECTION +?"
     BombSurvivorOrb(_) -> "◆ SURVIVAL BONUS +?"
     MultiplierOrb(multiplier) ->
-      "◈ MULTIPLIER ACTIVATED ×" <> float.to_string(multiplier)
+      "◈ FULL AMPLIFIER ACTIVATED ×" <> float.to_string(multiplier)
     NextPointMultiplierOrb(multiplier) ->
-      "◈ NEXT POINT AMPLIFIER ACTIVATED ×" <> float.to_string(multiplier)
+      "◈ SINGLE AMPLIFIER ACTIVATED ×" <> float.to_string(multiplier)
     BombImmunityOrb -> "◈ SHIELD GENERATOR ACTIVATED"
     ChoiceOrb -> "◈ CHOICE PORTAL ACTIVATED"
-    RiskOrb -> "⚠ FATE SAMPLE DETECTED"
+    RiskOrb -> "⚠ VOID PORTAL DETECTED"
     PointRecoveryOrb -> "◇ DATA RECOVERY ACTIVATED"
   }
 }
@@ -162,7 +162,7 @@ pub const mission_failed_message = "ALL SYSTEMS COMPROMISED. INITIATING RESET PR
 pub const status_effects_title = "ACTIVE ENHANCEMENTS"
 
 pub fn multiplier_status_text(multiplier: Int) -> String {
-  "◈ SIGNAL AMPLIFIER ×" <> int.to_string(multiplier)
+  "◈ FULL AMPLIFIER ×" <> int.to_string(multiplier)
 }
 
 pub fn immunity_status_text(remaining: Int) -> String {

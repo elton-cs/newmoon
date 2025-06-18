@@ -93,15 +93,15 @@ pub const common_marketplace_items = [
     orb: PointOrb(5),
     price: 5,
     rarity: types.Common,
-    name: "Data Sample",
+    name: "Data",
     description: "+5 points when extracted",
   ),
   types.MarketplaceItem(
     orb: RiskOrb,
     price: 5,
     rarity: types.Common,
-    name: "Fate Sample",
-    description: "High-risk, high-reward extraction",
+    name: "Void Portal",
+    description: "Dangerous void extraction with unknown rewards",
   ),
   types.MarketplaceItem(
     orb: BombSurvivorOrb(2),
@@ -114,7 +114,7 @@ pub const common_marketplace_items = [
     orb: HealthOrb(1),
     price: 9,
     rarity: types.Common,
-    name: "Health Sample",
+    name: "Health",
     description: "+1 health when extracted",
   ),
   types.MarketplaceItem(
@@ -129,14 +129,14 @@ pub const common_marketplace_items = [
     price: 8,
     rarity: types.Common,
     name: "Point Recovery",
-    description: "Returns lowest point sample to bag",
+    description: "Returns lowest data extraction to bag",
   ),
   types.MarketplaceItem(
     orb: PointCollectorOrb(2),
     price: 9,
     rarity: types.Common,
     name: "Point Collector",
-    description: "+2 points per data sample in bag",
+    description: "+2 points per data in bag",
   ),
 ]
 
@@ -160,14 +160,14 @@ pub const rare_marketplace_items = [
     orb: NextPointMultiplierOrb(2.0),
     price: 14,
     rarity: types.Rare,
-    name: "Boost Signal",
+    name: "Single Amplifier",
     description: "2x multiplier for next point extraction",
   ),
   types.MarketplaceItem(
     orb: MultiplierOrb(1.5),
     price: 16,
     rarity: types.Rare,
-    name: "Signal Amplifier",
+    name: "Full Amplifier",
     description: "1.5x multiplier for all point extraction",
   ),
 ]
@@ -185,8 +185,8 @@ pub const cosmic_marketplace_items = [
     orb: BombImmunityOrb,
     price: 23,
     rarity: types.Cosmic,
-    name: "Hazard Shield",
-    description: "Immunity to next 3 bomb samples",
+    name: "Shield Generator",
+    description: "Immunity to next 3 hazard extractions",
   ),
 ]
 
