@@ -59,6 +59,7 @@ pub fn init(_) -> Model {
     ),
     risk_health: 5,
     selected_marketplace_item: None,
+    marketplace_selection: [],
   )
 }
 
@@ -196,13 +197,25 @@ pub const cosmic_marketplace_items = [
   ),
 ]
 
-// Marketplace inventory with all available items
-fn marketplace_inventory() -> List(types.MarketplaceItem) {
-  list.flatten([
-    common_marketplace_items,
-    rare_marketplace_items,
-    cosmic_marketplace_items,
-  ])
+// Generate a random selection of marketplace items
+fn generate_marketplace_selection() -> List(types.MarketplaceItem) {
+  let common_items =
+    common_marketplace_items
+    |> list.shuffle
+    |> list.take(3)
+
+  let rare_items =
+    rare_marketplace_items
+    |> list.shuffle
+    |> list.take(2)
+
+  let cosmic_items =
+    cosmic_marketplace_items
+    |> list.shuffle
+    |> list.take(1)
+
+  [common_items, rare_items, cosmic_items]
+  |> list.flatten
 }
 
 // Test bag that includes the test orb plus the standard starter orbs
@@ -382,6 +395,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             ),
             risk_health: 5,
             selected_marketplace_item: None,
+            marketplace_selection: [],
           )
         }
         _ -> model
@@ -418,6 +432,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             ),
             risk_health: 5,
             selected_marketplace_item: None,
+            marketplace_selection: [],
           )
         }
         _ -> model
@@ -469,6 +484,7 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             ),
             risk_health: 5,
             selected_marketplace_item: None,
+            marketplace_selection: [],
           )
         }
         _ -> model
@@ -938,6 +954,7 @@ fn handle_restart_game(model: Model) -> Model {
     ),
     risk_health: 5,
     selected_marketplace_item: None,
+    marketplace_selection: [],
   )
 }
 
@@ -996,6 +1013,7 @@ fn handle_exit_testing(model: Model) -> Model {
     ),
     risk_health: 5,
     selected_marketplace_item: None,
+    marketplace_selection: [],
   )
 }
 
@@ -1310,6 +1328,7 @@ fn handle_exit_risk(model: Model) -> Model {
     ),
     risk_health: 5,
     selected_marketplace_item: None,
+    marketplace_selection: model.marketplace_selection,
   )
 }
 
@@ -1384,6 +1403,7 @@ fn handle_go_to_marketplace(model: Model) -> Model {
     ..model,
     screen: Game(Marketplace),
     credits: model.credits + model.points,
+    marketplace_selection: generate_marketplace_selection(),
   )
 }
 
@@ -1418,8 +1438,7 @@ fn handle_select_marketplace_item(model: Model, item_index: Int) -> Model {
 fn handle_purchase_item(model: Model, _item_index: Int) -> Model {
   case model.selected_marketplace_item {
     Some(selected_index) -> {
-      let inventory = marketplace_inventory()
-      case get_item_at_index(inventory, selected_index) {
+      case get_item_at_index(model.marketplace_selection, selected_index) {
         Some(item) ->
           case model.credits >= item.price {
             True ->

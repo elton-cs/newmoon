@@ -1095,6 +1095,21 @@ var Eq = class extends CustomType {
 var Gt = class extends CustomType {
 };
 
+// build/dev/javascript/gleam_stdlib/gleam/float.mjs
+function compare(a, b) {
+  let $ = a === b;
+  if ($) {
+    return new Eq();
+  } else {
+    let $1 = a < b;
+    if ($1) {
+      return new Lt();
+    } else {
+      return new Gt();
+    }
+  }
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/int.mjs
 function min(a, b) {
   let $ = a < b;
@@ -1707,6 +1722,40 @@ function sort(list4, compare4) {
     }
   }
 }
+function shuffle_pair_unwrap_loop(loop$list, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return acc;
+    } else {
+      let elem_pair = list4.head;
+      let enumerable = list4.tail;
+      loop$list = enumerable;
+      loop$acc = prepend(elem_pair[1], acc);
+    }
+  }
+}
+function do_shuffle_by_pair_indexes(list_of_pairs) {
+  return sort(
+    list_of_pairs,
+    (a_pair, b_pair) => {
+      return compare(a_pair[0], b_pair[0]);
+    }
+  );
+}
+function shuffle(list4) {
+  let _pipe = list4;
+  let _pipe$1 = fold(
+    _pipe,
+    toList([]),
+    (acc, a) => {
+      return prepend([random_uniform(), a], acc);
+    }
+  );
+  let _pipe$2 = do_shuffle_by_pair_indexes(_pipe$1);
+  return shuffle_pair_unwrap_loop(_pipe$2, toList([]));
+}
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
 function concat_loop(loop$strings, loop$accumulator) {
@@ -1993,6 +2042,13 @@ var trim_start_regex = /* @__PURE__ */ new RegExp(
 var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
 function truncate(float2) {
   return Math.trunc(float2);
+}
+function random_uniform() {
+  const random_uniform_result = Math.random();
+  if (random_uniform_result === 1) {
+    return random_uniform();
+  }
+  return random_uniform_result;
 }
 function new_map() {
   return Dict.new();
@@ -5209,7 +5265,7 @@ var RiskSample = class extends CustomType {
 var PointRecoverySample = class extends CustomType {
 };
 var Model = class extends CustomType {
-  constructor(health, points, credits, level, milestone, bag, purchased_orbs, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_original_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health, selected_marketplace_item) {
+  constructor(health, points, credits, level, milestone, bag, purchased_orbs, screen, last_orb, last_orb_message, input_value, pulled_orbs, point_multiplier, bomb_immunity, active_statuses, choice_orb_1, choice_orb_2, dev_mode, risk_orbs, risk_original_orbs, risk_pulled_orbs, risk_accumulated_effects, risk_health, selected_marketplace_item, marketplace_selection) {
     super();
     this.health = health;
     this.points = points;
@@ -5235,6 +5291,7 @@ var Model = class extends CustomType {
     this.risk_accumulated_effects = risk_accumulated_effects;
     this.risk_health = risk_health;
     this.selected_marketplace_item = selected_marketplace_item;
+    this.marketplace_selection = marketplace_selection;
   }
 };
 var StartGame = class extends CustomType {
@@ -5556,7 +5613,8 @@ function consume_next_point_multiplier(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function has_bomb_immunity(statuses) {
@@ -5658,7 +5716,8 @@ function clear_statuses_by_persistence(model, persistence) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function decrement_duration(duration) {
@@ -5743,7 +5802,8 @@ function tick_statuses(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function status_to_display_text(status) {
@@ -5889,7 +5949,8 @@ function add_status(model, new_status) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 
@@ -5943,7 +6004,8 @@ function init(_) {
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
     5,
-    new None()
+    new None(),
+    toList([])
   );
 }
 function get_full_bag(purchased_orbs) {
@@ -6065,7 +6127,8 @@ function handle_start_game(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_go_to_orb_testing(model) {
@@ -6094,7 +6157,8 @@ function handle_go_to_orb_testing(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_select_orb_type(model, orb_type) {
@@ -6123,7 +6187,8 @@ function handle_select_orb_type(model, orb_type) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_update_input_value(model, value2) {
@@ -6152,7 +6217,8 @@ function handle_update_input_value(model, value2) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
@@ -6191,7 +6257,8 @@ function handle_confirm_orb_value(model, orb_type) {
           toList([]),
           new RiskEffects(0, 0, 0, toList([])),
           5,
-          new None()
+          new None(),
+          toList([])
         );
       } else {
         return model;
@@ -6234,7 +6301,8 @@ function handle_confirm_orb_value(model, orb_type) {
           toList([]),
           new RiskEffects(0, 0, 0, toList([])),
           5,
-          new None()
+          new None(),
+          toList([])
         );
       } else {
         return model;
@@ -6303,7 +6371,8 @@ function handle_confirm_orb_value(model, orb_type) {
           toList([]),
           new RiskEffects(0, 0, 0, toList([])),
           5,
-          new None()
+          new None(),
+          toList([])
         );
       } else {
         return model;
@@ -6339,7 +6408,8 @@ function handle_back_to_orb_testing(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_with_both_statuses(model) {
@@ -6376,7 +6446,8 @@ function handle_start_testing_with_both_statuses(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_with_triple_choice(model) {
@@ -6413,7 +6484,8 @@ function handle_start_testing_with_triple_choice(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_back_to_main_menu(model) {
@@ -6442,7 +6514,8 @@ function handle_back_to_main_menu(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_risk_success(model) {
@@ -6487,7 +6560,8 @@ function handle_start_testing_risk_success(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_risk_failure(model) {
@@ -6531,7 +6605,8 @@ function handle_start_testing_risk_failure(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_risk_continue(model) {
@@ -6576,7 +6651,8 @@ function handle_start_testing_risk_continue(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_point_recovery_first(model) {
@@ -6615,7 +6691,8 @@ function handle_start_testing_point_recovery_first(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_start_testing_point_recovery_active(model) {
@@ -6654,7 +6731,8 @@ function handle_start_testing_point_recovery_active(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function apply_point_multipliers(model, base_points) {
@@ -6703,7 +6781,8 @@ function handle_restart_game(model) {
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
     5,
-    new None()
+    new None(),
+    toList([])
   );
 }
 function handle_next_level(model) {
@@ -6738,7 +6817,8 @@ function handle_next_level(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_reset_testing(model) {
@@ -6767,7 +6847,8 @@ function handle_reset_testing(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_exit_testing(model) {
@@ -6795,7 +6876,8 @@ function handle_exit_testing(model) {
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
     5,
-    new None()
+    new None(),
+    toList([])
   );
 }
 function check_game_status(model) {
@@ -6832,7 +6914,8 @@ function check_game_status(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
       } else if ($3) {
         let _record = model;
@@ -6860,7 +6943,8 @@ function check_game_status(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
       } else if ($4) {
         let _record = model;
@@ -6888,7 +6972,8 @@ function check_game_status(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
       } else {
         return model;
@@ -6928,7 +7013,8 @@ function check_game_status(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
       } else if ($3) {
         let $5 = model.level === 5;
@@ -6958,7 +7044,8 @@ function check_game_status(model) {
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
             _record.risk_health,
-            _record.selected_marketplace_item
+            _record.selected_marketplace_item,
+            _record.marketplace_selection
           );
         } else {
           let _record = model;
@@ -6986,7 +7073,8 @@ function check_game_status(model) {
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
             _record.risk_health,
-            _record.selected_marketplace_item
+            _record.selected_marketplace_item,
+            _record.marketplace_selection
           );
         }
       } else if ($4) {
@@ -7015,7 +7103,8 @@ function check_game_status(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
       } else {
         return model;
@@ -7053,7 +7142,8 @@ function handle_toggle_dev_mode(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_risk_orb_activation(model) {
@@ -7102,7 +7192,8 @@ function handle_risk_orb_activation(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_accept_risk(loop$model, loop$accept) {
@@ -7159,7 +7250,8 @@ function handle_accept_risk(loop$model, loop$accept) {
           toList([]),
           new RiskEffects(0, 0, 0, toList([])),
           model.health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
       } else {
         loop$model = model;
@@ -7197,7 +7289,8 @@ function handle_accept_risk(loop$model, loop$accept) {
                 _record.risk_pulled_orbs,
                 _record.risk_accumulated_effects,
                 _record.risk_health,
-                _record.selected_marketplace_item
+                _record.selected_marketplace_item,
+                _record.marketplace_selection
               );
             })()
           );
@@ -7234,7 +7327,8 @@ function handle_accept_risk(loop$model, loop$accept) {
                 _record.risk_pulled_orbs,
                 _record.risk_accumulated_effects,
                 _record.risk_health,
-                _record.selected_marketplace_item
+                _record.selected_marketplace_item,
+                _record.marketplace_selection
               );
             })()
           );
@@ -7293,7 +7387,8 @@ function handle_accept_fate(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_apply_risk_effects(model) {
@@ -7347,7 +7442,8 @@ function handle_apply_risk_effects(model) {
       _record.risk_pulled_orbs,
       _record.risk_accumulated_effects,
       _record.risk_health,
-      _record.selected_marketplace_item
+      _record.selected_marketplace_item,
+      _record.marketplace_selection
     );
   } else {
     let capped_health = min(final_health, 5);
@@ -7399,7 +7495,8 @@ function handle_apply_risk_effects(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
           })(_pipe$1);
         } else {
@@ -7452,7 +7549,8 @@ function handle_apply_risk_effects(model) {
       _record.risk_pulled_orbs,
       _record.risk_accumulated_effects,
       _record.risk_health,
-      _record.selected_marketplace_item
+      _record.selected_marketplace_item,
+      _record.marketplace_selection
     );
   }
 }
@@ -7483,7 +7581,8 @@ function handle_continue_after_risk_consumption(model) {
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
     5,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
   let clean_model = _block;
   let $ = model.screen;
@@ -7517,7 +7616,8 @@ function handle_continue_after_risk_consumption(model) {
             _record$1.risk_pulled_orbs,
             _record$1.risk_accumulated_effects,
             _record$1.risk_health,
-            _record$1.selected_marketplace_item
+            _record$1.selected_marketplace_item,
+            _record$1.marketplace_selection
           );
         })()
       );
@@ -7554,7 +7654,8 @@ function handle_continue_after_risk_consumption(model) {
             _record$1.risk_pulled_orbs,
             _record$1.risk_accumulated_effects,
             _record$1.risk_health,
-            _record$1.selected_marketplace_item
+            _record$1.selected_marketplace_item,
+            _record$1.marketplace_selection
           );
         })()
       );
@@ -7591,7 +7692,8 @@ function handle_exit_risk(model) {
     toList([]),
     new RiskEffects(0, 0, 0, toList([])),
     5,
-    new None()
+    new None(),
+    model.marketplace_selection
   );
 }
 function accumulate_risk_orb(orb, current_effects, active_statuses) {
@@ -7697,7 +7799,8 @@ function handle_pull_risk_orb(model) {
       prepend(first_orb, model.risk_pulled_orbs),
       new_effects,
       _record.risk_health,
-      _record.selected_marketplace_item
+      _record.selected_marketplace_item,
+      _record.marketplace_selection
     );
     let updated_model = _block;
     let $2 = is_empty(rest);
@@ -7747,7 +7850,8 @@ function handle_pull_risk_orb(model) {
         _record$1.risk_pulled_orbs,
         _record$1.risk_accumulated_effects,
         _record$1.risk_health,
-        _record$1.selected_marketplace_item
+        _record$1.selected_marketplace_item,
+        _record$1.marketplace_selection
       );
     } else {
       return updated_model;
@@ -7780,36 +7884,8 @@ function handle_test_game_complete(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    _record.selected_marketplace_item
-  );
-}
-function handle_go_to_marketplace(model) {
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    model.credits + model.points,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    _record.purchased_orbs,
-    new Game(new Marketplace()),
-    _record.last_orb,
-    _record.last_orb_message,
-    _record.input_value,
-    _record.pulled_orbs,
-    _record.point_multiplier,
-    _record.bomb_immunity,
-    _record.active_statuses,
-    _record.choice_orb_1,
-    _record.choice_orb_2,
-    _record.dev_mode,
-    _record.risk_orbs,
-    _record.risk_original_orbs,
-    _record.risk_pulled_orbs,
-    _record.risk_accumulated_effects,
-    _record.risk_health,
-    _record.selected_marketplace_item
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
   );
 }
 function handle_continue_to_next_level(model) {
@@ -7844,7 +7920,8 @@ function handle_continue_to_next_level(model) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    new None()
+    new None(),
+    _record.marketplace_selection
   );
 }
 function handle_select_marketplace_item(model, item_index) {
@@ -7873,13 +7950,61 @@ function handle_select_marketplace_item(model, item_index) {
     _record.risk_pulled_orbs,
     _record.risk_accumulated_effects,
     _record.risk_health,
-    new Some(item_index)
+    new Some(item_index),
+    _record.marketplace_selection
   );
 }
 function get_item_at_index(items, index4) {
   let _pipe = drop(items, index4);
   let _pipe$1 = first(_pipe);
   return from_result(_pipe$1);
+}
+function handle_purchase_item(model, _) {
+  let $ = model.selected_marketplace_item;
+  if ($ instanceof Some) {
+    let selected_index = $[0];
+    let $1 = get_item_at_index(model.marketplace_selection, selected_index);
+    if ($1 instanceof Some) {
+      let item = $1[0];
+      let $2 = model.credits >= item.price;
+      if ($2) {
+        let _record = model;
+        return new Model(
+          _record.health,
+          _record.points,
+          model.credits - item.price,
+          _record.level,
+          _record.milestone,
+          _record.bag,
+          prepend(item.orb, model.purchased_orbs),
+          _record.screen,
+          _record.last_orb,
+          _record.last_orb_message,
+          _record.input_value,
+          _record.pulled_orbs,
+          _record.point_multiplier,
+          _record.bomb_immunity,
+          _record.active_statuses,
+          _record.choice_orb_1,
+          _record.choice_orb_2,
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_original_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health,
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
+        );
+      } else {
+        return model;
+      }
+    } else {
+      return model;
+    }
+  } else {
+    return model;
+  }
 }
 var common_marketplace_items = /* @__PURE__ */ toList([
   /* @__PURE__ */ new MarketplaceItem(
@@ -7978,61 +8103,54 @@ var cosmic_marketplace_items = /* @__PURE__ */ toList([
     "Immunity to next 3 bomb samples"
   )
 ]);
-function marketplace_inventory() {
-  return flatten(
-    toList([
-      common_marketplace_items,
-      rare_marketplace_items,
-      cosmic_marketplace_items
-    ])
-  );
+function generate_marketplace_selection() {
+  let _block;
+  let _pipe = common_marketplace_items;
+  let _pipe$1 = shuffle(_pipe);
+  _block = take(_pipe$1, 3);
+  let common_items = _block;
+  let _block$1;
+  let _pipe$2 = rare_marketplace_items;
+  let _pipe$3 = shuffle(_pipe$2);
+  _block$1 = take(_pipe$3, 2);
+  let rare_items = _block$1;
+  let _block$2;
+  let _pipe$4 = cosmic_marketplace_items;
+  let _pipe$5 = shuffle(_pipe$4);
+  _block$2 = take(_pipe$5, 1);
+  let cosmic_items = _block$2;
+  let _pipe$6 = toList([common_items, rare_items, cosmic_items]);
+  return flatten(_pipe$6);
 }
-function handle_purchase_item(model, _) {
-  let $ = model.selected_marketplace_item;
-  if ($ instanceof Some) {
-    let selected_index = $[0];
-    let inventory = marketplace_inventory();
-    let $1 = get_item_at_index(inventory, selected_index);
-    if ($1 instanceof Some) {
-      let item = $1[0];
-      let $2 = model.credits >= item.price;
-      if ($2) {
-        let _record = model;
-        return new Model(
-          _record.health,
-          _record.points,
-          model.credits - item.price,
-          _record.level,
-          _record.milestone,
-          _record.bag,
-          prepend(item.orb, model.purchased_orbs),
-          _record.screen,
-          _record.last_orb,
-          _record.last_orb_message,
-          _record.input_value,
-          _record.pulled_orbs,
-          _record.point_multiplier,
-          _record.bomb_immunity,
-          _record.active_statuses,
-          _record.choice_orb_1,
-          _record.choice_orb_2,
-          _record.dev_mode,
-          _record.risk_orbs,
-          _record.risk_original_orbs,
-          _record.risk_pulled_orbs,
-          _record.risk_accumulated_effects,
-          _record.risk_health,
-          _record.selected_marketplace_item
-        );
-      } else {
-        return model;
-      }
-    } else {
-      return model;
-    }
-  } else {
-    return model;
-  }
+function handle_go_to_marketplace(model) {
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    model.credits + model.points,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.purchased_orbs,
+    new Game(new Marketplace()),
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health,
+    _record.selected_marketplace_item,
+    generate_marketplace_selection()
+  );
 }
 function handle_choice_orb_activation(model) {
   let $ = model.bag;
@@ -8068,7 +8186,8 @@ function handle_choice_orb_activation(model) {
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
         _record.risk_health,
-        _record.selected_marketplace_item
+        _record.selected_marketplace_item,
+        _record.marketplace_selection
       );
       let temp_model = _block;
       return handle_pull_orb(temp_model);
@@ -8122,7 +8241,8 @@ function handle_choice_orb_activation(model) {
         _record.risk_pulled_orbs,
         _record.risk_accumulated_effects,
         _record.risk_health,
-        _record.selected_marketplace_item
+        _record.selected_marketplace_item,
+        _record.marketplace_selection
       );
       let choice_model = _block$1;
       return choice_model;
@@ -8172,7 +8292,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -8211,7 +8332,8 @@ function handle_pull_orb(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -8246,7 +8368,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -8283,7 +8406,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8323,7 +8447,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8363,7 +8488,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8430,7 +8556,8 @@ function handle_pull_orb(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -8478,7 +8605,8 @@ function handle_pull_orb(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -8553,7 +8681,8 @@ function handle_pull_orb(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -8615,7 +8744,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -8654,7 +8784,8 @@ function handle_pull_orb(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -8689,7 +8820,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -8726,7 +8858,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8766,7 +8899,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8806,7 +8940,8 @@ function handle_pull_orb(model) {
             _record2.risk_pulled_orbs,
             _record2.risk_accumulated_effects,
             _record2.risk_health,
-            _record2.selected_marketplace_item
+            _record2.selected_marketplace_item,
+            _record2.marketplace_selection
           );
           let new_model2 = _block$12;
           let message = collector_result_message(
@@ -8873,7 +9008,8 @@ function handle_pull_orb(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
           })(_pipe$1);
           let new_model2 = _block$12;
@@ -8921,7 +9057,8 @@ function handle_pull_orb(model) {
               _record2.risk_pulled_orbs,
               _record2.risk_accumulated_effects,
               _record2.risk_health,
-              _record2.selected_marketplace_item
+              _record2.selected_marketplace_item,
+              _record2.marketplace_selection
             );
             let new_model2 = _block$12;
             let message = orb_result_message(first_orb);
@@ -8996,7 +9133,8 @@ function handle_pull_orb(model) {
           _record.risk_pulled_orbs,
           _record.risk_accumulated_effects,
           _record.risk_health,
-          _record.selected_marketplace_item
+          _record.selected_marketplace_item,
+          _record.marketplace_selection
         );
         let model_with_bag_and_pulls = _block$3;
         let _block$4;
@@ -9073,7 +9211,8 @@ function handle_choose_orb(model, choice_index) {
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
             _record.risk_health,
-            _record.selected_marketplace_item
+            _record.selected_marketplace_item,
+            _record.marketplace_selection
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -9126,7 +9265,8 @@ function handle_choose_orb(model, choice_index) {
             _record.risk_pulled_orbs,
             _record.risk_accumulated_effects,
             _record.risk_health,
-            _record.selected_marketplace_item
+            _record.selected_marketplace_item,
+            _record.marketplace_selection
           );
           let temp_model = _block$2;
           return handle_pull_orb(temp_model);
@@ -10606,6 +10746,31 @@ function get_item_at_index_view(items, index4) {
   let _pipe$1 = first(_pipe);
   return from_result(_pipe$1);
 }
+function render_marketplace_detail_panel(credits, selected_item, marketplace_selection) {
+  if (selected_item instanceof Some) {
+    let index4 = selected_item[0];
+    let $ = get_item_at_index_view(marketplace_selection, index4);
+    if ($ instanceof Some) {
+      let item = $[0];
+      let can_afford = credits >= item.price;
+      let rarity_color = rarity_color_class(item.rarity);
+      let rarity_name = rarity_display_name(item.rarity);
+      return marketplace_item_detail(
+        item.name,
+        item.description,
+        item.price,
+        rarity_name,
+        rarity_color,
+        can_afford,
+        new PurchaseItem(0)
+      );
+    } else {
+      return marketplace_default_detail();
+    }
+  } else {
+    return marketplace_default_detail();
+  }
+}
 function get_rarity_bg_color(rarity) {
   if (rarity instanceof Common) {
     return "bg-gray-400";
@@ -10646,17 +10811,7 @@ function get_item_code(index4) {
     return "??";
   }
 }
-function get_marketplace_inventory() {
-  return flatten(
-    toList([
-      common_marketplace_items,
-      rare_marketplace_items,
-      cosmic_marketplace_items
-    ])
-  );
-}
-function render_marketplace_catalog(credits, selected_item) {
-  let inventory = get_marketplace_inventory();
+function render_marketplace_catalog(credits, selected_item, marketplace_selection) {
   return div(
     toList([
       class$(
@@ -10664,7 +10819,7 @@ function render_marketplace_catalog(credits, selected_item) {
       )
     ]),
     index_map(
-      inventory,
+      marketplace_selection,
       (item, index4) => {
         let can_afford = credits >= item.price;
         let _block;
@@ -10688,40 +10843,20 @@ function render_marketplace_catalog(credits, selected_item) {
     )
   );
 }
-function render_marketplace_detail_panel(credits, selected_item) {
-  if (selected_item instanceof Some) {
-    let index4 = selected_item[0];
-    let inventory = get_marketplace_inventory();
-    let $ = get_item_at_index_view(inventory, index4);
-    if ($ instanceof Some) {
-      let item = $[0];
-      let can_afford = credits >= item.price;
-      let rarity_color = rarity_color_class(item.rarity);
-      let rarity_name = rarity_display_name(item.rarity);
-      return marketplace_item_detail(
-        item.name,
-        item.description,
-        item.price,
-        rarity_name,
-        rarity_color,
-        can_afford,
-        new PurchaseItem(0)
-      );
-    } else {
-      return marketplace_default_detail();
-    }
-  } else {
-    return marketplace_default_detail();
-  }
-}
-function render_marketplace_two_panel(credits, selected_item) {
+function render_marketplace_two_panel(credits, selected_item, marketplace_selection) {
   return div(
     toList([class$("space-y-4")]),
     toList([
-      render_marketplace_catalog(credits, selected_item),
+      render_marketplace_catalog(credits, selected_item, marketplace_selection),
       div(
         toList([class$("min-h-[200px]")]),
-        toList([render_marketplace_detail_panel(credits, selected_item)])
+        toList([
+          render_marketplace_detail_panel(
+            credits,
+            selected_item,
+            marketplace_selection
+          )
+        ])
       )
     ])
   );
@@ -10755,7 +10890,8 @@ function render_marketplace_view(model) {
       render_marketplace_stats(model.points, model.credits),
       render_marketplace_two_panel(
         model.credits,
-        model.selected_marketplace_item
+        model.selected_marketplace_item,
+        model.marketplace_selection
       ),
       primary_button(
         continue_to_next_sector_text,

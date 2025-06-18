@@ -139,6 +139,7 @@ pub type Model {
     risk_accumulated_effects: RiskEffects,
     risk_health: Int,
     selected_marketplace_item: Option(Int),
+    marketplace_selection: List(MarketplaceItem),
   )
 }
 

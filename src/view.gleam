@@ -2,11 +2,9 @@ import display
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/string
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
-import lustre/event
 import status
 import types.{
   type MarketplaceItem, type Model, type Msg, type OrbType, type Rarity,
@@ -28,9 +26,6 @@ import types.{
   TestingRiskSurvived, ValueConfiguration, Victory,
 }
 import ui
-import update.{
-  common_marketplace_items, cosmic_marketplace_items, rare_marketplace_items,
-}
 
 pub fn view(model: Model) -> Element(Msg) {
   // Clear pattern matching on model fields to determine view
@@ -507,7 +502,11 @@ fn render_marketplace_view(model: types.Model) -> Element(Msg) {
       "bg-purple-50 border-purple-200",
     ),
     render_marketplace_stats(model.points, model.credits),
-    render_marketplace_two_panel(model.credits, model.selected_marketplace_item),
+    render_marketplace_two_panel(
+      model.credits,
+      model.selected_marketplace_item,
+      model.marketplace_selection,
+    ),
     ui.primary_button(display.continue_to_next_sector_text, ContinueToNextLevel),
   ])
 }
@@ -516,13 +515,18 @@ fn render_marketplace_view(model: types.Model) -> Element(Msg) {
 fn render_marketplace_two_panel(
   credits: Int,
   selected_item: option.Option(Int),
+  marketplace_selection: List(MarketplaceItem),
 ) -> Element(Msg) {
   html.div([attribute.class("space-y-4")], [
     // Horizontal scrolling catalog (mobile-first)
-    render_marketplace_catalog(credits, selected_item),
+    render_marketplace_catalog(credits, selected_item, marketplace_selection),
     // Detail panel below on mobile, side-by-side on larger screens
     html.div([attribute.class("min-h-[200px]")], [
-      render_marketplace_detail_panel(credits, selected_item),
+      render_marketplace_detail_panel(
+        credits,
+        selected_item,
+        marketplace_selection,
+      ),
     ]),
   ])
 }
@@ -531,15 +535,15 @@ fn render_marketplace_two_panel(
 fn render_marketplace_catalog(
   credits: Int,
   selected_item: option.Option(Int),
+  marketplace_selection: List(MarketplaceItem),
 ) -> Element(Msg) {
-  let inventory = get_marketplace_inventory()
   html.div(
     [
       attribute.class(
         "flex gap-3 overflow-x-auto overflow-y-hidden pt-3 pb-2 scrollbar-thin scrollbar-thumb-gray-300 w-[396px]",
       ),
     ],
-    list.index_map(inventory, fn(item, index) {
+    list.index_map(marketplace_selection, fn(item, index) {
       let can_afford = credits >= item.price
       let is_selected = case selected_item {
         Some(selected_index) -> selected_index == index
@@ -563,11 +567,11 @@ fn render_marketplace_catalog(
 fn render_marketplace_detail_panel(
   credits: Int,
   selected_item: option.Option(Int),
+  marketplace_selection: List(MarketplaceItem),
 ) -> Element(Msg) {
   case selected_item {
     Some(index) -> {
-      let inventory = get_marketplace_inventory()
-      case get_item_at_index_view(inventory, index) {
+      case get_item_at_index_view(marketplace_selection, index) {
         Some(item) -> {
           let can_afford = credits >= item.price
           let rarity_color = display.rarity_color_class(item.rarity)
@@ -628,15 +632,6 @@ fn get_item_code(index: Int) -> String {
     12 -> "X2"
     _ -> "??"
   }
-}
-
-// Get marketplace inventory (using constants from update.gleam)
-fn get_marketplace_inventory() -> List(MarketplaceItem) {
-  list.flatten([
-    common_marketplace_items,
-    rare_marketplace_items,
-    cosmic_marketplace_items,
-  ])
 }
 
 // Marketplace Stats - shows earned points and total credits
