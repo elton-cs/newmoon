@@ -66,10 +66,6 @@ pub fn marketplace_grid(items: List(Element(Msg))) -> Element(Msg) {
   html.div([attribute.class("grid grid-cols-2 grid-rows-3 gap-3")], items)
 }
 
-pub fn marketplace_stats_grid(stats: List(Element(Msg))) -> Element(Msg) {
-  html.div([attribute.class("grid grid-cols-2 gap-3")], stats)
-}
-
 pub fn stat_card(
   symbol: String,
   label: String,
@@ -392,9 +388,7 @@ pub fn container_display(orbs_left: Int) -> Element(Msg) {
       [html.text(display.container_label)],
     ),
     html.p([attribute.class("text-2xl font-light text-black")], [
-      html.text(
-        string.concat([int.to_string(orbs_left), display.specimens_suffix]),
-      ),
+      html.text(int.to_string(orbs_left)),
     ]),
   ])
 }
@@ -520,7 +514,7 @@ pub fn status_panel(
       [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
       [html.text(title)],
     ),
-    html.p([attribute.class("text-gray-600 text-sm font-light")], [
+    html.p([attribute.class("text-gray-600 text-l font-light")], [
       html.text(message),
     ]),
   ])

@@ -5177,12 +5177,17 @@ function collector_result_message(orb, bonus_points) {
     return orb_result_message(orb);
   }
 }
+function credits_earned_message(credits) {
+  return to_string(credits) + " \u25C7";
+}
+function available_credits_message(credits) {
+  return to_string(credits) + " \u25C7";
+}
 function data_target_message(milestone) {
   return "DATA TARGET ACHIEVED: " + to_string(milestone) + " UNITS";
 }
 var container_label = "SAMPLE CONTAINER";
 var extract_button_text = "EXTRACT SAMPLE";
-var specimens_suffix = " SPECIMENS";
 var start_game_button_text = "START MISSION";
 var main_menu_subtitle = "PREPARE FOR DEEP SPACE EXPLORATION";
 var sector_complete_title = "SECTOR COMPLETE";
@@ -5196,7 +5201,6 @@ var data_label = "DATA";
 var target_label = "TARGET";
 var sector_label = "SECTOR";
 var credits_label = "CREDITS";
-var earned_label = "EARNED";
 var mission_failed_message = "ALL SYSTEMS COMPROMISED. INITIATING RESET PROTOCOL.";
 
 // build/dev/javascript/newmoon/status.mjs
@@ -7677,9 +7681,6 @@ function marketplace_grid(items) {
     items
   );
 }
-function marketplace_stats_grid(stats) {
-  return div(toList([class$("grid grid-cols-2 gap-3")]), stats);
-}
 function stat_card(symbol, label, value, color_class) {
   return div(
     toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
@@ -8042,13 +8043,7 @@ function container_display(orbs_left) {
       ),
       p(
         toList([class$("text-2xl font-light text-black")]),
-        toList([
-          text3(
-            concat2(
-              toList([to_string(orbs_left), specimens_suffix])
-            )
-          )
-        ])
+        toList([text3(to_string(orbs_left))])
       )
     ])
   );
@@ -8131,7 +8126,7 @@ function status_panel(title, message, bg_class) {
         toList([text3(title)])
       ),
       p(
-        toList([class$("text-gray-600 text-sm font-light")]),
+        toList([class$("text-gray-600 text-l font-light")]),
         toList([text3(message)])
       )
     ])
@@ -8725,6 +8720,11 @@ function render_won_view(last_orb, last_orb_message, bag, active_statuses, miles
     toList([
       orb_result_display(last_orb, last_orb_message),
       container_display(orbs_left),
+      status_panel(
+        "CREDITS EARNED",
+        credits_earned_message(milestone),
+        "bg-gray-50 border-gray-200"
+      ),
       success_button(advance_button_text, new GoToMarketplace()),
       status_panel(
         sector_complete_title,
@@ -8804,24 +8804,6 @@ function render_marketplace_grid(credits, marketplace_selection) {
   );
   return marketplace_grid(item_cards);
 }
-function render_marketplace_stats(earned_points, total_credits) {
-  return marketplace_stats_grid(
-    toList([
-      stat_card(
-        "\u25CF",
-        earned_label,
-        to_string(earned_points),
-        "text-gray-600"
-      ),
-      stat_card(
-        "\u25C7",
-        credits_label,
-        to_string(total_credits),
-        "text-gray-600"
-      )
-    ])
-  );
-}
 function render_marketplace_view(model) {
   return fragment2(
     toList([
@@ -8830,7 +8812,11 @@ function render_marketplace_view(model) {
         "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
         "bg-gray-50 border-gray-200"
       ),
-      render_marketplace_stats(model.points, model.credits),
+      status_panel(
+        "CREDITS",
+        available_credits_message(model.credits),
+        "bg-gray-50 border-gray-200"
+      ),
       render_marketplace_grid(model.credits, model.marketplace_selection),
       primary_button(
         continue_to_next_sector_text,

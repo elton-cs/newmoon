@@ -151,6 +151,15 @@ pub const credits_label = "CREDITS"
 
 pub const earned_label = "EARNED"
 
+// Credits Display Messages
+pub fn credits_earned_message(credits: Int) -> String {
+  int.to_string(credits) <> " ◇"
+}
+
+pub fn available_credits_message(credits: Int) -> String {
+  int.to_string(credits) <> " ◇"
+}
+
 // Status Messages
 pub fn data_target_message(milestone: Int) -> String {
   "DATA TARGET ACHIEVED: " <> int.to_string(milestone) <> " UNITS"

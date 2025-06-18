@@ -269,6 +269,11 @@ fn render_won_view(
   element.fragment([
     ui.orb_result_display(last_orb, last_orb_message),
     ui.container_display(orbs_left),
+    ui.status_panel(
+      "CREDITS EARNED",
+      display.credits_earned_message(milestone),
+      "bg-gray-50 border-gray-200",
+    ),
     ui.success_button(display.advance_button_text, GoToMarketplace),
     ui.status_panel(
       display.sector_complete_title,
@@ -325,7 +330,11 @@ fn render_marketplace_view(model: types.Model) -> Element(Msg) {
       "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
       "bg-gray-50 border-gray-200",
     ),
-    render_marketplace_stats(model.points, model.credits),
+    ui.status_panel(
+      "CREDITS",
+      display.available_credits_message(model.credits),
+      "bg-gray-50 border-gray-200",
+    ),
     render_marketplace_grid(model.credits, model.marketplace_selection),
     ui.primary_button(display.continue_to_next_sector_text, ContinueToNextLevel),
   ])
@@ -369,27 +378,6 @@ fn get_marketplace_symbol(orb: types.Orb) -> String {
     types.RiskOrb -> "⚠"
     types.PointRecoveryOrb -> "◎"
   }
-}
-
-// Marketplace Stats - shows earned points and total credits
-fn render_marketplace_stats(
-  earned_points: Int,
-  total_credits: Int,
-) -> Element(Msg) {
-  ui.marketplace_stats_grid([
-    ui.stat_card(
-      "●",
-      display.earned_label,
-      int.to_string(earned_points),
-      "text-gray-600",
-    ),
-    ui.stat_card(
-      "◇",
-      display.credits_label,
-      int.to_string(total_credits),
-      "text-gray-600",
-    ),
-  ])
 }
 
 // Main Menu View - no model data needed
