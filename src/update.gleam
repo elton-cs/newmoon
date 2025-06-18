@@ -7,13 +7,13 @@ import status
 import types.{
   type Model, type Msg, type Orb, AcceptFate, AcceptRisk, AllCollectorOrb,
   ApplyRiskEffects, BackToMainMenu, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  ChoiceOrb, ChooseOrb, Choosing, ClearOnGame, ClearOnLevel,
-  ContinueAfterRiskConsumption, ContinueToNextLevel, Defeat, ExitRisk, Game,
-  GameComplete, GoToMarketplace, HealthOrb, Main, Marketplace, Menu, Model,
-  MultiplierOrb, NextLevel, NextPointMultiplierOrb, Playing, PointCollectorOrb,
-  PointOrb, PointRecoveryOrb, PullOrb, PullRiskOrb, PurchaseItem, RestartGame,
-  RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying, RiskReveal,
-  RiskSurvived, SelectMarketplaceItem, StartGame, ToggleDevMode, Victory,
+  ChoiceOrb, ChooseOrb, ClearOnGame, ClearOnLevel, ContinueAfterRiskConsumption,
+  ContinueToNextLevel, Defeat, ExitRisk, Game, GameComplete, GoToMarketplace,
+  HealthOrb, Main, Marketplace, Menu, Model, MultiplierOrb, NextLevel,
+  NextPointMultiplierOrb, Playing, PointCollectorOrb, PointOrb, PointRecoveryOrb,
+  PullOrb, PullRiskOrb, PurchaseItem, RestartGame, RiskAccept, RiskConsumed,
+  RiskDied, RiskOrb, RiskPlaying, RiskReveal, RiskSurvived,
+  SelectMarketplaceItem, StartGame, ToggleDevMode, Victory,
 }
 
 pub fn init(_) -> Model {
@@ -539,28 +539,53 @@ fn handle_pull_orb(model: Model) -> Model {
   }
 }
 
+// Helper function to determine if an orb is consumable (immediate effect, no special interactions)
+fn is_consumable_orb(orb: Orb) -> Bool {
+  case orb {
+    PointOrb(_) -> True
+    BombOrb(_) -> True
+    HealthOrb(_) -> True
+    AllCollectorOrb(_) -> True
+    PointCollectorOrb(_) -> True
+    BombSurvivorOrb(_) -> True
+    MultiplierOrb(_) -> True
+    NextPointMultiplierOrb(_) -> True
+    BombImmunityOrb -> True
+    ChoiceOrb -> False
+    RiskOrb -> False
+    PointRecoveryOrb -> False
+  }
+}
+
 fn handle_choice_orb_activation(model: Model) -> Model {
-  case model.bag {
+  // Filter bag for consumable orbs only, maintaining order
+  let consumable_orbs = list.filter(model.bag, is_consumable_orb)
+
+  case consumable_orbs {
     [] -> {
-      // No orbs left to choose from, continue with game status check
+      // No consumable orbs available, continue with game status check
       check_game_status(model)
     }
     [single_orb] -> {
-      // Only one orb left, automatically process it
-      let temp_model = Model(..model, bag: [single_orb])
+      // Only one consumable orb available, automatically process it
+      // Remove it from the bag and process it
+      let new_bag = list.filter(model.bag, fn(orb) { orb != single_orb })
+      let temp_model = Model(..model, bag: [single_orb, ..new_bag])
       handle_pull_orb(temp_model)
     }
-    [first_choice, second_choice, ..remaining] -> {
-      // Present choice between the next two orbs
-      let screen = case model.screen {
-        Game(Playing) -> Game(Choosing)
-        _ -> model.screen
-      }
+    [first_choice, second_choice, ..] -> {
+      // Present choice between the first two consumable orbs
+      // Remove chosen orbs from the bag for now (they'll be handled after choice)
+      let bag_without_choices =
+        list.filter(model.bag, fn(orb) {
+          orb != first_choice && orb != second_choice
+        })
       let choice_model =
         Model(
           ..model,
-          screen: screen,
-          bag: remaining,
+          screen: Game(Playing),
+          // Stay in playing screen instead of switching to Choosing
+          bag: bag_without_choices,
           choice_orb_1: Some(first_choice),
           choice_orb_2: Some(second_choice),
         )
@@ -645,8 +670,8 @@ fn check_game_status(model: Model) -> Model {
 }
 
 fn handle_choose_orb(model: Model, choice_index: Int) -> Model {
-  case model.screen, model.choice_orb_1, model.choice_orb_2 {
-    Game(Choosing), Some(first_choice), Some(second_choice) -> {
+  case model.choice_orb_1, model.choice_orb_2 {
+    Some(first_choice), Some(second_choice) -> {
       let chosen_orb = case choice_index {
         0 -> first_choice
         _ -> second_choice
@@ -664,7 +689,6 @@ fn handle_choose_orb(model: Model, choice_index: Int) -> Model {
         Model(
           ..model,
           bag: [chosen_orb, ..new_bag],
-          screen: Game(Playing),
           choice_orb_1: None,
           choice_orb_2: None,
         )
@@ -672,7 +696,7 @@ fn handle_choose_orb(model: Model, choice_index: Int) -> Model {
       // Process the chosen orb (this handles ChoiceOrb -> ChoiceOrb chains naturally)
       handle_pull_orb(temp_model)
     }
-    _, _, _ -> model
+    _, _ -> model
   }
 }
 

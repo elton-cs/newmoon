@@ -7,13 +7,11 @@ import lustre/element.{type Element}
 import lustre/element/html
 import status
 import types.{
-  type MarketplaceItem, type Model, type Msg, AcceptFate,
-  AcceptRisk, ApplyRiskEffects, ChooseOrb, Choosing,
-  ContinueAfterRiskConsumption, ContinueToNextLevel, Defeat,
-  Game, GameComplete, GoToMarketplace, Main, Marketplace, Menu,
-  Playing, PurchaseItem, RestartGame, RiskAccept,
-  RiskConsumed, RiskDied, RiskPlaying, RiskReveal, RiskSurvived,
-  SelectMarketplaceItem, StartGame, Victory,
+  type MarketplaceItem, type Model, type Msg, AcceptFate, AcceptRisk,
+  ApplyRiskEffects, ContinueAfterRiskConsumption, ContinueToNextLevel, Defeat,
+  Game, GameComplete, GoToMarketplace, Main, Marketplace, Menu, Playing,
+  PurchaseItem, RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskPlaying,
+  RiskReveal, RiskSurvived, SelectMarketplaceItem, StartGame, Victory,
 }
 import ui
 
@@ -41,6 +39,8 @@ pub fn view(model: Model) -> Element(Msg) {
             model.bag,
             model.active_statuses,
             model.pulled_orbs,
+            model.choice_orb_1,
+            model.choice_orb_2,
           ),
         ]),
       )
@@ -101,28 +101,6 @@ pub fn view(model: Model) -> Element(Msg) {
     Game(Marketplace) ->
       ui.app_container(
         ui.game_card([ui.game_header(), render_marketplace_view(model)]),
-      )
-    Game(Choosing) ->
-      ui.app_container(
-        ui.game_card([
-          ui.game_header(),
-          render_game_stats(
-            model.health,
-            model.points,
-            model.milestone,
-            model.level,
-            model.credits,
-          ),
-          render_choosing_view(
-            model.last_orb,
-            model.last_orb_message,
-            model.bag,
-            model.active_statuses,
-            model.choice_orb_1,
-            model.choice_orb_2,
-            model.pulled_orbs,
-          ),
-        ]),
       )
     Game(RiskAccept) ->
       ui.app_container(
@@ -243,16 +221,28 @@ fn render_playing_view(
   bag,
   active_statuses: List(types.StatusEffect),
   _pulled_orbs: List(types.Orb),
+  choice_orb_1: Option(types.Orb),
+  choice_orb_2: Option(types.Orb),
 ) -> Element(Msg) {
   let orbs_left = list.length(bag)
   let is_disabled = list.is_empty(bag)
   let status_effects = extract_active_status_effects(active_statuses)
 
+  // Check if we're in choice state
+  let is_choosing = case choice_orb_1, choice_orb_2 {
+    Some(_), Some(_) -> True
+    _, _ -> False
+  }
+
   element.fragment([
-    ui.orb_result_display(last_orb, last_orb_message),
+    case is_choosing {
+      True -> ui.choice_orb_display(choice_orb_1, choice_orb_2)
+      False -> ui.orb_result_display(last_orb, last_orb_message)
+    },
     ui.status_effects_display(status_effects),
     ui.container_display(orbs_left),
-    ui.extract_button(is_disabled),
+    ui.extract_button(is_disabled || is_choosing),
+    // Disable extract button during choice
   ])
 }
 
@@ -502,43 +492,6 @@ fn extract_active_status_effects(
   active_statuses: List(types.StatusEffect),
 ) -> List(String) {
   list.map(active_statuses, status.status_to_display_text)
-}
-
-// Choosing View - displays two orb options for main game
-fn render_choosing_view(
-  last_orb,
-  last_orb_message,
-  bag,
-  active_statuses: List(types.StatusEffect),
-  choice_orb_1: Option(types.Orb),
-  choice_orb_2: Option(types.Orb),
-  _pulled_orbs: List(types.Orb),
-) -> Element(Msg) {
-  let orbs_left = list.length(bag)
-  let status_effects = extract_active_status_effects(active_statuses)
-
-  case choice_orb_1, choice_orb_2 {
-    Some(first_choice), Some(second_choice) ->
-      element.fragment([
-        ui.orb_result_display(last_orb, last_orb_message),
-        ui.status_effects_display(status_effects),
-        ui.container_display(orbs_left),
-        ui.choice_panel(
-          "SELECT ONE SAMPLE:",
-          display.orb_display_name(first_choice),
-          display.orb_display_name(second_choice),
-          ChooseOrb(0),
-          ChooseOrb(1),
-        ),
-      ])
-    _, _ ->
-      element.fragment([
-        ui.orb_result_display(last_orb, last_orb_message),
-        ui.status_effects_display(status_effects),
-        ui.container_display(orbs_left),
-        ui.failure_panel("CHOICE ERROR", "No choice options available."),
-      ])
-  }
 }
 
 // Risk Mode Views

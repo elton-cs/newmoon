@@ -1,8 +1,7 @@
 import types.{
-  type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb,
-  BombSurvivorOrb, ChoiceOrb, HealthOrb, MultiplierOrb,
-  NextPointMultiplierOrb, PointCollectorOrb, PointOrb, PointRecoveryOrb,
-  RiskOrb,
+  type Orb, AllCollectorOrb, BombImmunityOrb, BombOrb, BombSurvivorOrb,
+  ChoiceOrb, HealthOrb, MultiplierOrb, NextPointMultiplierOrb, PointCollectorOrb,
+  PointOrb, PointRecoveryOrb, RiskOrb,
 }
 
 // Import int and float for string conversion
@@ -28,6 +27,29 @@ pub fn orb_display_name(orb: Orb) -> String {
     ChoiceOrb -> "Choice Portal Sample"
     RiskOrb -> "Fate Sample"
     PointRecoveryOrb -> "Point Recovery Sample"
+  }
+}
+
+// Orb Choice Display Names - for choice selection (no "Sample" suffix, shows values)
+pub fn orb_choice_display(orb: Orb) -> String {
+  case orb {
+    PointOrb(value) -> "Data (+" <> int.to_string(value) <> ")"
+    BombOrb(value) -> "Hazard (-" <> int.to_string(value) <> ")"
+    HealthOrb(value) -> "Health (+" <> int.to_string(value) <> ")"
+    AllCollectorOrb(value) ->
+      "All Collector (+" <> int.to_string(value) <> " per Orb)"
+    PointCollectorOrb(value) ->
+      "Point Collector (+" <> int.to_string(value) <> " per Point)"
+    BombSurvivorOrb(value) ->
+      "Bomb Survivor (+" <> int.to_string(value) <> " per Bomb)"
+    MultiplierOrb(multiplier) ->
+      "Full Amplifier (×" <> float.to_string(multiplier) <> ")"
+    NextPointMultiplierOrb(multiplier) ->
+      "Single Amplifier (×" <> float.to_string(multiplier) <> ")"
+    BombImmunityOrb -> "Shield Generator"
+    ChoiceOrb -> "Choice Portal"
+    RiskOrb -> "Fate Sample"
+    PointRecoveryOrb -> "Point Recovery"
   }
 }
 

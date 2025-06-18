@@ -11,10 +11,10 @@ import lustre/event
 import types.{
   type Msg, type Orb, type Screen, type StatusDuration, type StatusEffect,
   AllCollectorOrb, BombImmunity, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb,
-  NextPointMultiplier, NextPointMultiplierOrb, Permanent, PointCollectorOrb,
-  PointMultiplier, PointOrb, PointRecoveryOrb, PullOrb, PullRiskOrb, RiskOrb,
-  ToggleDevMode, Triggered,
+  ChoiceOrb, ChooseOrb, Countdown, HealthOrb, MultiplierOrb, NextPointMultiplier,
+  NextPointMultiplierOrb, Permanent, PointCollectorOrb, PointMultiplier,
+  PointOrb, PointRecoveryOrb, PullOrb, PullRiskOrb, RiskOrb, ToggleDevMode,
+  Triggered,
 }
 
 // Layout Components
@@ -244,6 +244,58 @@ fn info_panel(
       html.text(message),
     ]),
   ])
+}
+
+// Choice Orb Display - shows two orb options side by side as clickable buttons
+pub fn choice_orb_display(
+  choice_orb_1: Option(Orb),
+  choice_orb_2: Option(Orb),
+) -> Element(Msg) {
+  case choice_orb_1, choice_orb_2 {
+    Some(first_choice), Some(second_choice) ->
+      html.div(
+        [attribute.class("p-3 bg-blue-50 rounded border border-blue-200")],
+        [
+          html.p([attribute.class("text-blue-700 font-light text-sm mb-3")], [
+            html.text("◈ CHOICE PORTAL ACTIVATED"),
+          ]),
+          html.div([attribute.class("grid grid-cols-2 gap-2")], [
+            html.button(
+              [
+                attribute.class(
+                  "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors",
+                ),
+                event.on_click(ChooseOrb(0)),
+              ],
+              [
+                html.p([attribute.class("text-sm font-medium text-blue-900")], [
+                  html.text(display.orb_choice_display(first_choice)),
+                ]),
+              ],
+            ),
+            html.button(
+              [
+                attribute.class(
+                  "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors",
+                ),
+                event.on_click(ChooseOrb(1)),
+              ],
+              [
+                html.p([attribute.class("text-sm font-medium text-blue-900")], [
+                  html.text(display.orb_choice_display(second_choice)),
+                ]),
+              ],
+            ),
+          ]),
+        ],
+      )
+    _, _ ->
+      info_panel(
+        "CHOICE ERROR - No choice options available.",
+        "text-red-700",
+        "bg-red-50 border-red-200",
+      )
+  }
 }
 
 // Container Components
@@ -506,45 +558,6 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
 
 // Choice Components
 
-pub fn choice_panel(
-  title: String,
-  first_option: String,
-  second_option: String,
-  first_msg: Msg,
-  second_msg: Msg,
-) -> Element(Msg) {
-  html.div([attribute.class("space-y-4")], [
-    html.div(
-      [
-        attribute.class(
-          "text-sm text-indigo-700 font-medium bg-indigo-50 border border-indigo-200 rounded p-3 text-center",
-        ),
-      ],
-      [html.text(title)],
-    ),
-    html.div([attribute.class("grid grid-cols-1 gap-3")], [
-      html.button(
-        [
-          attribute.class(
-            "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide",
-          ),
-          event.on_click(first_msg),
-        ],
-        [html.text(first_option)],
-      ),
-      html.button(
-        [
-          attribute.class(
-            "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide",
-          ),
-          event.on_click(second_msg),
-        ],
-        [html.text(second_option)],
-      ),
-    ]),
-  ])
-}
-
 // Dev Mode Components
 
 pub fn dev_mode_panel(
@@ -602,10 +615,10 @@ pub fn dev_mode_panel(
 }
 
 fn render_dev_mode_content(
-  screen: Screen,
+  _screen: Screen,
   bag: List(Orb),
-  choice_orb_1: Option(Orb),
-  choice_orb_2: Option(Orb),
+  _choice_orb_1: Option(Orb),
+  _choice_orb_2: Option(Orb),
   active_statuses: List(StatusEffect),
   pulled_orbs: List(Orb),
 ) -> Element(Msg) {
@@ -617,13 +630,7 @@ fn render_dev_mode_content(
     True -> []
   }
 
-  let choice_section = case screen {
-    Game(Choosing) -> [
-      render_choice_mode_info(choice_orb_1, choice_orb_2),
-      html.div([attribute.class("mt-3 pt-3 border-t border-yellow-300")], []),
-    ]
-    _ -> []
-  }
+  let choice_section = []
 
   let pulled_orbs_section = case list.is_empty(pulled_orbs) {
     False -> [
@@ -641,50 +648,6 @@ fn render_dev_mode_content(
     |> list.append(pulled_orbs_section)
     |> list.append(container_section),
   )
-}
-
-fn render_choice_mode_info(
-  choice_orb_1: Option(Orb),
-  choice_orb_2: Option(Orb),
-) -> Element(Msg) {
-  html.div([], [
-    html.div(
-      [
-        attribute.class(
-          "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light",
-        ),
-      ],
-      [html.text("CHOICE MODE ACTIVE")],
-    ),
-    html.div([attribute.class("space-y-1")], [
-      case choice_orb_1 {
-        Some(orb) ->
-          html.div([attribute.class("flex items-center text-yellow-800")], [
-            html.span([attribute.class("mr-2 font-medium")], [html.text("A:")]),
-            html.span([attribute.class("font-medium")], [
-              html.text(format_orb_for_dev_display(orb)),
-            ]),
-          ])
-        None ->
-          html.div([attribute.class("text-yellow-600")], [
-            html.text("A: No orb"),
-          ])
-      },
-      case choice_orb_2 {
-        Some(orb) ->
-          html.div([attribute.class("flex items-center text-yellow-800")], [
-            html.span([attribute.class("mr-2 font-medium")], [html.text("B:")]),
-            html.span([attribute.class("font-medium")], [
-              html.text(format_orb_for_dev_display(orb)),
-            ]),
-          ])
-        None ->
-          html.div([attribute.class("text-yellow-600")], [
-            html.text("B: No orb"),
-          ])
-      },
-    ]),
-  ])
 }
 
 fn render_pulled_orbs_log(pulled_orbs: List(Orb)) -> Element(Msg) {

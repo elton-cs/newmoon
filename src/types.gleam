@@ -68,7 +68,6 @@ pub type GameScreen {
   Defeat
   GameComplete
   Marketplace
-  Choosing
   RiskAccept
   RiskReveal
   RiskPlaying

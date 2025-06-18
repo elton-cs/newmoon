@@ -4945,8 +4945,6 @@ var GameComplete = class extends CustomType {
 };
 var Marketplace = class extends CustomType {
 };
-var Choosing = class extends CustomType {
-};
 var RiskAccept = class extends CustomType {
 };
 var RiskReveal = class extends CustomType {
@@ -5077,6 +5075,41 @@ function orb_display_name(orb) {
     return "Fate Sample";
   } else {
     return "Point Recovery Sample";
+  }
+}
+function orb_choice_display(orb) {
+  if (orb instanceof PointOrb) {
+    let value = orb[0];
+    return "Data (+" + to_string(value) + ")";
+  } else if (orb instanceof BombOrb) {
+    let value = orb[0];
+    return "Hazard (-" + to_string(value) + ")";
+  } else if (orb instanceof HealthOrb) {
+    let value = orb[0];
+    return "Health (+" + to_string(value) + ")";
+  } else if (orb instanceof AllCollectorOrb) {
+    let value = orb[0];
+    return "All Collector (+" + to_string(value) + " per Orb)";
+  } else if (orb instanceof PointCollectorOrb) {
+    let value = orb[0];
+    return "Point Collector (+" + to_string(value) + " per Point)";
+  } else if (orb instanceof BombSurvivorOrb) {
+    let value = orb[0];
+    return "Bomb Survivor (+" + to_string(value) + " per Bomb)";
+  } else if (orb instanceof MultiplierOrb) {
+    let multiplier = orb[0];
+    return "Full Amplifier (\xD7" + float_to_string(multiplier) + ")";
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    let multiplier = orb[0];
+    return "Single Amplifier (\xD7" + float_to_string(multiplier) + ")";
+  } else if (orb instanceof BombImmunityOrb) {
+    return "Shield Generator";
+  } else if (orb instanceof ChoiceOrb) {
+    return "Choice Portal";
+  } else if (orb instanceof RiskOrb) {
+    return "Fate Sample";
+  } else {
+    return "Point Recovery";
   }
 }
 function orb_result_message(orb) {
@@ -5824,6 +5857,33 @@ function apply_point_multipliers(model, base_points) {
       identity(base_points) * regular_multiplier
     );
     return [model, final_points];
+  }
+}
+function is_consumable_orb(orb) {
+  if (orb instanceof PointOrb) {
+    return true;
+  } else if (orb instanceof BombOrb) {
+    return true;
+  } else if (orb instanceof HealthOrb) {
+    return true;
+  } else if (orb instanceof AllCollectorOrb) {
+    return true;
+  } else if (orb instanceof PointCollectorOrb) {
+    return true;
+  } else if (orb instanceof BombSurvivorOrb) {
+    return true;
+  } else if (orb instanceof MultiplierOrb) {
+    return true;
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    return true;
+  } else if (orb instanceof BombImmunityOrb) {
+    return true;
+  } else if (orb instanceof ChoiceOrb) {
+    return false;
+  } else if (orb instanceof RiskOrb) {
+    return false;
+  } else {
+    return false;
   }
 }
 function handle_restart_game(model) {
@@ -6894,13 +6954,19 @@ function handle_go_to_marketplace(model) {
   );
 }
 function handle_choice_orb_activation(model) {
-  let $ = model.bag;
-  if ($ instanceof Empty) {
+  let consumable_orbs = filter(model.bag, is_consumable_orb);
+  if (consumable_orbs instanceof Empty) {
     return check_game_status(model);
   } else {
-    let $1 = $.tail;
-    if ($1 instanceof Empty) {
-      let single_orb = $.head;
+    let $ = consumable_orbs.tail;
+    if ($ instanceof Empty) {
+      let single_orb = consumable_orbs.head;
+      let new_bag = filter(
+        model.bag,
+        (orb) => {
+          return !isEqual(orb, single_orb);
+        }
+      );
       let _block;
       let _record = model;
       _block = new Model(
@@ -6909,7 +6975,7 @@ function handle_choice_orb_activation(model) {
         _record.credits,
         _record.level,
         _record.milestone,
-        toList([single_orb]),
+        prepend(single_orb, new_bag),
         _record.purchased_orbs,
         _record.screen,
         _record.last_orb,
@@ -6932,33 +6998,25 @@ function handle_choice_orb_activation(model) {
       let temp_model = _block;
       return handle_pull_orb(temp_model);
     } else {
-      let first_choice = $.head;
-      let second_choice = $1.head;
-      let remaining = $1.tail;
-      let _block;
-      let $2 = model.screen;
-      if ($2 instanceof Game) {
-        let $3 = $2[0];
-        if ($3 instanceof Playing) {
-          _block = new Game(new Choosing());
-        } else {
-          _block = model.screen;
+      let first_choice = consumable_orbs.head;
+      let second_choice = $.head;
+      let bag_without_choices = filter(
+        model.bag,
+        (orb) => {
+          return !isEqual(orb, first_choice) && !isEqual(orb, second_choice);
         }
-      } else {
-        _block = model.screen;
-      }
-      let screen = _block;
-      let _block$1;
+      );
+      let _block;
       let _record = model;
-      _block$1 = new Model(
+      _block = new Model(
         _record.health,
         _record.points,
         _record.credits,
         _record.level,
         _record.milestone,
-        remaining,
+        bag_without_choices,
         _record.purchased_orbs,
-        screen,
+        new Game(new Playing()),
         _record.last_orb,
         _record.last_orb_message,
         _record.pulled_orbs,
@@ -6976,7 +7034,7 @@ function handle_choice_orb_activation(model) {
         _record.selected_marketplace_item,
         _record.marketplace_selection
       );
-      let choice_model = _block$1;
+      let choice_model = _block;
       return choice_model;
     }
   }
@@ -7431,67 +7489,57 @@ function handle_pull_orb(model) {
   }
 }
 function handle_choose_orb(model, choice_index) {
-  let $ = model.screen;
-  let $1 = model.choice_orb_1;
-  let $2 = model.choice_orb_2;
-  if ($2 instanceof Some) {
-    if ($1 instanceof Some) {
-      if ($ instanceof Game) {
-        let $3 = $[0];
-        if ($3 instanceof Choosing) {
-          let second_choice = $2[0];
-          let first_choice = $1[0];
-          let _block;
-          if (choice_index === 0) {
-            _block = first_choice;
-          } else {
-            _block = second_choice;
-          }
-          let chosen_orb = _block;
-          let _block$1;
-          if (choice_index === 0) {
-            _block$1 = second_choice;
-          } else {
-            _block$1 = first_choice;
-          }
-          let unchosen_orb = _block$1;
-          let new_bag = append(model.bag, toList([unchosen_orb]));
-          let _block$2;
-          let _record = model;
-          _block$2 = new Model(
-            _record.health,
-            _record.points,
-            _record.credits,
-            _record.level,
-            _record.milestone,
-            prepend(chosen_orb, new_bag),
-            _record.purchased_orbs,
-            new Game(new Playing()),
-            _record.last_orb,
-            _record.last_orb_message,
-            _record.pulled_orbs,
-            _record.point_multiplier,
-            _record.bomb_immunity,
-            _record.active_statuses,
-            new None(),
-            new None(),
-            _record.dev_mode,
-            _record.risk_orbs,
-            _record.risk_original_orbs,
-            _record.risk_pulled_orbs,
-            _record.risk_accumulated_effects,
-            _record.risk_health,
-            _record.selected_marketplace_item,
-            _record.marketplace_selection
-          );
-          let temp_model = _block$2;
-          return handle_pull_orb(temp_model);
-        } else {
-          return model;
-        }
+  let $ = model.choice_orb_1;
+  let $1 = model.choice_orb_2;
+  if ($1 instanceof Some) {
+    if ($ instanceof Some) {
+      let second_choice = $1[0];
+      let first_choice = $[0];
+      let _block;
+      if (choice_index === 0) {
+        _block = first_choice;
       } else {
-        return model;
+        _block = second_choice;
       }
+      let chosen_orb = _block;
+      let _block$1;
+      if (choice_index === 0) {
+        _block$1 = second_choice;
+      } else {
+        _block$1 = first_choice;
+      }
+      let unchosen_orb = _block$1;
+      let new_bag = append(model.bag, toList([unchosen_orb]));
+      let _block$2;
+      let _record = model;
+      _block$2 = new Model(
+        _record.health,
+        _record.points,
+        _record.credits,
+        _record.level,
+        _record.milestone,
+        prepend(chosen_orb, new_bag),
+        _record.purchased_orbs,
+        _record.screen,
+        _record.last_orb,
+        _record.last_orb_message,
+        _record.pulled_orbs,
+        _record.point_multiplier,
+        _record.bomb_immunity,
+        _record.active_statuses,
+        new None(),
+        new None(),
+        _record.dev_mode,
+        _record.risk_orbs,
+        _record.risk_original_orbs,
+        _record.risk_pulled_orbs,
+        _record.risk_accumulated_effects,
+        _record.risk_health,
+        _record.selected_marketplace_item,
+        _record.marketplace_selection
+      );
+      let temp_model = _block$2;
+      return handle_pull_orb(temp_model);
     } else {
       return model;
     }
@@ -7819,6 +7867,78 @@ function orb_result_display(orb, message) {
     return div(toList([class$("h-8")]), toList([]));
   }
 }
+function choice_orb_display(choice_orb_1, choice_orb_2) {
+  if (choice_orb_2 instanceof Some) {
+    if (choice_orb_1 instanceof Some) {
+      let second_choice = choice_orb_2[0];
+      let first_choice = choice_orb_1[0];
+      return div(
+        toList([
+          class$("p-3 bg-blue-50 rounded border border-blue-200")
+        ]),
+        toList([
+          p(
+            toList([class$("text-blue-700 font-light text-sm mb-3")]),
+            toList([text3("\u25C8 CHOICE PORTAL ACTIVATED")])
+          ),
+          div(
+            toList([class$("grid grid-cols-2 gap-2")]),
+            toList([
+              button(
+                toList([
+                  class$(
+                    "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors"
+                  ),
+                  on_click(new ChooseOrb(0))
+                ]),
+                toList([
+                  p(
+                    toList([
+                      class$("text-sm font-medium text-blue-900")
+                    ]),
+                    toList([
+                      text3(orb_choice_display(first_choice))
+                    ])
+                  )
+                ])
+              ),
+              button(
+                toList([
+                  class$(
+                    "p-3 bg-white hover:bg-blue-100 rounded border border-blue-300 text-left transition-colors"
+                  ),
+                  on_click(new ChooseOrb(1))
+                ]),
+                toList([
+                  p(
+                    toList([
+                      class$("text-sm font-medium text-blue-900")
+                    ]),
+                    toList([
+                      text3(orb_choice_display(second_choice))
+                    ])
+                  )
+                ])
+              )
+            ])
+          )
+        ])
+      );
+    } else {
+      return info_panel(
+        "CHOICE ERROR - No choice options available.",
+        "text-red-700",
+        "bg-red-50 border-red-200"
+      );
+    }
+  } else {
+    return info_panel(
+      "CHOICE ERROR - No choice options available.",
+      "text-red-700",
+      "bg-red-50 border-red-200"
+    );
+  }
+}
 function container_display(orbs_left) {
   return div(
     toList([class$("p-4 bg-gray-50 rounded border border-gray-100")]),
@@ -7997,44 +8117,6 @@ function get_orb_style_classes(orb) {
     return ["bg-teal-50", "text-teal-700", "border-teal-200"];
   }
 }
-function choice_panel(title, first_option, second_option, first_msg, second_msg) {
-  return div(
-    toList([class$("space-y-4")]),
-    toList([
-      div(
-        toList([
-          class$(
-            "text-sm text-indigo-700 font-medium bg-indigo-50 border border-indigo-200 rounded p-3 text-center"
-          )
-        ]),
-        toList([text3(title)])
-      ),
-      div(
-        toList([class$("grid grid-cols-1 gap-3")]),
-        toList([
-          button(
-            toList([
-              class$(
-                "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide"
-              ),
-              on_click(first_msg)
-            ]),
-            toList([text3(first_option)])
-          ),
-          button(
-            toList([
-              class$(
-                "bg-indigo-600 hover:bg-indigo-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide"
-              ),
-              on_click(second_msg)
-            ]),
-            toList([text3(second_option)])
-          )
-        ])
-      )
-    ])
-  );
-}
 function format_duration_for_dev(duration) {
   if (duration instanceof Permanent) {
     return "Permanent";
@@ -8146,72 +8228,6 @@ function format_orb_for_dev_display(orb) {
     return "PointRecovery";
   }
 }
-function render_choice_mode_info(choice_orb_1, choice_orb_2) {
-  return div(
-    toList([]),
-    toList([
-      div(
-        toList([
-          class$(
-            "text-xs text-yellow-700 uppercase tracking-wider mb-2 font-light"
-          )
-        ]),
-        toList([text3("CHOICE MODE ACTIVE")])
-      ),
-      div(
-        toList([class$("space-y-1")]),
-        toList([
-          (() => {
-            if (choice_orb_1 instanceof Some) {
-              let orb = choice_orb_1[0];
-              return div(
-                toList([class$("flex items-center text-yellow-800")]),
-                toList([
-                  span(
-                    toList([class$("mr-2 font-medium")]),
-                    toList([text3("A:")])
-                  ),
-                  span(
-                    toList([class$("font-medium")]),
-                    toList([text3(format_orb_for_dev_display(orb))])
-                  )
-                ])
-              );
-            } else {
-              return div(
-                toList([class$("text-yellow-600")]),
-                toList([text3("A: No orb")])
-              );
-            }
-          })(),
-          (() => {
-            if (choice_orb_2 instanceof Some) {
-              let orb = choice_orb_2[0];
-              return div(
-                toList([class$("flex items-center text-yellow-800")]),
-                toList([
-                  span(
-                    toList([class$("mr-2 font-medium")]),
-                    toList([text3("B:")])
-                  ),
-                  span(
-                    toList([class$("font-medium")]),
-                    toList([text3(format_orb_for_dev_display(orb))])
-                  )
-                ])
-              );
-            } else {
-              return div(
-                toList([class$("text-yellow-600")]),
-                toList([text3("B: No orb")])
-              );
-            }
-          })()
-        ])
-      )
-    ])
-  );
-}
 function render_pulled_orbs_log(pulled_orbs) {
   return div(
     toList([]),
@@ -8288,7 +8304,7 @@ function render_container_contents(bag) {
     ])
   );
 }
-function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active_statuses, pulled_orbs) {
+function render_dev_mode_content(_, bag, _1, _2, active_statuses, pulled_orbs) {
   let _block;
   let $ = is_empty(active_statuses);
   if ($) {
@@ -8303,30 +8319,13 @@ function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active
     ]);
   }
   let status_section = _block;
+  let choice_section = toList([]);
   let _block$1;
-  if (screen instanceof Game) {
-    let $12 = screen[0];
-    if ($12 instanceof Choosing) {
-      _block$1 = toList([
-        render_choice_mode_info(choice_orb_1, choice_orb_2),
-        div(
-          toList([class$("mt-3 pt-3 border-t border-yellow-300")]),
-          toList([])
-        )
-      ]);
-    } else {
-      _block$1 = toList([]);
-    }
-  } else {
-    _block$1 = toList([]);
-  }
-  let choice_section = _block$1;
-  let _block$2;
   let $1 = is_empty(pulled_orbs);
   if ($1) {
-    _block$2 = toList([]);
+    _block$1 = toList([]);
   } else {
-    _block$2 = toList([
+    _block$1 = toList([
       render_pulled_orbs_log(pulled_orbs),
       div(
         toList([class$("mt-3 pt-3 border-t border-yellow-300")]),
@@ -8334,7 +8333,7 @@ function render_dev_mode_content(screen, bag, choice_orb_1, choice_orb_2, active
       )
     ]);
   }
-  let pulled_orbs_section = _block$2;
+  let pulled_orbs_section = _block$1;
   let container_section = toList([render_container_contents(bag)]);
   return fragment2(
     (() => {
@@ -8983,16 +8982,33 @@ function render_main_menu_view() {
 function extract_active_status_effects(active_statuses) {
   return map(active_statuses, status_to_display_text);
 }
-function render_playing_view(last_orb, last_orb_message, bag, active_statuses, _) {
+function render_playing_view(last_orb, last_orb_message, bag, active_statuses, _, choice_orb_1, choice_orb_2) {
   let orbs_left = length(bag);
   let is_disabled = is_empty(bag);
   let status_effects = extract_active_status_effects(active_statuses);
+  let _block;
+  if (choice_orb_2 instanceof Some) {
+    if (choice_orb_1 instanceof Some) {
+      _block = true;
+    } else {
+      _block = false;
+    }
+  } else {
+    _block = false;
+  }
+  let is_choosing = _block;
   return fragment2(
     toList([
-      orb_result_display(last_orb, last_orb_message),
+      (() => {
+        if (is_choosing) {
+          return choice_orb_display(choice_orb_1, choice_orb_2);
+        } else {
+          return orb_result_display(last_orb, last_orb_message);
+        }
+      })(),
       status_effects_display(status_effects),
       container_display(orbs_left),
-      extract_button(is_disabled)
+      extract_button(is_disabled || is_choosing)
     ])
   );
 }
@@ -9029,48 +9045,6 @@ function render_lost_view(last_orb, last_orb_message, bag, active_statuses, _) {
       )
     ])
   );
-}
-function render_choosing_view(last_orb, last_orb_message, bag, active_statuses, choice_orb_1, choice_orb_2, _) {
-  let orbs_left = length(bag);
-  let status_effects = extract_active_status_effects(active_statuses);
-  if (choice_orb_2 instanceof Some) {
-    if (choice_orb_1 instanceof Some) {
-      let second_choice = choice_orb_2[0];
-      let first_choice = choice_orb_1[0];
-      return fragment2(
-        toList([
-          orb_result_display(last_orb, last_orb_message),
-          status_effects_display(status_effects),
-          container_display(orbs_left),
-          choice_panel(
-            "SELECT ONE SAMPLE:",
-            orb_display_name(first_choice),
-            orb_display_name(second_choice),
-            new ChooseOrb(0),
-            new ChooseOrb(1)
-          )
-        ])
-      );
-    } else {
-      return fragment2(
-        toList([
-          orb_result_display(last_orb, last_orb_message),
-          status_effects_display(status_effects),
-          container_display(orbs_left),
-          failure_panel("CHOICE ERROR", "No choice options available.")
-        ])
-      );
-    }
-  } else {
-    return fragment2(
-      toList([
-        orb_result_display(last_orb, last_orb_message),
-        status_effects_display(status_effects),
-        container_display(orbs_left),
-        failure_panel("CHOICE ERROR", "No choice options available.")
-      ])
-    );
-  }
 }
 function render_risk_accept_view() {
   return fragment2(
@@ -9197,7 +9171,9 @@ function view(model) {
               model.last_orb_message,
               model.bag,
               model.active_statuses,
-              model.pulled_orbs
+              model.pulled_orbs,
+              model.choice_orb_1,
+              model.choice_orb_2
             )
           ])
         )
@@ -9266,30 +9242,6 @@ function view(model) {
       _block = app_container(
         game_card(
           toList([game_header(), render_marketplace_view(model)])
-        )
-      );
-    } else if ($1 instanceof Choosing) {
-      _block = app_container(
-        game_card(
-          toList([
-            game_header(),
-            render_game_stats(
-              model.health,
-              model.points,
-              model.milestone,
-              model.level,
-              model.credits
-            ),
-            render_choosing_view(
-              model.last_orb,
-              model.last_orb_message,
-              model.bag,
-              model.active_statuses,
-              model.choice_orb_1,
-              model.choice_orb_2,
-              model.pulled_orbs
-            )
-          ])
         )
       );
     } else if ($1 instanceof RiskAccept) {
