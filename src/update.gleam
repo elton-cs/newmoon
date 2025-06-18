@@ -14,17 +14,18 @@ import types.{
   ExitRisk, ExitTesting, Failure, Game, GameComplete, Gameplay, GoToMarketplace,
   GoToOrbTesting, HazardSample, HealthOrb, HealthSample, Main, Marketplace,
   MarketplaceItem, Menu, Model, MultiplierOrb, MultiplierSample, NextLevel,
-  OrbSelection, Playing, PointCollectorOrb, PointCollectorSample, PointOrb,
-  PointRecoveryOrb, PointRecoverySample, PullOrb, PullRiskOrb, PurchaseItem,
-  Rare, ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskOrb,
-  RiskPlaying, RiskReveal, RiskSample, RiskSurvived, SelectMarketplaceItem,
-  SelectOrbType, StartGame, StartTestingPointRecoveryActive,
-  StartTestingPointRecoveryFirst, StartTestingRiskContinue,
-  StartTestingRiskFailure, StartTestingRiskSuccess, StartTestingWithBothStatuses,
-  StartTestingWithTripleChoice, Success, TestGameComplete, Testing,
-  TestingChoosing, TestingRiskAccept, TestingRiskConsumed, TestingRiskDied,
-  TestingRiskPlaying, TestingRiskReveal, TestingRiskSurvived, ToggleDevMode,
-  UpdateInputValue, ValueConfiguration, Victory,
+  NextPointMultiplierOrb, NextPointMultiplierSample, OrbSelection, Playing,
+  PointCollectorOrb, PointCollectorSample, PointOrb, PointRecoveryOrb,
+  PointRecoverySample, PullOrb, PullRiskOrb, PurchaseItem, Rare, ResetTesting,
+  RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskOrb, RiskPlaying,
+  RiskReveal, RiskSample, RiskSurvived, SelectMarketplaceItem, SelectOrbType,
+  StartGame, StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
+  StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
+  StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
+  TestGameComplete, Testing, TestingChoosing, TestingRiskAccept,
+  TestingRiskConsumed, TestingRiskDied, TestingRiskPlaying, TestingRiskReveal,
+  TestingRiskSurvived, ToggleDevMode, UpdateInputValue, ValueConfiguration,
+  Victory,
 }
 
 pub fn init(_) -> Model {
@@ -352,6 +353,30 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
         _ -> model
       }
     }
+    NextPointMultiplierSample -> {
+      case float.parse(model.input_value) {
+        Ok(multiplier_value) if multiplier_value >. 0.0 -> {
+          let test_orb = NextPointMultiplierOrb(multiplier_value)
+          let clean_model =
+            status.clear_statuses_by_persistence(model, ClearOnGame)
+          Model(
+            ..clean_model,
+            screen: Testing(Gameplay),
+            bag: create_test_bag(test_orb),
+            health: 5,
+            points: 0,
+            last_orb: None,
+            last_orb_message: None,
+            pulled_orbs: [],
+            point_multiplier: 1,
+            bomb_immunity: 0,
+            choice_orb_1: None,
+            choice_orb_2: None,
+          )
+        }
+        _ -> model
+      }
+    }
     _ -> {
       case int.parse(model.input_value) {
         Ok(value) if value > 0 -> {
@@ -367,6 +392,8 @@ fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
             RiskSample -> RiskOrb
             PointRecoverySample -> PointRecoveryOrb
             MultiplierSample -> MultiplierOrb(2.0)
+            // This case won't be reached
+            NextPointMultiplierSample -> NextPointMultiplierOrb(2.0)
             // This case won't be reached
           }
           let clean_model =
@@ -571,6 +598,31 @@ fn handle_start_testing_point_recovery_active(model: Model) -> Model {
   )
 }
 
+// Helper function to apply both next point multiplier and regular multiplier to points
+fn apply_point_multipliers(model: Model, base_points: Int) -> #(Model, Int) {
+  let regular_multiplier = status.get_point_multiplier(model.active_statuses)
+  let has_next_multiplier =
+    status.has_next_point_multiplier(model.active_statuses)
+
+  case has_next_multiplier {
+    True -> {
+      let next_multiplier =
+        status.get_next_point_multiplier(model.active_statuses)
+      let final_points =
+        float.truncate(
+          int.to_float(base_points) *. next_multiplier *. regular_multiplier,
+        )
+      let updated_model = status.consume_next_point_multiplier(model)
+      #(updated_model, final_points)
+    }
+    False -> {
+      let final_points =
+        float.truncate(int.to_float(base_points) *. regular_multiplier)
+      #(model, final_points)
+    }
+  }
+}
+
 fn handle_pull_orb(model: Model) -> Model {
   case model.screen {
     Game(Playing) | Testing(Gameplay) -> {
@@ -579,10 +631,13 @@ fn handle_pull_orb(model: Model) -> Model {
         [first_orb, ..rest] -> {
           let #(new_model, orb_message, return_orb_to_bag) = case first_orb {
             PointOrb(value) -> {
-              let multiplier =
-                status.get_point_multiplier(model.active_statuses)
-              let points = float.truncate(int.to_float(value) *. multiplier)
-              let new_model = Model(..model, points: model.points + points)
+              let #(updated_model, final_points) =
+                apply_point_multipliers(model, value)
+              let new_model =
+                Model(
+                  ..updated_model,
+                  points: updated_model.points + final_points,
+                )
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
@@ -608,47 +663,43 @@ fn handle_pull_orb(model: Model) -> Model {
               #(new_model, message, False)
             }
             AllCollectorOrb(collector_value) -> {
-              let multiplier =
-                status.get_point_multiplier(model.active_statuses)
-              let bonus_points =
-                float.truncate(
-                  int.to_float(list.length(rest) * collector_value)
-                  *. multiplier,
-                )
+              let base_points = list.length(rest) * collector_value
+              let #(updated_model, final_points) =
+                apply_point_multipliers(model, base_points)
               let new_model =
-                Model(..model, points: model.points + bonus_points)
+                Model(
+                  ..updated_model,
+                  points: updated_model.points + final_points,
+                )
               let message =
-                display.collector_result_message(first_orb, bonus_points)
+                display.collector_result_message(first_orb, final_points)
               #(new_model, message, False)
             }
             PointCollectorOrb(collector_value) -> {
-              let multiplier =
-                status.get_point_multiplier(model.active_statuses)
-              let bonus_points =
-                float.truncate(
-                  int.to_float(count_point_orbs(rest) * collector_value)
-                  *. multiplier,
-                )
+              let base_points = count_point_orbs(rest) * collector_value
+              let #(updated_model, final_points) =
+                apply_point_multipliers(model, base_points)
               let new_model =
-                Model(..model, points: model.points + bonus_points)
+                Model(
+                  ..updated_model,
+                  points: updated_model.points + final_points,
+                )
               let message =
-                display.collector_result_message(first_orb, bonus_points)
+                display.collector_result_message(first_orb, final_points)
               #(new_model, message, False)
             }
             BombSurvivorOrb(collector_value) -> {
-              let multiplier =
-                status.get_point_multiplier(model.active_statuses)
-              let bonus_points =
-                float.truncate(
-                  int.to_float(
-                    count_pulled_bomb_orbs(model.pulled_orbs) * collector_value,
-                  )
-                  *. multiplier,
-                )
+              let base_points =
+                count_pulled_bomb_orbs(model.pulled_orbs) * collector_value
+              let #(updated_model, final_points) =
+                apply_point_multipliers(model, base_points)
               let new_model =
-                Model(..model, points: model.points + bonus_points)
+                Model(
+                  ..updated_model,
+                  points: updated_model.points + final_points,
+                )
               let message =
-                display.collector_result_message(first_orb, bonus_points)
+                display.collector_result_message(first_orb, final_points)
               #(new_model, message, False)
             }
             MultiplierOrb(multiplier) -> {
@@ -659,6 +710,15 @@ fn handle_pull_orb(model: Model) -> Model {
                 model
                 |> status.add_status(status.create_point_multiplier(
                   new_multiplier,
+                ))
+              let message = display.orb_result_message(first_orb)
+              #(new_model, message, False)
+            }
+            NextPointMultiplierOrb(multiplier) -> {
+              let new_model =
+                model
+                |> status.add_status(status.create_next_point_multiplier(
+                  multiplier,
                 ))
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)

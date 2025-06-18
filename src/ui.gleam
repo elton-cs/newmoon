@@ -11,10 +11,10 @@ import lustre/event
 import types.{
   type Msg, type Orb, type Screen, type StatusDuration, type StatusEffect,
   AllCollectorOrb, BombImmunity, BombImmunityOrb, BombOrb, BombSurvivorOrb,
-  ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb, Permanent,
-  PointCollectorOrb, PointMultiplier, PointOrb, PointRecoveryOrb, PullOrb,
-  PullRiskOrb, RiskOrb, Testing, TestingChoosing, ToggleDevMode, Triggered,
-  UpdateInputValue,
+  ChoiceOrb, Choosing, Countdown, Game, HealthOrb, MultiplierOrb,
+  NextPointMultiplier, NextPointMultiplierOrb, Permanent, PointCollectorOrb,
+  PointMultiplier, PointOrb, PointRecoveryOrb, PullOrb, PullRiskOrb, RiskOrb,
+  Testing, TestingChoosing, ToggleDevMode, Triggered, UpdateInputValue,
 }
 
 // Layout Components
@@ -129,6 +129,12 @@ pub fn orb_result_display(
             "text-yellow-700",
             "bg-yellow-50 border-yellow-200",
           )
+        types.NextPointMultiplierOrb(_) ->
+          info_panel(
+            orb_message,
+            "text-orange-700",
+            "bg-orange-50 border-orange-200",
+          )
         types.BombImmunityOrb ->
           info_panel(orb_message, "text-cyan-700", "bg-cyan-50 border-cyan-200")
         types.ChoiceOrb ->
@@ -192,6 +198,12 @@ pub fn orb_result_display(
             fallback_message,
             "text-yellow-700",
             "bg-yellow-50 border-yellow-200",
+          )
+        types.NextPointMultiplierOrb(_) ->
+          info_panel(
+            fallback_message,
+            "text-orange-700",
+            "bg-orange-50 border-orange-200",
           )
         types.BombImmunityOrb ->
           info_panel(
@@ -531,6 +543,11 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
       "text-yellow-700",
       "border-yellow-200",
     )
+    NextPointMultiplierOrb(_) -> #(
+      "bg-orange-50",
+      "text-orange-700",
+      "border-orange-200",
+    )
     BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
     ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
     RiskOrb -> #("bg-red-100", "text-red-800", "border-red-300")
@@ -814,6 +831,8 @@ fn format_status_for_dev_display(status: StatusEffect) -> String {
       <> ", "
       <> format_duration_for_dev(duration)
       <> ")"
+    NextPointMultiplier(multiplier) ->
+      "NextPointMultiplier(×" <> float.to_string(multiplier) <> ")"
     BombImmunity(duration) ->
       "BombImmunity(" <> format_duration_for_dev(duration) <> ")"
   }
@@ -837,6 +856,8 @@ fn format_orb_for_dev_display(orb: Orb) -> String {
     BombSurvivorOrb(value) -> "BombSurvivor(" <> int.to_string(value) <> ")"
     MultiplierOrb(multiplier) ->
       "Multiplier(" <> float.to_string(multiplier) <> ")"
+    NextPointMultiplierOrb(multiplier) ->
+      "NextPointMultiplier(" <> float.to_string(multiplier) <> ")"
     BombImmunityOrb -> "BombImmunity"
     ChoiceOrb -> "Choice"
     RiskOrb -> "Risk"

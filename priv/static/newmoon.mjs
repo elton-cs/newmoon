@@ -5008,6 +5008,12 @@ var PointMultiplier = class extends CustomType {
     this.duration = duration;
   }
 };
+var NextPointMultiplier = class extends CustomType {
+  constructor(multiplier) {
+    super();
+    this.multiplier = multiplier;
+  }
+};
 var BombImmunity = class extends CustomType {
   constructor(duration) {
     super();
@@ -5064,6 +5070,12 @@ var BombSurvivorOrb = class extends CustomType {
   }
 };
 var MultiplierOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+};
+var NextPointMultiplierOrb = class extends CustomType {
   constructor($0) {
     super();
     this[0] = $0;
@@ -5156,6 +5168,8 @@ var HazardSample = class extends CustomType {
 var HealthSample = class extends CustomType {
 };
 var MultiplierSample = class extends CustomType {
+};
+var NextPointMultiplierSample = class extends CustomType {
 };
 var AllCollectorSample = class extends CustomType {
 };
@@ -5309,6 +5323,8 @@ function orb_display_name(orb) {
     return "Bomb Survivor Sample";
   } else if (orb instanceof MultiplierOrb) {
     return "Multiplier Sample";
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    return "Next Point Amplifier";
   } else if (orb instanceof BombImmunityOrb) {
     return "Shield Generator Sample";
   } else if (orb instanceof ChoiceOrb) {
@@ -5338,6 +5354,9 @@ function orb_result_message(orb) {
   } else if (orb instanceof MultiplierOrb) {
     let multiplier = orb[0];
     return "\u25C8 MULTIPLIER ACTIVATED \xD7" + float_to_string(multiplier);
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    let multiplier = orb[0];
+    return "\u25C8 NEXT POINT AMPLIFIER ACTIVATED \xD7" + float_to_string(multiplier);
   } else if (orb instanceof BombImmunityOrb) {
     return "\u25C8 SHIELD GENERATOR ACTIVATED";
   } else if (orb instanceof ChoiceOrb) {
@@ -5414,6 +5433,9 @@ var Add = class extends CustomType {
 function create_point_multiplier(multiplier) {
   return new PointMultiplier(multiplier, new Permanent());
 }
+function create_next_point_multiplier(multiplier) {
+  return new NextPointMultiplier(multiplier);
+}
 function create_bomb_immunity(turns) {
   return new BombImmunity(new Countdown(turns));
 }
@@ -5440,6 +5462,80 @@ function get_point_multiplier(statuses) {
     return 1;
   }
 }
+function has_next_point_multiplier(statuses) {
+  return any(
+    statuses,
+    (status) => {
+      if (status instanceof NextPointMultiplier) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  );
+}
+function get_next_point_multiplier(statuses) {
+  let $ = find2(
+    statuses,
+    (status) => {
+      if (status instanceof NextPointMultiplier) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  );
+  if ($ instanceof Ok) {
+    let $1 = $[0];
+    if ($1 instanceof NextPointMultiplier) {
+      let multiplier = $1.multiplier;
+      return multiplier;
+    } else {
+      return 1;
+    }
+  } else {
+    return 1;
+  }
+}
+function consume_next_point_multiplier(model) {
+  let remaining_statuses = filter(
+    model.active_statuses,
+    (status) => {
+      if (status instanceof NextPointMultiplier) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+  );
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.credits,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.purchased_orbs,
+    _record.screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.input_value,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    remaining_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    _record.risk_orbs,
+    _record.risk_original_orbs,
+    _record.risk_pulled_orbs,
+    _record.risk_accumulated_effects,
+    _record.risk_health,
+    _record.selected_marketplace_item
+  );
+}
 function has_bomb_immunity(statuses) {
   return any(
     statuses,
@@ -5455,6 +5551,12 @@ function has_bomb_immunity(statuses) {
 function is_same_status_type(status1, status2) {
   if (status2 instanceof PointMultiplier) {
     if (status1 instanceof PointMultiplier) {
+      return true;
+    } else {
+      return false;
+    }
+  } else if (status2 instanceof NextPointMultiplier) {
+    if (status1 instanceof NextPointMultiplier) {
       return true;
     } else {
       return false;
@@ -5486,12 +5588,16 @@ function find_existing_status(statuses, new_status) {
 function get_status_stacking_behavior(status) {
   if (status instanceof PointMultiplier) {
     return new Replace2();
+  } else if (status instanceof NextPointMultiplier) {
+    return new Replace2();
   } else {
     return new Add();
   }
 }
 function get_status_persistence(status) {
   if (status instanceof PointMultiplier) {
+    return new ClearOnLevel();
+  } else if (status instanceof NextPointMultiplier) {
     return new ClearOnLevel();
   } else {
     return new ClearOnLevel();
@@ -5552,6 +5658,9 @@ function decrement_status_duration(status) {
     let multiplier = status.multiplier;
     let duration = status.duration;
     return new PointMultiplier(multiplier, decrement_duration(duration));
+  } else if (status instanceof NextPointMultiplier) {
+    let multiplier = status.multiplier;
+    return new NextPointMultiplier(multiplier);
   } else {
     let duration = status.duration;
     return new BombImmunity(decrement_duration(duration));
@@ -5568,6 +5677,8 @@ function is_status_active(status) {
     } else {
       return true;
     }
+  } else if (status instanceof NextPointMultiplier) {
+    return true;
   } else {
     let $ = status.duration;
     if ($ instanceof Countdown) {
@@ -5616,6 +5727,9 @@ function status_to_display_text(status) {
   if (status instanceof PointMultiplier) {
     let multiplier = status.multiplier;
     return "\u25C8 SIGNAL AMPLIFIER \xD7" + float_to_string(multiplier);
+  } else if (status instanceof NextPointMultiplier) {
+    let multiplier = status.multiplier;
+    return "\u25C8 NEXT POINT AMPLIFIER \xD7" + float_to_string(multiplier);
   } else {
     let $ = status.duration;
     if ($ instanceof Permanent) {
@@ -6150,6 +6264,49 @@ function handle_confirm_orb_value(model, orb_type) {
     } else {
       return model;
     }
+  } else if (orb_type instanceof NextPointMultiplierSample) {
+    let $ = parse_float(model.input_value);
+    if ($ instanceof Ok) {
+      let multiplier_value = $[0];
+      if (multiplier_value > 0) {
+        let test_orb = new NextPointMultiplierOrb(multiplier_value);
+        let clean_model = clear_statuses_by_persistence(
+          model,
+          new ClearOnGame()
+        );
+        let _record = clean_model;
+        return new Model(
+          5,
+          0,
+          _record.credits,
+          _record.level,
+          _record.milestone,
+          create_test_bag(test_orb),
+          _record.purchased_orbs,
+          new Testing(new Gameplay()),
+          new None(),
+          new None(),
+          _record.input_value,
+          toList([]),
+          1,
+          0,
+          _record.active_statuses,
+          new None(),
+          new None(),
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_original_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health,
+          _record.selected_marketplace_item
+        );
+      } else {
+        return model;
+      }
+    } else {
+      return model;
+    }
   } else {
     let $ = parse_int(model.input_value);
     if ($ instanceof Ok) {
@@ -6164,6 +6321,8 @@ function handle_confirm_orb_value(model, orb_type) {
           _block = new HealthOrb(value2);
         } else if (orb_type instanceof MultiplierSample) {
           _block = new MultiplierOrb(2);
+        } else if (orb_type instanceof NextPointMultiplierSample) {
+          _block = new NextPointMultiplierOrb(2);
         } else if (orb_type instanceof AllCollectorSample) {
           _block = new AllCollectorOrb(value2);
         } else if (orb_type instanceof PointCollectorSample) {
@@ -6562,6 +6721,27 @@ function handle_start_testing_point_recovery_active(model) {
     _record.risk_health,
     _record.selected_marketplace_item
   );
+}
+function apply_point_multipliers(model, base_points) {
+  let regular_multiplier = get_point_multiplier(model.active_statuses);
+  let has_next_multiplier = has_next_point_multiplier(
+    model.active_statuses
+  );
+  if (has_next_multiplier) {
+    let next_multiplier = get_next_point_multiplier(
+      model.active_statuses
+    );
+    let final_points = truncate(
+      identity(base_points) * next_multiplier * regular_multiplier
+    );
+    let updated_model = consume_next_point_multiplier(model);
+    return [updated_model, final_points];
+  } else {
+    let final_points = truncate(
+      identity(base_points) * regular_multiplier
+    );
+    return [model, final_points];
+  }
 }
 function handle_restart_game(model) {
   return new Model(
@@ -7922,13 +8102,14 @@ function handle_pull_orb(model) {
         let _block;
         if (first_orb instanceof PointOrb) {
           let value2 = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let points = truncate(identity(value2) * multiplier);
+          let $4 = apply_point_multipliers(model, value2);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8031,15 +8212,15 @@ function handle_pull_orb(model) {
           _block = [new_model2, message, false];
         } else if (first_orb instanceof AllCollectorOrb) {
           let collector_value = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = truncate(
-            identity(length(rest) * collector_value) * multiplier
-          );
+          let base_points = length(rest) * collector_value;
+          let $4 = apply_point_multipliers(model, base_points);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + bonus_points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8066,20 +8247,20 @@ function handle_pull_orb(model) {
           let new_model2 = _block$12;
           let message = collector_result_message(
             first_orb,
-            bonus_points
+            final_points
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof PointCollectorOrb) {
           let collector_value = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = truncate(
-            identity(count_point_orbs(rest) * collector_value) * multiplier
-          );
+          let base_points = count_point_orbs(rest) * collector_value;
+          let $4 = apply_point_multipliers(model, base_points);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + bonus_points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8106,22 +8287,20 @@ function handle_pull_orb(model) {
           let new_model2 = _block$12;
           let message = collector_result_message(
             first_orb,
-            bonus_points
+            final_points
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof BombSurvivorOrb) {
           let collector_value = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = truncate(
-            identity(
-              count_pulled_bomb_orbs(model.pulled_orbs) * collector_value
-            ) * multiplier
-          );
+          let base_points = count_pulled_bomb_orbs(model.pulled_orbs) * collector_value;
+          let $4 = apply_point_multipliers(model, base_points);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + bonus_points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8148,7 +8327,7 @@ function handle_pull_orb(model) {
           let new_model2 = _block$12;
           let message = collector_result_message(
             first_orb,
-            bonus_points
+            final_points
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof MultiplierOrb) {
@@ -8162,6 +8341,17 @@ function handle_pull_orb(model) {
           _block$12 = add_status(
             _pipe,
             create_point_multiplier(new_multiplier)
+          );
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message, false];
+        } else if (first_orb instanceof NextPointMultiplierOrb) {
+          let multiplier = first_orb[0];
+          let _block$12;
+          let _pipe = model;
+          _block$12 = add_status(
+            _pipe,
+            create_next_point_multiplier(multiplier)
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -8355,13 +8545,14 @@ function handle_pull_orb(model) {
         let _block;
         if (first_orb instanceof PointOrb) {
           let value2 = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let points = truncate(identity(value2) * multiplier);
+          let $4 = apply_point_multipliers(model, value2);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8464,15 +8655,15 @@ function handle_pull_orb(model) {
           _block = [new_model2, message, false];
         } else if (first_orb instanceof AllCollectorOrb) {
           let collector_value = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = truncate(
-            identity(length(rest) * collector_value) * multiplier
-          );
+          let base_points = length(rest) * collector_value;
+          let $4 = apply_point_multipliers(model, base_points);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + bonus_points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8499,20 +8690,20 @@ function handle_pull_orb(model) {
           let new_model2 = _block$12;
           let message = collector_result_message(
             first_orb,
-            bonus_points
+            final_points
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof PointCollectorOrb) {
           let collector_value = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = truncate(
-            identity(count_point_orbs(rest) * collector_value) * multiplier
-          );
+          let base_points = count_point_orbs(rest) * collector_value;
+          let $4 = apply_point_multipliers(model, base_points);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + bonus_points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8539,22 +8730,20 @@ function handle_pull_orb(model) {
           let new_model2 = _block$12;
           let message = collector_result_message(
             first_orb,
-            bonus_points
+            final_points
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof BombSurvivorOrb) {
           let collector_value = first_orb[0];
-          let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = truncate(
-            identity(
-              count_pulled_bomb_orbs(model.pulled_orbs) * collector_value
-            ) * multiplier
-          );
+          let base_points = count_pulled_bomb_orbs(model.pulled_orbs) * collector_value;
+          let $4 = apply_point_multipliers(model, base_points);
+          let updated_model2 = $4[0];
+          let final_points = $4[1];
           let _block$12;
-          let _record2 = model;
+          let _record2 = updated_model2;
           _block$12 = new Model(
             _record2.health,
-            model.points + bonus_points,
+            updated_model2.points + final_points,
             _record2.credits,
             _record2.level,
             _record2.milestone,
@@ -8581,7 +8770,7 @@ function handle_pull_orb(model) {
           let new_model2 = _block$12;
           let message = collector_result_message(
             first_orb,
-            bonus_points
+            final_points
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof MultiplierOrb) {
@@ -8595,6 +8784,17 @@ function handle_pull_orb(model) {
           _block$12 = add_status(
             _pipe,
             create_point_multiplier(new_multiplier)
+          );
+          let new_model2 = _block$12;
+          let message = orb_result_message(first_orb);
+          _block = [new_model2, message, false];
+        } else if (first_orb instanceof NextPointMultiplierOrb) {
+          let multiplier = first_orb[0];
+          let _block$12;
+          let _pipe = model;
+          _block$12 = add_status(
+            _pipe,
+            create_next_point_multiplier(multiplier)
           );
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
@@ -9155,6 +9355,12 @@ function orb_result_display(orb, message) {
           "text-yellow-700",
           "bg-yellow-50 border-yellow-200"
         );
+      } else if (orb_value instanceof NextPointMultiplierOrb) {
+        return info_panel(
+          orb_message,
+          "text-orange-700",
+          "bg-orange-50 border-orange-200"
+        );
       } else if (orb_value instanceof BombImmunityOrb) {
         return info_panel(
           orb_message,
@@ -9224,6 +9430,12 @@ function orb_result_display(orb, message) {
           fallback_message,
           "text-yellow-700",
           "bg-yellow-50 border-yellow-200"
+        );
+      } else if (orb_value instanceof NextPointMultiplierOrb) {
+        return info_panel(
+          fallback_message,
+          "text-orange-700",
+          "bg-orange-50 border-orange-200"
         );
       } else if (orb_value instanceof BombImmunityOrb) {
         return info_panel(
@@ -9478,6 +9690,8 @@ function get_orb_style_classes(orb) {
     return ["bg-orange-50", "text-orange-700", "border-orange-200"];
   } else if (orb instanceof MultiplierOrb) {
     return ["bg-yellow-50", "text-yellow-700", "border-yellow-200"];
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    return ["bg-orange-50", "text-orange-700", "border-orange-200"];
   } else if (orb instanceof BombImmunityOrb) {
     return ["bg-cyan-50", "text-cyan-700", "border-cyan-200"];
   } else if (orb instanceof ChoiceOrb) {
@@ -9544,6 +9758,9 @@ function format_status_for_dev_display(status) {
     return "PointMultiplier(\xD7" + float_to_string(multiplier) + ", " + format_duration_for_dev(
       duration
     ) + ")";
+  } else if (status instanceof NextPointMultiplier) {
+    let multiplier = status.multiplier;
+    return "NextPointMultiplier(\xD7" + float_to_string(multiplier) + ")";
   } else {
     let duration = status.duration;
     return "BombImmunity(" + format_duration_for_dev(duration) + ")";
@@ -9621,6 +9838,9 @@ function format_orb_for_dev_display(orb) {
   } else if (orb instanceof MultiplierOrb) {
     let multiplier = orb[0];
     return "Multiplier(" + float_to_string(multiplier) + ")";
+  } else if (orb instanceof NextPointMultiplierOrb) {
+    let multiplier = orb[0];
+    return "NextPointMultiplier(" + float_to_string(multiplier) + ")";
   } else if (orb instanceof BombImmunityOrb) {
     return "BombImmunity";
   } else if (orb instanceof ChoiceOrb) {
@@ -10589,6 +10809,10 @@ function render_orb_testing_view() {
         new SelectOrbType(new MultiplierSample())
       ),
       orb_selection_button(
+        "Next Point Amplifier",
+        new SelectOrbType(new NextPointMultiplierSample())
+      ),
+      orb_selection_button(
         "All Collector Sample",
         new SelectOrbType(new AllCollectorSample())
       ),
@@ -10658,6 +10882,8 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block = "Health Sample";
   } else if (orb_type instanceof MultiplierSample) {
     _block = "Multiplier Sample";
+  } else if (orb_type instanceof NextPointMultiplierSample) {
+    _block = "Next Point Amplifier";
   } else if (orb_type instanceof AllCollectorSample) {
     _block = "All Collector Sample";
   } else if (orb_type instanceof PointCollectorSample) {
@@ -10683,6 +10909,8 @@ function render_orb_value_selection_view(orb_type, input_value) {
     _block$1 = "Enter the health points this sample will restore";
   } else if (orb_type instanceof MultiplierSample) {
     _block$1 = "Doubles the current point multiplier for all point-awarding samples";
+  } else if (orb_type instanceof NextPointMultiplierSample) {
+    _block$1 = "Applies multiplier to the next point-awarding sample only, then expires";
   } else if (orb_type instanceof AllCollectorSample) {
     _block$1 = "Enter points awarded per remaining sample in container";
   } else if (orb_type instanceof PointCollectorSample) {
@@ -10744,9 +10972,23 @@ function render_orb_value_selection_view(orb_type, input_value) {
         status_panel(
           orb_name + " Configuration",
           description,
-          "bg-purple-50 border-purple-200"
+          "bg-blue-50 border-blue-200"
         ),
-        primary_button("Start Test", new ConfirmOrbValue(orb_type)),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
+        secondary_button("Back to Selection", new BackToOrbTesting())
+      ])
+    );
+  } else if (orb_type instanceof NextPointMultiplierSample) {
+    return fragment2(
+      toList([
+        status_panel(
+          orb_name + " Configuration",
+          description,
+          "bg-blue-50 border-blue-200"
+        ),
+        number_input(input_value),
+        primary_button("Confirm Value", new ConfirmOrbValue(orb_type)),
         secondary_button("Back to Selection", new BackToOrbTesting())
       ])
     );

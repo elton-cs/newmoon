@@ -16,11 +16,11 @@ import types.{
   ContinueToNextLevel, Cosmic, DataSample, Defeat, ExitRisk, ExitTesting,
   Failure, Game, GameComplete, Gameplay, GoToMarketplace, GoToOrbTesting,
   HazardSample, HealthSample, Main, Marketplace, MarketplaceItem, Menu,
-  MultiplierSample, NextLevel, OrbSelection, Playing, PointCollectorSample,
-  PointRecoverySample, PullRiskOrb, PurchaseItem, Rare, ResetTesting,
-  RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskPlaying, RiskReveal,
-  RiskSample, RiskSurvived, SelectMarketplaceItem, SelectOrbType, StartGame,
-  StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
+  MultiplierSample, NextLevel, NextPointMultiplierSample, OrbSelection, Playing,
+  PointCollectorSample, PointRecoverySample, PullRiskOrb, PurchaseItem, Rare,
+  ResetTesting, RestartGame, RiskAccept, RiskConsumed, RiskDied, RiskPlaying,
+  RiskReveal, RiskSample, RiskSurvived, SelectMarketplaceItem, SelectOrbType,
+  StartGame, StartTestingPointRecoveryActive, StartTestingPointRecoveryFirst,
   StartTestingRiskContinue, StartTestingRiskFailure, StartTestingRiskSuccess,
   StartTestingWithBothStatuses, StartTestingWithTripleChoice, Success,
   TestGameComplete, Testing, TestingChoosing, TestingRiskAccept,
@@ -767,6 +767,10 @@ fn render_orb_testing_view() -> Element(Msg) {
       SelectOrbType(MultiplierSample),
     ),
     ui.orb_selection_button(
+      "Next Point Amplifier",
+      SelectOrbType(NextPointMultiplierSample),
+    ),
+    ui.orb_selection_button(
       "All Collector Sample",
       SelectOrbType(AllCollectorSample),
     ),
@@ -815,6 +819,7 @@ fn render_orb_value_selection_view(
     HazardSample -> "Hazard Sample"
     HealthSample -> "Health Sample"
     MultiplierSample -> "Multiplier Sample"
+    NextPointMultiplierSample -> "Next Point Amplifier"
     AllCollectorSample -> "All Collector Sample"
     PointCollectorSample -> "Point Collector Sample"
     BombSurvivorSample -> "Bomb Survivor Sample"
@@ -829,6 +834,8 @@ fn render_orb_value_selection_view(
     HealthSample -> "Enter the health points this sample will restore"
     MultiplierSample ->
       "Doubles the current point multiplier for all point-awarding samples"
+    NextPointMultiplierSample ->
+      "Applies multiplier to the next point-awarding sample only, then expires"
     AllCollectorSample ->
       "Enter points awarded per remaining sample in container"
     PointCollectorSample ->
@@ -848,6 +855,8 @@ fn render_orb_value_selection_view(
     DataSample
     | HazardSample
     | HealthSample
+    | MultiplierSample
+    | NextPointMultiplierSample
     | AllCollectorSample
     | PointCollectorSample
     | BombSurvivorSample ->
@@ -861,11 +870,7 @@ fn render_orb_value_selection_view(
         ui.primary_button("Confirm Value", ConfirmOrbValue(orb_type)),
         ui.secondary_button("Back to Selection", BackToOrbTesting),
       ])
-    MultiplierSample
-    | BombImmunitySample
-    | ChoiceSample
-    | RiskSample
-    | PointRecoverySample ->
+    BombImmunitySample | ChoiceSample | RiskSample | PointRecoverySample ->
       element.fragment([
         ui.status_panel(
           orb_name <> " Configuration",

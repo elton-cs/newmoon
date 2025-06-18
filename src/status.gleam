@@ -3,12 +3,16 @@ import gleam/int
 import gleam/list
 import types.{
   type Model, type StatusDuration, type StatusEffect, type StatusPersistence,
-  BombImmunity, ClearOnLevel, Countdown, Model, Permanent, PointMultiplier,
-  Triggered,
+  BombImmunity, ClearOnLevel, Countdown, Model, NextPointMultiplier, Permanent,
+  PointMultiplier, Triggered,
 }
 
 pub fn create_point_multiplier(multiplier: Float) -> StatusEffect {
   PointMultiplier(multiplier, Permanent)
+}
+
+pub fn create_next_point_multiplier(multiplier: Float) -> StatusEffect {
+  NextPointMultiplier(multiplier)
 }
 
 pub fn create_bomb_immunity(turns: Int) -> StatusEffect {
@@ -63,6 +67,40 @@ pub fn get_point_multiplier(statuses: List(StatusEffect)) -> Float {
   }
 }
 
+pub fn has_next_point_multiplier(statuses: List(StatusEffect)) -> Bool {
+  list.any(statuses, fn(status) {
+    case status {
+      NextPointMultiplier(_) -> True
+      _ -> False
+    }
+  })
+}
+
+pub fn get_next_point_multiplier(statuses: List(StatusEffect)) -> Float {
+  case
+    list.find(statuses, fn(status) {
+      case status {
+        NextPointMultiplier(_) -> True
+        _ -> False
+      }
+    })
+  {
+    Ok(NextPointMultiplier(multiplier)) -> multiplier
+    _ -> 1.0
+  }
+}
+
+pub fn consume_next_point_multiplier(model: Model) -> Model {
+  let remaining_statuses =
+    list.filter(model.active_statuses, fn(status) {
+      case status {
+        NextPointMultiplier(_) -> False
+        _ -> True
+      }
+    })
+  Model(..model, active_statuses: remaining_statuses)
+}
+
 pub fn has_bomb_immunity(statuses: List(StatusEffect)) -> Bool {
   list.any(statuses, fn(status) {
     case status {
@@ -105,6 +143,7 @@ fn find_existing_status(
 fn is_same_status_type(status1: StatusEffect, status2: StatusEffect) -> Bool {
   case status1, status2 {
     PointMultiplier(_, _), PointMultiplier(_, _) -> True
+    NextPointMultiplier(_), NextPointMultiplier(_) -> True
     BombImmunity(_), BombImmunity(_) -> True
     _, _ -> False
   }
@@ -118,6 +157,7 @@ type StackingBehavior {
 fn get_status_stacking_behavior(status: StatusEffect) -> StackingBehavior {
   case status {
     PointMultiplier(_, _) -> Replace
+    NextPointMultiplier(_) -> Replace
     BombImmunity(_) -> Add
   }
 }
@@ -143,6 +183,7 @@ fn combine_statuses(
 fn get_status_persistence(status: StatusEffect) -> StatusPersistence {
   case status {
     PointMultiplier(_, _) -> ClearOnLevel
+    NextPointMultiplier(_) -> ClearOnLevel
     BombImmunity(_) -> ClearOnLevel
   }
 }
@@ -151,6 +192,7 @@ fn decrement_status_duration(status: StatusEffect) -> StatusEffect {
   case status {
     PointMultiplier(multiplier, duration) ->
       PointMultiplier(multiplier, decrement_duration(duration))
+    NextPointMultiplier(multiplier) -> NextPointMultiplier(multiplier)
     BombImmunity(duration) -> BombImmunity(decrement_duration(duration))
   }
 }
@@ -168,6 +210,7 @@ fn is_status_active(status: StatusEffect) -> Bool {
   case status {
     PointMultiplier(_, Permanent) -> True
     PointMultiplier(_, Countdown(n)) -> n > 0
+    NextPointMultiplier(_) -> True
     BombImmunity(Countdown(n)) -> n > 0
     _ -> True
   }
@@ -177,6 +220,8 @@ pub fn status_to_display_text(status: StatusEffect) -> String {
   case status {
     PointMultiplier(multiplier, _) ->
       "◈ SIGNAL AMPLIFIER ×" <> float.to_string(multiplier)
+    NextPointMultiplier(multiplier) ->
+      "◈ NEXT POINT AMPLIFIER ×" <> float.to_string(multiplier)
     BombImmunity(Countdown(remaining)) ->
       "◈ HAZARD SHIELD ACTIVE (" <> int.to_string(remaining) <> " remaining)"
     BombImmunity(Permanent) -> "◈ HAZARD SHIELD PERMANENT"
