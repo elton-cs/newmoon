@@ -63,7 +63,11 @@ pub fn stats_grid(stats: List(Element(Msg))) -> Element(Msg) {
 }
 
 pub fn marketplace_grid(items: List(Element(Msg))) -> Element(Msg) {
-  html.div([attribute.class("grid grid-cols-3 grid-rows-2 gap-3")], items)
+  html.div([attribute.class("grid grid-cols-2 grid-rows-3 gap-3")], items)
+}
+
+pub fn marketplace_stats_grid(stats: List(Element(Msg))) -> Element(Msg) {
+  html.div([attribute.class("grid grid-cols-2 gap-3")], stats)
 }
 
 pub fn stat_card(
@@ -146,7 +150,7 @@ pub fn marketplace_item_card(
         attribute.disabled(!can_afford),
         event.on_click(purchase_msg),
       ],
-      [html.text(int.to_string(price) <> " CREDITS")],
+      [html.text(int.to_string(price) <> " ◇")],
     ),
   ])
 }

@@ -7673,9 +7673,12 @@ function stats_grid(stats) {
 }
 function marketplace_grid(items) {
   return div(
-    toList([class$("grid grid-cols-3 grid-rows-2 gap-3")]),
+    toList([class$("grid grid-cols-2 grid-rows-3 gap-3")]),
     items
   );
+}
+function marketplace_stats_grid(stats) {
+  return div(toList([class$("grid grid-cols-2 gap-3")]), stats);
 }
 function stat_card(symbol, label, value, color_class) {
   return div(
@@ -7770,7 +7773,7 @@ function marketplace_item_card(symbol, name, price, can_afford, purchase_msg) {
           disabled(!can_afford),
           on_click(purchase_msg)
         ]),
-        toList([text3(to_string(price) + " CREDITS")])
+        toList([text3(to_string(price) + " \u25C7")])
       )
     ])
   );
@@ -8802,19 +8805,19 @@ function render_marketplace_grid(credits, marketplace_selection) {
   return marketplace_grid(item_cards);
 }
 function render_marketplace_stats(earned_points, total_credits) {
-  return stats_grid(
+  return marketplace_stats_grid(
     toList([
       stat_card(
         "\u25CF",
         earned_label,
         to_string(earned_points),
-        "text-green-600"
+        "text-gray-600"
       ),
       stat_card(
         "\u25C7",
         credits_label,
         to_string(total_credits),
-        "text-purple-600"
+        "text-gray-600"
       )
     ])
   );

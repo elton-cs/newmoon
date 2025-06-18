@@ -376,18 +376,18 @@ fn render_marketplace_stats(
   earned_points: Int,
   total_credits: Int,
 ) -> Element(Msg) {
-  ui.stats_grid([
+  ui.marketplace_stats_grid([
     ui.stat_card(
       "●",
       display.earned_label,
       int.to_string(earned_points),
-      "text-green-600",
+      "text-gray-600",
     ),
     ui.stat_card(
       "◇",
       display.credits_label,
       int.to_string(total_credits),
-      "text-purple-600",
+      "text-gray-600",
     ),
   ])
 }
