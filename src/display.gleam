@@ -4,7 +4,8 @@ import types.{
   PointCollectorOrb, PointOrb, PointRecoveryOrb, Rare, RiskOrb,
 }
 
-// Import int for string conversion
+// Import int and float for string conversion
+import gleam/float
 import gleam/int
 
 // Display text mappings for space-themed frontend terminology
@@ -20,7 +21,7 @@ pub fn orb_display_name(orb: Orb) -> String {
     AllCollectorOrb(_) -> "All Collector Sample"
     PointCollectorOrb(_) -> "Point Collector Sample"
     BombSurvivorOrb(_) -> "Bomb Survivor Sample"
-    MultiplierOrb -> "Multiplier Sample"
+    MultiplierOrb(_) -> "Multiplier Sample"
     BombImmunityOrb -> "Shield Generator Sample"
     ChoiceOrb -> "Choice Portal Sample"
     RiskOrb -> "Fate Sample"
@@ -37,7 +38,8 @@ pub fn orb_result_message(orb: Orb) -> String {
     AllCollectorOrb(_) -> "◈ TOTAL COLLECTION +?"
     PointCollectorOrb(_) -> "◉ DATA COLLECTION +?"
     BombSurvivorOrb(_) -> "◆ SURVIVAL BONUS +?"
-    MultiplierOrb -> "◈ MULTIPLIER ACTIVATED ×2"
+    MultiplierOrb(multiplier) ->
+      "◈ MULTIPLIER ACTIVATED ×" <> float.to_string(multiplier)
     BombImmunityOrb -> "◈ SHIELD GENERATOR ACTIVATED"
     ChoiceOrb -> "◈ CHOICE PORTAL ACTIVATED"
     RiskOrb -> "⚠ FATE SAMPLE DETECTED"

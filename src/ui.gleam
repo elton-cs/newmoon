@@ -1,4 +1,5 @@
 import display
+import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -122,7 +123,7 @@ pub fn orb_result_display(
             "text-orange-700",
             "bg-orange-50 border-orange-200",
           )
-        types.MultiplierOrb ->
+        types.MultiplierOrb(_) ->
           info_panel(
             orb_message,
             "text-yellow-700",
@@ -186,7 +187,7 @@ pub fn orb_result_display(
             "text-orange-700",
             "bg-orange-50 border-orange-200",
           )
-        types.MultiplierOrb ->
+        types.MultiplierOrb(_) ->
           info_panel(
             fallback_message,
             "text-yellow-700",
@@ -525,7 +526,11 @@ fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
       "text-orange-700",
       "border-orange-200",
     )
-    MultiplierOrb -> #("bg-yellow-50", "text-yellow-700", "border-yellow-200")
+    MultiplierOrb(_) -> #(
+      "bg-yellow-50",
+      "text-yellow-700",
+      "border-yellow-200",
+    )
     BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
     ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
     RiskOrb -> #("bg-red-100", "text-red-800", "border-red-300")
@@ -805,7 +810,7 @@ fn format_status_for_dev_display(status: StatusEffect) -> String {
   case status {
     PointMultiplier(multiplier, duration) ->
       "PointMultiplier(×"
-      <> int.to_string(multiplier)
+      <> float.to_string(multiplier)
       <> ", "
       <> format_duration_for_dev(duration)
       <> ")"
@@ -830,7 +835,8 @@ fn format_orb_for_dev_display(orb: Orb) -> String {
     AllCollectorOrb(value) -> "AllCollector(" <> int.to_string(value) <> ")"
     PointCollectorOrb(value) -> "PointCollector(" <> int.to_string(value) <> ")"
     BombSurvivorOrb(value) -> "BombSurvivor(" <> int.to_string(value) <> ")"
-    MultiplierOrb -> "Multiplier"
+    MultiplierOrb(multiplier) ->
+      "Multiplier(" <> float.to_string(multiplier) <> ")"
     BombImmunityOrb -> "BombImmunity"
     ChoiceOrb -> "Choice"
     RiskOrb -> "Risk"

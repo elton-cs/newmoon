@@ -1,3 +1,4 @@
+import gleam/float
 import gleam/int
 import gleam/list
 import types.{
@@ -6,7 +7,7 @@ import types.{
   Triggered,
 }
 
-pub fn create_point_multiplier(multiplier: Int) -> StatusEffect {
+pub fn create_point_multiplier(multiplier: Float) -> StatusEffect {
   PointMultiplier(multiplier, Permanent)
 }
 
@@ -48,7 +49,7 @@ pub fn clear_statuses_by_persistence(
   Model(..model, active_statuses: remaining_statuses)
 }
 
-pub fn get_point_multiplier(statuses: List(StatusEffect)) -> Int {
+pub fn get_point_multiplier(statuses: List(StatusEffect)) -> Float {
   case
     list.find(statuses, fn(status) {
       case status {
@@ -58,7 +59,7 @@ pub fn get_point_multiplier(statuses: List(StatusEffect)) -> Int {
     })
   {
     Ok(PointMultiplier(multiplier, _)) -> multiplier
-    _ -> 1
+    _ -> 1.0
   }
 }
 
@@ -175,7 +176,7 @@ fn is_status_active(status: StatusEffect) -> Bool {
 pub fn status_to_display_text(status: StatusEffect) -> String {
   case status {
     PointMultiplier(multiplier, _) ->
-      "◈ SIGNAL AMPLIFIER ×" <> int.to_string(multiplier)
+      "◈ SIGNAL AMPLIFIER ×" <> float.to_string(multiplier)
     BombImmunity(Countdown(remaining)) ->
       "◈ HAZARD SHIELD ACTIVE (" <> int.to_string(remaining) <> " remaining)"
     BombImmunity(Permanent) -> "◈ HAZARD SHIELD PERMANENT"

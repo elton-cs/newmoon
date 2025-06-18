@@ -1,4 +1,5 @@
 import display
+import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
@@ -319,39 +320,69 @@ fn handle_update_input_value(model: Model, value: String) -> Model {
 }
 
 fn handle_confirm_orb_value(model: Model, orb_type: OrbType) -> Model {
-  case int.parse(model.input_value) {
-    Ok(value) if value > 0 -> {
-      let test_orb = case orb_type {
-        DataSample -> PointOrb(value)
-        HazardSample -> BombOrb(value)
-        HealthSample -> HealthOrb(value)
-        MultiplierSample -> MultiplierOrb
-        AllCollectorSample -> AllCollectorOrb(value)
-        PointCollectorSample -> PointCollectorOrb(value)
-        BombSurvivorSample -> BombSurvivorOrb(value)
-        BombImmunitySample -> BombImmunityOrb
-        ChoiceSample -> ChoiceOrb
-        RiskSample -> RiskOrb
-        PointRecoverySample -> PointRecoveryOrb
+  case orb_type {
+    MultiplierSample -> {
+      case float.parse(model.input_value) {
+        Ok(multiplier_value) if multiplier_value >. 0.0 -> {
+          let test_orb = MultiplierOrb(multiplier_value)
+          let clean_model =
+            status.clear_statuses_by_persistence(model, ClearOnGame)
+          Model(
+            ..clean_model,
+            screen: Testing(Gameplay),
+            bag: create_test_bag(test_orb),
+            health: 5,
+            points: 0,
+            last_orb: None,
+            last_orb_message: None,
+            pulled_orbs: [],
+            point_multiplier: 1,
+            bomb_immunity: 0,
+            choice_orb_1: None,
+            choice_orb_2: None,
+          )
+        }
+        _ -> model
       }
-      let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
-      Model(
-        ..clean_model,
-        screen: Testing(Gameplay),
-        bag: create_test_bag(test_orb),
-        health: 5,
-        points: 0,
-        last_orb: None,
-        last_orb_message: None,
-        pulled_orbs: [],
-        point_multiplier: 1,
-        bomb_immunity: 0,
-        choice_orb_1: None,
-        choice_orb_2: None,
-      )
     }
-    _ -> model
-    // Invalid input, stay on current screen
+    _ -> {
+      case int.parse(model.input_value) {
+        Ok(value) if value > 0 -> {
+          let test_orb = case orb_type {
+            DataSample -> PointOrb(value)
+            HazardSample -> BombOrb(value)
+            HealthSample -> HealthOrb(value)
+            AllCollectorSample -> AllCollectorOrb(value)
+            PointCollectorSample -> PointCollectorOrb(value)
+            BombSurvivorSample -> BombSurvivorOrb(value)
+            BombImmunitySample -> BombImmunityOrb
+            ChoiceSample -> ChoiceOrb
+            RiskSample -> RiskOrb
+            PointRecoverySample -> PointRecoveryOrb
+            MultiplierSample -> MultiplierOrb(2.0)
+            // This case won't be reached
+          }
+          let clean_model =
+            status.clear_statuses_by_persistence(model, ClearOnGame)
+          Model(
+            ..clean_model,
+            screen: Testing(Gameplay),
+            bag: create_test_bag(test_orb),
+            health: 5,
+            points: 0,
+            last_orb: None,
+            last_orb_message: None,
+            pulled_orbs: [],
+            point_multiplier: 1,
+            bomb_immunity: 0,
+            choice_orb_1: None,
+            choice_orb_2: None,
+          )
+        }
+        _ -> model
+        // Invalid input, stay on current screen
+      }
+    }
   }
 }
 
@@ -360,7 +391,8 @@ fn handle_back_to_orb_testing(model: Model) -> Model {
 }
 
 fn handle_start_testing_with_both_statuses(model: Model) -> Model {
-  let test_bag = [MultiplierOrb, BombImmunityOrb] |> list.append(starter_orbs())
+  let test_bag =
+    [MultiplierOrb(2.0), BombImmunityOrb] |> list.append(starter_orbs())
   let clean_model = status.clear_statuses_by_persistence(model, ClearOnGame)
   Model(
     ..clean_model,
@@ -542,7 +574,7 @@ fn handle_pull_orb(model: Model) -> Model {
             PointOrb(value) -> {
               let multiplier =
                 status.get_point_multiplier(model.active_statuses)
-              let points = value * multiplier
+              let points = float.truncate(int.to_float(value) *. multiplier)
               let new_model = Model(..model, points: model.points + points)
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
@@ -572,7 +604,10 @@ fn handle_pull_orb(model: Model) -> Model {
               let multiplier =
                 status.get_point_multiplier(model.active_statuses)
               let bonus_points =
-                list.length(rest) * collector_value * multiplier
+                float.truncate(
+                  int.to_float(list.length(rest) * collector_value)
+                  *. multiplier,
+                )
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -583,7 +618,10 @@ fn handle_pull_orb(model: Model) -> Model {
               let multiplier =
                 status.get_point_multiplier(model.active_statuses)
               let bonus_points =
-                count_point_orbs(rest) * collector_value * multiplier
+                float.truncate(
+                  int.to_float(count_point_orbs(rest) * collector_value)
+                  *. multiplier,
+                )
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
@@ -594,23 +632,27 @@ fn handle_pull_orb(model: Model) -> Model {
               let multiplier =
                 status.get_point_multiplier(model.active_statuses)
               let bonus_points =
-                count_pulled_bomb_orbs(model.pulled_orbs)
-                * collector_value
-                * multiplier
+                float.truncate(
+                  int.to_float(
+                    count_pulled_bomb_orbs(model.pulled_orbs) * collector_value,
+                  )
+                  *. multiplier,
+                )
               let new_model =
                 Model(..model, points: model.points + bonus_points)
               let message =
                 display.collector_result_message(first_orb, bonus_points)
               #(new_model, message, False)
             }
-            MultiplierOrb -> {
-              let new_multiplier = model.point_multiplier * 2
+            MultiplierOrb(multiplier) -> {
+              let current_multiplier =
+                status.get_point_multiplier(model.active_statuses)
+              let new_multiplier = current_multiplier *. multiplier
               let new_model =
                 model
                 |> status.add_status(status.create_point_multiplier(
                   new_multiplier,
                 ))
-                |> fn(m) { Model(..m, point_multiplier: new_multiplier) }
               let message = display.orb_result_message(first_orb)
               #(new_model, message, False)
             }
@@ -1064,13 +1106,14 @@ fn handle_apply_risk_effects(model: Model) -> Model {
       let model_with_special =
         list.fold(effects.special_orbs, model, fn(acc_model, special_orb) {
           case special_orb {
-            MultiplierOrb -> {
-              let new_multiplier = acc_model.point_multiplier * 2
+            MultiplierOrb(multiplier) -> {
+              let current_multiplier =
+                status.get_point_multiplier(acc_model.active_statuses)
+              let new_multiplier = current_multiplier *. multiplier
               acc_model
               |> status.add_status(status.create_point_multiplier(
                 new_multiplier,
               ))
-              |> fn(m) { Model(..m, point_multiplier: new_multiplier) }
             }
             BombImmunityOrb -> {
               acc_model
@@ -1154,7 +1197,8 @@ fn accumulate_risk_orb(
   case orb {
     PointOrb(value) -> {
       let multiplier = status.get_point_multiplier(active_statuses)
-      let risk_bonus_points = value * 2 * multiplier
+      let risk_bonus_points =
+        float.truncate(int.to_float(value * 2) *. multiplier)
       let new_effects =
         types.RiskEffects(
           ..current_effects,

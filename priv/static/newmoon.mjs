@@ -1924,8 +1924,28 @@ function parse_int(value2) {
     return new Error(Nil);
   }
 }
+function parse_float(value2) {
+  if (/^[-+]?(\d+)\.(\d+)([eE][-+]?\d+)?$/.test(value2)) {
+    return new Ok(parseFloat(value2));
+  } else {
+    return new Error(Nil);
+  }
+}
 function to_string(term) {
   return term.toString();
+}
+function float_to_string(float2) {
+  const string5 = float2.toString().replace("+", "");
+  if (string5.indexOf(".") >= 0) {
+    return string5;
+  } else {
+    const index4 = string5.indexOf("e");
+    if (index4 >= 0) {
+      return string5.slice(0, index4) + ".0" + string5.slice(index4);
+    } else {
+      return string5 + ".0";
+    }
+  }
 }
 function starts_with(haystack, needle) {
   return haystack.startsWith(needle);
@@ -1954,6 +1974,9 @@ var trim_start_regex = /* @__PURE__ */ new RegExp(
   `^[${unicode_whitespaces}]*`
 );
 var trim_end_regex = /* @__PURE__ */ new RegExp(`[${unicode_whitespaces}]*$`);
+function truncate(float2) {
+  return Math.trunc(float2);
+}
 function new_map() {
   return Dict.new();
 }
@@ -5041,6 +5064,10 @@ var BombSurvivorOrb = class extends CustomType {
   }
 };
 var MultiplierOrb = class extends CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
 };
 var BombImmunityOrb = class extends CustomType {
 };
@@ -5309,7 +5336,8 @@ function orb_result_message(orb) {
   } else if (orb instanceof BombSurvivorOrb) {
     return "\u25C6 SURVIVAL BONUS +?";
   } else if (orb instanceof MultiplierOrb) {
-    return "\u25C8 MULTIPLIER ACTIVATED \xD72";
+    let multiplier = orb[0];
+    return "\u25C8 MULTIPLIER ACTIVATED \xD7" + float_to_string(multiplier);
   } else if (orb instanceof BombImmunityOrb) {
     return "\u25C8 SHIELD GENERATOR ACTIVATED";
   } else if (orb instanceof ChoiceOrb) {
@@ -5587,7 +5615,7 @@ function tick_statuses(model) {
 function status_to_display_text(status) {
   if (status instanceof PointMultiplier) {
     let multiplier = status.multiplier;
-    return "\u25C8 SIGNAL AMPLIFIER \xD7" + to_string(multiplier);
+    return "\u25C8 SIGNAL AMPLIFIER \xD7" + float_to_string(multiplier);
   } else {
     let $ = status.duration;
     if ($ instanceof Permanent) {
@@ -6072,71 +6100,116 @@ function handle_update_input_value(model, value2) {
   );
 }
 function handle_confirm_orb_value(model, orb_type) {
-  let $ = parse_int(model.input_value);
-  if ($ instanceof Ok) {
-    let value2 = $[0];
-    if (value2 > 0) {
-      let _block;
-      if (orb_type instanceof DataSample) {
-        _block = new PointOrb(value2);
-      } else if (orb_type instanceof HazardSample) {
-        _block = new BombOrb(value2);
-      } else if (orb_type instanceof HealthSample) {
-        _block = new HealthOrb(value2);
-      } else if (orb_type instanceof MultiplierSample) {
-        _block = new MultiplierOrb();
-      } else if (orb_type instanceof AllCollectorSample) {
-        _block = new AllCollectorOrb(value2);
-      } else if (orb_type instanceof PointCollectorSample) {
-        _block = new PointCollectorOrb(value2);
-      } else if (orb_type instanceof BombSurvivorSample) {
-        _block = new BombSurvivorOrb(value2);
-      } else if (orb_type instanceof BombImmunitySample) {
-        _block = new BombImmunityOrb();
-      } else if (orb_type instanceof ChoiceSample) {
-        _block = new ChoiceOrb();
-      } else if (orb_type instanceof RiskSample) {
-        _block = new RiskOrb();
+  if (orb_type instanceof MultiplierSample) {
+    let $ = parse_float(model.input_value);
+    if ($ instanceof Ok) {
+      let multiplier_value = $[0];
+      if (multiplier_value > 0) {
+        let test_orb = new MultiplierOrb(multiplier_value);
+        let clean_model = clear_statuses_by_persistence(
+          model,
+          new ClearOnGame()
+        );
+        let _record = clean_model;
+        return new Model(
+          5,
+          0,
+          _record.credits,
+          _record.level,
+          _record.milestone,
+          create_test_bag(test_orb),
+          _record.purchased_orbs,
+          new Testing(new Gameplay()),
+          new None(),
+          new None(),
+          _record.input_value,
+          toList([]),
+          1,
+          0,
+          _record.active_statuses,
+          new None(),
+          new None(),
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_original_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health,
+          _record.selected_marketplace_item
+        );
       } else {
-        _block = new PointRecoveryOrb();
+        return model;
       }
-      let test_orb = _block;
-      let clean_model = clear_statuses_by_persistence(
-        model,
-        new ClearOnGame()
-      );
-      let _record = clean_model;
-      return new Model(
-        5,
-        0,
-        _record.credits,
-        _record.level,
-        _record.milestone,
-        create_test_bag(test_orb),
-        _record.purchased_orbs,
-        new Testing(new Gameplay()),
-        new None(),
-        new None(),
-        _record.input_value,
-        toList([]),
-        1,
-        0,
-        _record.active_statuses,
-        new None(),
-        new None(),
-        _record.dev_mode,
-        _record.risk_orbs,
-        _record.risk_original_orbs,
-        _record.risk_pulled_orbs,
-        _record.risk_accumulated_effects,
-        _record.risk_health,
-        _record.selected_marketplace_item
-      );
     } else {
       return model;
     }
   } else {
-    return model;
+    let $ = parse_int(model.input_value);
+    if ($ instanceof Ok) {
+      let value2 = $[0];
+      if (value2 > 0) {
+        let _block;
+        if (orb_type instanceof DataSample) {
+          _block = new PointOrb(value2);
+        } else if (orb_type instanceof HazardSample) {
+          _block = new BombOrb(value2);
+        } else if (orb_type instanceof HealthSample) {
+          _block = new HealthOrb(value2);
+        } else if (orb_type instanceof MultiplierSample) {
+          _block = new MultiplierOrb(2);
+        } else if (orb_type instanceof AllCollectorSample) {
+          _block = new AllCollectorOrb(value2);
+        } else if (orb_type instanceof PointCollectorSample) {
+          _block = new PointCollectorOrb(value2);
+        } else if (orb_type instanceof BombSurvivorSample) {
+          _block = new BombSurvivorOrb(value2);
+        } else if (orb_type instanceof BombImmunitySample) {
+          _block = new BombImmunityOrb();
+        } else if (orb_type instanceof ChoiceSample) {
+          _block = new ChoiceOrb();
+        } else if (orb_type instanceof RiskSample) {
+          _block = new RiskOrb();
+        } else {
+          _block = new PointRecoveryOrb();
+        }
+        let test_orb = _block;
+        let clean_model = clear_statuses_by_persistence(
+          model,
+          new ClearOnGame()
+        );
+        let _record = clean_model;
+        return new Model(
+          5,
+          0,
+          _record.credits,
+          _record.level,
+          _record.milestone,
+          create_test_bag(test_orb),
+          _record.purchased_orbs,
+          new Testing(new Gameplay()),
+          new None(),
+          new None(),
+          _record.input_value,
+          toList([]),
+          1,
+          0,
+          _record.active_statuses,
+          new None(),
+          new None(),
+          _record.dev_mode,
+          _record.risk_orbs,
+          _record.risk_original_orbs,
+          _record.risk_pulled_orbs,
+          _record.risk_accumulated_effects,
+          _record.risk_health,
+          _record.selected_marketplace_item
+        );
+      } else {
+        return model;
+      }
+    } else {
+      return model;
+    }
   }
 }
 function handle_back_to_orb_testing(model) {
@@ -6170,7 +6243,7 @@ function handle_back_to_orb_testing(model) {
 }
 function handle_start_testing_with_both_statuses(model) {
   let _block;
-  let _pipe = toList([new MultiplierOrb(), new BombImmunityOrb()]);
+  let _pipe = toList([new MultiplierOrb(2), new BombImmunityOrb()]);
   _block = append(_pipe, starter_orbs());
   let test_bag = _block;
   let clean_model = clear_statuses_by_persistence(
@@ -7162,41 +7235,16 @@ function handle_apply_risk_effects(model) {
       model,
       (acc_model, special_orb) => {
         if (special_orb instanceof MultiplierOrb) {
-          let new_multiplier = acc_model.point_multiplier * 2;
+          let multiplier = special_orb[0];
+          let current_multiplier = get_point_multiplier(
+            acc_model.active_statuses
+          );
+          let new_multiplier = current_multiplier * multiplier;
           let _pipe = acc_model;
-          let _pipe$1 = add_status(
+          return add_status(
             _pipe,
             create_point_multiplier(new_multiplier)
           );
-          return ((m) => {
-            let _record2 = m;
-            return new Model(
-              _record2.health,
-              _record2.points,
-              _record2.credits,
-              _record2.level,
-              _record2.milestone,
-              _record2.bag,
-              _record2.purchased_orbs,
-              _record2.screen,
-              _record2.last_orb,
-              _record2.last_orb_message,
-              _record2.input_value,
-              _record2.pulled_orbs,
-              new_multiplier,
-              _record2.bomb_immunity,
-              _record2.active_statuses,
-              _record2.choice_orb_1,
-              _record2.choice_orb_2,
-              _record2.dev_mode,
-              _record2.risk_orbs,
-              _record2.risk_original_orbs,
-              _record2.risk_pulled_orbs,
-              _record2.risk_accumulated_effects,
-              _record2.risk_health,
-              _record2.selected_marketplace_item
-            );
-          })(_pipe$1);
         } else if (special_orb instanceof BombImmunityOrb) {
           let _pipe = acc_model;
           let _pipe$1 = add_status(
@@ -7428,7 +7476,9 @@ function accumulate_risk_orb(orb, current_effects, active_statuses) {
   if (orb instanceof PointOrb) {
     let value2 = orb[0];
     let multiplier = get_point_multiplier(active_statuses);
-    let risk_bonus_points = value2 * 2 * multiplier;
+    let risk_bonus_points = truncate(
+      identity(value2 * 2) * multiplier
+    );
     let _block;
     let _record = current_effects;
     _block = new RiskEffects(
@@ -7866,7 +7916,7 @@ function handle_pull_orb(model) {
         if (first_orb instanceof PointOrb) {
           let value2 = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let points = value2 * multiplier;
+          let points = truncate(identity(value2) * multiplier);
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -7975,7 +8025,9 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof AllCollectorOrb) {
           let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = length(rest) * collector_value * multiplier;
+          let bonus_points = truncate(
+            identity(length(rest) * collector_value) * multiplier
+          );
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8013,7 +8065,9 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof PointCollectorOrb) {
           let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_point_orbs(rest) * collector_value * multiplier;
+          let bonus_points = truncate(
+            identity(count_point_orbs(rest) * collector_value) * multiplier
+          );
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8051,7 +8105,11 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof BombSurvivorOrb) {
           let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * collector_value * multiplier;
+          let bonus_points = truncate(
+            identity(
+              count_pulled_bomb_orbs(model.pulled_orbs) * collector_value
+            ) * multiplier
+          );
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8087,42 +8145,17 @@ function handle_pull_orb(model) {
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof MultiplierOrb) {
-          let new_multiplier = model.point_multiplier * 2;
+          let multiplier = first_orb[0];
+          let current_multiplier = get_point_multiplier(
+            model.active_statuses
+          );
+          let new_multiplier = current_multiplier * multiplier;
           let _block$12;
           let _pipe = model;
-          let _pipe$1 = add_status(
+          _block$12 = add_status(
             _pipe,
             create_point_multiplier(new_multiplier)
           );
-          _block$12 = ((m) => {
-            let _record2 = m;
-            return new Model(
-              _record2.health,
-              _record2.points,
-              _record2.credits,
-              _record2.level,
-              _record2.milestone,
-              _record2.bag,
-              _record2.purchased_orbs,
-              _record2.screen,
-              _record2.last_orb,
-              _record2.last_orb_message,
-              _record2.input_value,
-              _record2.pulled_orbs,
-              new_multiplier,
-              _record2.bomb_immunity,
-              _record2.active_statuses,
-              _record2.choice_orb_1,
-              _record2.choice_orb_2,
-              _record2.dev_mode,
-              _record2.risk_orbs,
-              _record2.risk_original_orbs,
-              _record2.risk_pulled_orbs,
-              _record2.risk_accumulated_effects,
-              _record2.risk_health,
-              _record2.selected_marketplace_item
-            );
-          })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
@@ -8316,7 +8349,7 @@ function handle_pull_orb(model) {
         if (first_orb instanceof PointOrb) {
           let value2 = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let points = value2 * multiplier;
+          let points = truncate(identity(value2) * multiplier);
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8425,7 +8458,9 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof AllCollectorOrb) {
           let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = length(rest) * collector_value * multiplier;
+          let bonus_points = truncate(
+            identity(length(rest) * collector_value) * multiplier
+          );
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8463,7 +8498,9 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof PointCollectorOrb) {
           let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_point_orbs(rest) * collector_value * multiplier;
+          let bonus_points = truncate(
+            identity(count_point_orbs(rest) * collector_value) * multiplier
+          );
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8501,7 +8538,11 @@ function handle_pull_orb(model) {
         } else if (first_orb instanceof BombSurvivorOrb) {
           let collector_value = first_orb[0];
           let multiplier = get_point_multiplier(model.active_statuses);
-          let bonus_points = count_pulled_bomb_orbs(model.pulled_orbs) * collector_value * multiplier;
+          let bonus_points = truncate(
+            identity(
+              count_pulled_bomb_orbs(model.pulled_orbs) * collector_value
+            ) * multiplier
+          );
           let _block$12;
           let _record2 = model;
           _block$12 = new Model(
@@ -8537,42 +8578,17 @@ function handle_pull_orb(model) {
           );
           _block = [new_model2, message, false];
         } else if (first_orb instanceof MultiplierOrb) {
-          let new_multiplier = model.point_multiplier * 2;
+          let multiplier = first_orb[0];
+          let current_multiplier = get_point_multiplier(
+            model.active_statuses
+          );
+          let new_multiplier = current_multiplier * multiplier;
           let _block$12;
           let _pipe = model;
-          let _pipe$1 = add_status(
+          _block$12 = add_status(
             _pipe,
             create_point_multiplier(new_multiplier)
           );
-          _block$12 = ((m) => {
-            let _record2 = m;
-            return new Model(
-              _record2.health,
-              _record2.points,
-              _record2.credits,
-              _record2.level,
-              _record2.milestone,
-              _record2.bag,
-              _record2.purchased_orbs,
-              _record2.screen,
-              _record2.last_orb,
-              _record2.last_orb_message,
-              _record2.input_value,
-              _record2.pulled_orbs,
-              new_multiplier,
-              _record2.bomb_immunity,
-              _record2.active_statuses,
-              _record2.choice_orb_1,
-              _record2.choice_orb_2,
-              _record2.dev_mode,
-              _record2.risk_orbs,
-              _record2.risk_original_orbs,
-              _record2.risk_pulled_orbs,
-              _record2.risk_accumulated_effects,
-              _record2.risk_health,
-              _record2.selected_marketplace_item
-            );
-          })(_pipe$1);
           let new_model2 = _block$12;
           let message = orb_result_message(first_orb);
           _block = [new_model2, message, false];
@@ -9518,7 +9534,7 @@ function format_status_for_dev_display(status) {
   if (status instanceof PointMultiplier) {
     let multiplier = status.multiplier;
     let duration = status.duration;
-    return "PointMultiplier(\xD7" + to_string(multiplier) + ", " + format_duration_for_dev(
+    return "PointMultiplier(\xD7" + float_to_string(multiplier) + ", " + format_duration_for_dev(
       duration
     ) + ")";
   } else {
@@ -9596,7 +9612,8 @@ function format_orb_for_dev_display(orb) {
     let value2 = orb[0];
     return "BombSurvivor(" + to_string(value2) + ")";
   } else if (orb instanceof MultiplierOrb) {
-    return "Multiplier";
+    let multiplier = orb[0];
+    return "Multiplier(" + float_to_string(multiplier) + ")";
   } else if (orb instanceof BombImmunityOrb) {
     return "BombImmunity";
   } else if (orb instanceof ChoiceOrb) {

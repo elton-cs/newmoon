@@ -23,7 +23,7 @@ pub type StatusDuration {
 }
 
 pub type StatusEffect {
-  PointMultiplier(multiplier: Int, duration: StatusDuration)
+  PointMultiplier(multiplier: Float, duration: StatusDuration)
   BombImmunity(duration: StatusDuration)
 }
 
@@ -49,7 +49,7 @@ pub type Orb {
   AllCollectorOrb(Int)
   PointCollectorOrb(Int)
   BombSurvivorOrb(Int)
-  MultiplierOrb
+  MultiplierOrb(Float)
   BombImmunityOrb
   ChoiceOrb
   RiskOrb
