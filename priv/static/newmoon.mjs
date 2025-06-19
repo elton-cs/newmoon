@@ -1757,6 +1757,30 @@ function range_loop(loop$start, loop$stop, loop$acc) {
 function range(start4, stop) {
   return range_loop(start4, stop, toList([]));
 }
+function split_while_loop(loop$list, loop$f, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let f = loop$f;
+    let acc = loop$acc;
+    if (list4 instanceof Empty) {
+      return [reverse(acc), toList([])];
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let $ = f(first$1);
+      if ($) {
+        loop$list = rest$1;
+        loop$f = f;
+        loop$acc = prepend(first$1, acc);
+      } else {
+        return [reverse(acc), list4];
+      }
+    }
+  }
+}
+function split_while(list4, predicate) {
+  return split_while_loop(list4, predicate, toList([]));
+}
 function shuffle_pair_unwrap_loop(loop$list, loop$acc) {
   while (true) {
     let list4 = loop$list;
@@ -6120,56 +6144,82 @@ function handle_toggle_dev_mode(model) {
   );
 }
 function handle_risk_orb_activation(model) {
-  let _block;
-  let $ = model.screen;
-  if ($ instanceof Game) {
-    let $1 = $[0];
-    if ($1 instanceof Playing) {
-      _block = new Game(new RiskAccept());
+  let consumable_orbs = filter(model.bag, is_consumable_orb);
+  let $ = length(consumable_orbs) >= 5;
+  if ($) {
+    let _block;
+    let $1 = model.screen;
+    if ($1 instanceof Game) {
+      let $2 = $1[0];
+      if ($2 instanceof Playing) {
+        _block = new Game(new RiskAccept());
+      } else {
+        _block = model.screen;
+      }
     } else {
       _block = model.screen;
     }
+    let screen = _block;
+    let _record = model;
+    return new Model(
+      _record.health,
+      _record.points,
+      _record.credits,
+      _record.level,
+      _record.milestone,
+      _record.bag,
+      _record.purchased_orbs,
+      screen,
+      _record.last_orb,
+      _record.last_orb_message,
+      _record.pulled_orbs,
+      _record.point_multiplier,
+      _record.bomb_immunity,
+      _record.active_statuses,
+      _record.choice_orb_1,
+      _record.choice_orb_2,
+      _record.dev_mode,
+      _record.risk_orbs,
+      _record.risk_original_orbs,
+      _record.risk_pulled_orbs,
+      _record.risk_accumulated_effects,
+      _record.risk_health,
+      _record.selected_marketplace_item,
+      _record.marketplace_selection
+    );
   } else {
-    _block = model.screen;
+    return check_game_status(model);
   }
-  let screen = _block;
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.credits,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    _record.purchased_orbs,
-    screen,
-    _record.last_orb,
-    _record.last_orb_message,
-    _record.pulled_orbs,
-    _record.point_multiplier,
-    _record.bomb_immunity,
-    _record.active_statuses,
-    _record.choice_orb_1,
-    _record.choice_orb_2,
-    _record.dev_mode,
-    _record.risk_orbs,
-    _record.risk_original_orbs,
-    _record.risk_pulled_orbs,
-    _record.risk_accumulated_effects,
-    _record.risk_health,
-    _record.selected_marketplace_item,
-    _record.marketplace_selection
-  );
 }
 function handle_accept_risk(loop$model, loop$accept) {
   while (true) {
     let model = loop$model;
     let accept = loop$accept;
     if (accept) {
-      let $ = length(model.bag) >= 5;
+      let consumable_orbs = filter(model.bag, is_consumable_orb);
+      let $ = length(consumable_orbs) >= 5;
       if ($) {
-        let risk_orbs = take(model.bag, 5);
-        let remaining_bag = drop(model.bag, 5);
+        let risk_orbs = take(consumable_orbs, 5);
+        let remaining_bag = fold(
+          risk_orbs,
+          model.bag,
+          (bag, orb_to_remove) => {
+            let $12 = split_while(
+              bag,
+              (orb) => {
+                return !isEqual(orb, orb_to_remove);
+              }
+            );
+            let $2 = $12[1];
+            if ($2 instanceof Empty) {
+              return bag;
+            } else {
+              let before = $12[0];
+              let after = $2.tail;
+              return append(before, after);
+            }
+          }
+        );
         let _block;
         let $1 = model.screen;
         if ($1 instanceof Game) {
@@ -6258,48 +6308,6 @@ function handle_accept_risk(loop$model, loop$accept) {
       }
     }
   }
-}
-function handle_accept_fate(model) {
-  let _block;
-  let $ = model.screen;
-  if ($ instanceof Game) {
-    let $1 = $[0];
-    if ($1 instanceof RiskReveal) {
-      _block = new Game(new RiskPlaying());
-    } else {
-      _block = model.screen;
-    }
-  } else {
-    _block = model.screen;
-  }
-  let screen = _block;
-  let _record = model;
-  return new Model(
-    _record.health,
-    _record.points,
-    _record.credits,
-    _record.level,
-    _record.milestone,
-    _record.bag,
-    _record.purchased_orbs,
-    screen,
-    _record.last_orb,
-    _record.last_orb_message,
-    _record.pulled_orbs,
-    _record.point_multiplier,
-    _record.bomb_immunity,
-    _record.active_statuses,
-    _record.choice_orb_1,
-    _record.choice_orb_2,
-    _record.dev_mode,
-    _record.risk_orbs,
-    _record.risk_original_orbs,
-    _record.risk_pulled_orbs,
-    _record.risk_accumulated_effects,
-    _record.risk_health,
-    _record.selected_marketplace_item,
-    _record.marketplace_selection
-  );
 }
 function handle_apply_risk_effects(model) {
   let effects = model.risk_accumulated_effects;
@@ -6610,6 +6618,57 @@ function accumulate_risk_orb(orb, current_effects, active_statuses) {
     let new_effects = _block;
     return [new_effects, orb_result_message(special_orb)];
   }
+}
+function handle_accept_fate(model) {
+  let final_effects = fold(
+    model.risk_orbs,
+    model.risk_accumulated_effects,
+    (effects, orb) => {
+      let $2 = accumulate_risk_orb(orb, effects, model.active_statuses);
+      let new_effects = $2[0];
+      return new_effects;
+    }
+  );
+  let _block;
+  let $ = model.screen;
+  if ($ instanceof Game) {
+    let $1 = $[0];
+    if ($1 instanceof RiskReveal) {
+      _block = new Game(new RiskSurvived());
+    } else {
+      _block = model.screen;
+    }
+  } else {
+    _block = model.screen;
+  }
+  let screen = _block;
+  let _record = model;
+  return new Model(
+    _record.health,
+    _record.points,
+    _record.credits,
+    _record.level,
+    _record.milestone,
+    _record.bag,
+    _record.purchased_orbs,
+    screen,
+    _record.last_orb,
+    _record.last_orb_message,
+    _record.pulled_orbs,
+    _record.point_multiplier,
+    _record.bomb_immunity,
+    _record.active_statuses,
+    _record.choice_orb_1,
+    _record.choice_orb_2,
+    _record.dev_mode,
+    toList([]),
+    _record.risk_original_orbs,
+    model.risk_orbs,
+    final_effects,
+    _record.risk_health,
+    _record.selected_marketplace_item,
+    _record.marketplace_selection
+  );
 }
 function handle_pull_risk_orb(model) {
   let $ = model.risk_orbs;
@@ -8955,11 +9014,11 @@ function render_risk_reveal_view(risk_orbs) {
     toList([
       status_panel(
         "BEHOLD YOUR DESTINY",
-        "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
+        "The void has revealed 5 consumable specimens that await you. All will be processed simultaneously with enhanced effects if you survive.",
         "bg-gray-50 border-gray-200"
       ),
       risk_orbs_display(risk_orbs),
-      primary_button("FACE THE UNKNOWN", new AcceptFate())
+      primary_button("PROCESS ALL SPECIMENS", new AcceptFate())
     ])
   );
 }

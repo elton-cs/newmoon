@@ -705,12 +705,23 @@ fn handle_toggle_dev_mode(model: Model) -> Model {
 }
 
 fn handle_risk_orb_activation(model: Model) -> Model {
-  // Transition to risk accept screen
-  let screen = case model.screen {
-    Game(Playing) -> Game(RiskAccept)
-    _ -> model.screen
+  // Filter bag for consumable orbs only, like choice orb implementation
+  let consumable_orbs = list.filter(model.bag, is_consumable_orb)
+
+  case list.length(consumable_orbs) >= 5 {
+    True -> {
+      // Enough consumable orbs available, transition to risk accept screen
+      let screen = case model.screen {
+        Game(Playing) -> Game(RiskAccept)
+        _ -> model.screen
+      }
+      Model(..model, screen: screen)
+    }
+    False -> {
+      // Not enough consumable orbs, just consume the risk orb and continue
+      check_game_status(model)
+    }
   }
-  Model(..model, screen: screen)
 }
 
 fn handle_accept_risk(model: Model, accept: Bool) -> Model {
@@ -724,11 +735,19 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
       }
     }
     True -> {
-      // Accept risk - pull 5 orbs and transition to reveal
-      case list.length(model.bag) >= 5 {
+      // Accept risk - pull 5 consumable orbs and transition to reveal
+      let consumable_orbs = list.filter(model.bag, is_consumable_orb)
+      case list.length(consumable_orbs) >= 5 {
         True -> {
-          let risk_orbs = list.take(model.bag, 5)
-          let remaining_bag = list.drop(model.bag, 5)
+          let risk_orbs = list.take(consumable_orbs, 5)
+          // Remove the 5 chosen consumable orbs from the bag
+          let remaining_bag =
+            list.fold(risk_orbs, model.bag, fn(bag, orb_to_remove) {
+              case list.split_while(bag, fn(orb) { orb != orb_to_remove }) {
+                #(before, [_, ..after]) -> list.append(before, after)
+                #(_, []) -> bag
+              }
+            })
           let screen = case model.screen {
             Game(RiskAccept) -> Game(RiskReveal)
             _ -> model.screen
@@ -750,7 +769,7 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
           )
         }
         False -> {
-          // Not enough orbs - treat as decline
+          // Not enough consumable orbs - treat as decline
           handle_accept_risk(model, False)
         }
       }
@@ -759,12 +778,26 @@ fn handle_accept_risk(model: Model, accept: Bool) -> Model {
 }
 
 fn handle_accept_fate(model: Model) -> Model {
-  // Transition from reveal to playing the risk mini-game
+  // Automatically process all 5 consumable orbs and transition to survival screen
+  let final_effects =
+    list.fold(model.risk_orbs, model.risk_accumulated_effects, fn(effects, orb) {
+      let #(new_effects, _) =
+        accumulate_risk_orb(orb, effects, model.active_statuses)
+      new_effects
+    })
+
   let screen = case model.screen {
-    Game(RiskReveal) -> Game(RiskPlaying)
+    Game(RiskReveal) -> Game(RiskSurvived)
     _ -> model.screen
   }
-  Model(..model, screen: screen)
+
+  Model(
+    ..model,
+    screen: screen,
+    risk_orbs: [],
+    risk_pulled_orbs: model.risk_orbs,
+    risk_accumulated_effects: final_effects,
+  )
 }
 
 fn handle_pull_risk_orb(model: Model) -> Model {

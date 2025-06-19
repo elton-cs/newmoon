@@ -461,11 +461,11 @@ fn render_risk_reveal_view(risk_orbs: List(types.Orb)) -> Element(Msg) {
   element.fragment([
     ui.status_panel(
       "BEHOLD YOUR DESTINY",
-      "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
+      "The void has revealed 5 consumable specimens that await you. All will be processed simultaneously with enhanced effects if you survive.",
       "bg-gray-50 border-gray-200",
     ),
     ui.risk_orbs_display(risk_orbs),
-    ui.primary_button("FACE THE UNKNOWN", AcceptFate),
+    ui.primary_button("PROCESS ALL SPECIMENS", AcceptFate),
   ])
 }
 
