@@ -46,11 +46,19 @@ pub fn game_card(content: List(Element(Msg))) -> Element(Msg) {
 pub fn game_header() -> Element(Msg) {
   html.div([], [
     html.h1(
-      [attribute.class("text-3xl font-light text-black mb-2 tracking-wide")],
+      [
+        attribute.class(
+          "text-3xl font-light text-black mb-2 tracking-wide uppercase",
+        ),
+      ],
       [html.text("NEW MOON")],
     ),
     html.p(
-      [attribute.class("text-sm text-gray-500 mb-6 font-light tracking-wider")],
+      [
+        attribute.class(
+          "text-sm text-gray-500 mb-6 font-light tracking-wider uppercase",
+        ),
+      ],
       [html.text("DEEP SPACE EXPLORATION")],
     ),
   ])
@@ -120,6 +128,8 @@ pub fn marketplace_item_card(
   name: String,
   price: Int,
   can_afford: Bool,
+  is_selected: Bool,
+  select_msg: Msg,
   purchase_msg: Msg,
 ) -> Element(Msg) {
   let purchase_classes = case can_afford {
@@ -127,7 +137,14 @@ pub fn marketplace_item_card(
     False -> "bg-gray-300 text-gray-500 cursor-not-allowed"
   }
 
-  html.div([attribute.class("bg-gray-50 rounded border border-gray-100 p-4")], [
+  let card_classes = case is_selected {
+    True ->
+      "bg-gray-50 rounded border-2 border-gray-400 p-4 cursor-pointer hover:border-gray-500 transition-colors"
+    False ->
+      "bg-gray-50 rounded border border-gray-100 p-4 cursor-pointer hover:border-gray-300 transition-colors"
+  }
+
+  html.div([attribute.class(card_classes), event.on_click(select_msg)], [
     html.div([attribute.class("text-lg font-light mb-1")], [html.text(symbol)]),
     html.div(
       [
@@ -511,24 +528,42 @@ pub fn status_panel(
 ) -> Element(Msg) {
   html.div([attribute.class("p-6 " <> bg_class <> " rounded border")], [
     html.h2(
-      [attribute.class("text-xl font-light text-black mb-2 tracking-wide")],
+      [
+        attribute.class(
+          "text-xl font-light text-black mb-2 tracking-wide uppercase",
+        ),
+      ],
       [html.text(title)],
     ),
-    html.p([attribute.class("text-gray-600 text-l font-light")], [
-      html.text(message),
-    ]),
+    html.p(
+      [
+        attribute.class(
+          "text-gray-600 text-sm font-light tracking-wider uppercase",
+        ),
+      ],
+      [html.text(message)],
+    ),
   ])
 }
 
 pub fn failure_panel(title: String, message: String) -> Element(Msg) {
   html.div([attribute.class("p-6 bg-red-50 border border-red-200 rounded")], [
     html.h2(
-      [attribute.class("text-xl font-light text-red-800 mb-2 tracking-wide")],
+      [
+        attribute.class(
+          "text-xl font-light text-red-800 mb-2 tracking-wide uppercase",
+        ),
+      ],
       [html.text(title)],
     ),
-    html.p([attribute.class("text-red-700 text-sm font-light")], [
-      html.text(message),
-    ]),
+    html.p(
+      [
+        attribute.class(
+          "text-red-700 text-sm font-light tracking-wider uppercase",
+        ),
+      ],
+      [html.text(message)],
+    ),
   ])
 }
 
@@ -605,33 +640,21 @@ pub fn pulled_orbs_log(pulled_orbs: List(Orb)) -> Element(Msg) {
 fn get_orb_style_classes(orb: Orb) -> #(String, String, String) {
   case orb {
     PointOrb(_) -> #("bg-gray-50", "text-gray-700", "border-gray-200")
-    BombOrb(_) -> #("bg-red-50", "text-red-700", "border-red-200")
-    HealthOrb(_) -> #("bg-green-50", "text-green-700", "border-green-200")
-    AllCollectorOrb(_) -> #(
-      "bg-purple-50",
-      "text-purple-700",
-      "border-purple-200",
-    )
-    PointCollectorOrb(_) -> #("bg-blue-50", "text-blue-700", "border-blue-200")
-    BombSurvivorOrb(_) -> #(
-      "bg-orange-50",
-      "text-orange-700",
-      "border-orange-200",
-    )
-    MultiplierOrb(_) -> #(
-      "bg-yellow-50",
-      "text-yellow-700",
-      "border-yellow-200",
-    )
+    BombOrb(_) -> #("bg-gray-100", "text-gray-600", "border-gray-300")
+    HealthOrb(_) -> #("bg-gray-50", "text-gray-700", "border-gray-200")
+    AllCollectorOrb(_) -> #("bg-gray-100", "text-gray-600", "border-gray-300")
+    PointCollectorOrb(_) -> #("bg-gray-50", "text-gray-700", "border-gray-200")
+    BombSurvivorOrb(_) -> #("bg-gray-100", "text-gray-600", "border-gray-300")
+    MultiplierOrb(_) -> #("bg-gray-50", "text-gray-700", "border-gray-200")
     NextPointMultiplierOrb(_) -> #(
-      "bg-orange-50",
-      "text-orange-700",
-      "border-orange-200",
+      "bg-gray-100",
+      "text-gray-600",
+      "border-gray-300",
     )
-    BombImmunityOrb -> #("bg-cyan-50", "text-cyan-700", "border-cyan-200")
-    ChoiceOrb -> #("bg-indigo-50", "text-indigo-700", "border-indigo-200")
-    RiskOrb -> #("bg-red-100", "text-red-800", "border-red-300")
-    PointRecoveryOrb -> #("bg-teal-50", "text-teal-700", "border-teal-200")
+    BombImmunityOrb -> #("bg-gray-50", "text-gray-700", "border-gray-200")
+    ChoiceOrb -> #("bg-gray-100", "text-gray-600", "border-gray-300")
+    RiskOrb -> #("bg-gray-200", "text-gray-500", "border-gray-400")
+    PointRecoveryOrb -> #("bg-gray-50", "text-gray-700", "border-gray-200")
   }
 }
 
@@ -860,12 +883,16 @@ fn format_orb_for_dev_display(orb: Orb) -> String {
 
 pub fn risk_orbs_display(risk_orbs: List(Orb)) -> Element(Msg) {
   html.div(
-    [attribute.class("p-4 bg-red-50 border border-red-200 rounded text-center")],
+    [
+      attribute.class(
+        "p-4 bg-gray-50 border border-gray-200 rounded text-center",
+      ),
+    ],
     [
       html.div(
         [
           attribute.class(
-            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light",
+            "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light",
           ),
         ],
         [html.text("YOUR DESTINY AWAITS")],
@@ -908,12 +935,16 @@ pub fn risk_orbs_progress_display(
     list.length(all_risk_orbs) - list.length(remaining_risk_orbs)
 
   html.div(
-    [attribute.class("p-4 bg-red-50 border border-red-200 rounded text-center")],
+    [
+      attribute.class(
+        "p-4 bg-gray-50 border border-gray-200 rounded text-center",
+      ),
+    ],
     [
       html.div(
         [
           attribute.class(
-            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light",
+            "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light",
           ),
         ],
         [html.text("YOUR DESTINY AWAITS")],
@@ -981,17 +1012,21 @@ pub fn risk_health_display(risk_health: Int) -> Element(Msg) {
 
 pub fn risk_container_display(orbs_left: Int) -> Element(Msg) {
   html.div(
-    [attribute.class("p-3 bg-red-50 border border-red-200 rounded text-center")],
+    [
+      attribute.class(
+        "p-3 bg-gray-50 border border-gray-200 rounded text-center",
+      ),
+    ],
     [
       html.div(
         [
           attribute.class(
-            "text-sm text-red-700 uppercase tracking-wider mb-2 font-light",
+            "text-sm text-gray-600 uppercase tracking-wider mb-2 font-light",
           ),
         ],
         [html.text("VOID SPECIMENS REMAINING")],
       ),
-      html.div([attribute.class("text-2xl font-bold text-red-800")], [
+      html.div([attribute.class("text-2xl font-bold text-gray-700")], [
         html.text(int.to_string(orbs_left)),
       ]),
     ],
@@ -1005,7 +1040,7 @@ pub fn risk_extract_button(is_disabled: Bool) -> Element(Msg) {
         True ->
           "bg-gray-400 text-gray-600 font-light py-4 px-6 rounded-lg w-full cursor-not-allowed"
         False ->
-          "bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide w-full"
+          "bg-gray-700 hover:bg-black text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide w-full"
       }),
       attribute.disabled(is_disabled),
       event.on_click(PullRiskOrb),
@@ -1015,61 +1050,57 @@ pub fn risk_extract_button(is_disabled: Bool) -> Element(Msg) {
 }
 
 pub fn risk_effects_summary(risk_effects: types.RiskEffects) -> Element(Msg) {
-  html.div(
-    [attribute.class("p-4 bg-green-50 border border-green-200 rounded")],
-    [
-      html.div(
-        [
-          attribute.class(
-            "text-sm text-green-700 uppercase tracking-wider mb-3 font-light",
-          ),
-        ],
-        [html.text("ACCUMULATED EFFECTS")],
-      ),
-      html.div([attribute.class("space-y-2")], [
-        case risk_effects.health_gained > 0 {
-          True ->
-            html.div([attribute.class("text-green-800")], [
-              html.text(
-                "◇ SYSTEMS RESTORED: +"
-                <> int.to_string(risk_effects.health_gained),
-              ),
-            ])
-          False -> html.div([], [])
-        },
-        case risk_effects.damage_taken > 0 {
-          True ->
-            html.div([attribute.class("text-red-800")], [
-              html.text(
-                "○ HAZARD DAMAGE: -" <> int.to_string(risk_effects.damage_taken),
-              ),
-            ])
-          False -> html.div([], [])
-        },
-        case risk_effects.points_gained > 0 {
-          True ->
-            html.div([attribute.class("text-green-800")], [
-              html.text(
-                "● ENHANCED DATA: +"
-                <> int.to_string(risk_effects.points_gained),
-              ),
-            ])
-          False -> html.div([], [])
-        },
-        case list.is_empty(risk_effects.special_orbs) {
-          True -> html.div([], [])
-          False ->
-            html.div([attribute.class("text-green-800")], [
-              html.text(
-                "◈ SPECIAL EFFECTS: "
-                <> int.to_string(list.length(risk_effects.special_orbs))
-                <> " activated",
-              ),
-            ])
-        },
-      ]),
-    ],
-  )
+  html.div([attribute.class("p-4 bg-gray-50 border border-gray-200 rounded")], [
+    html.div(
+      [
+        attribute.class(
+          "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light",
+        ),
+      ],
+      [html.text("ACCUMULATED EFFECTS")],
+    ),
+    html.div([attribute.class("space-y-2")], [
+      case risk_effects.health_gained > 0 {
+        True ->
+          html.div([attribute.class("text-gray-700")], [
+            html.text(
+              "◇ SYSTEMS RESTORED: +"
+              <> int.to_string(risk_effects.health_gained),
+            ),
+          ])
+        False -> html.div([], [])
+      },
+      case risk_effects.damage_taken > 0 {
+        True ->
+          html.div([attribute.class("text-gray-600")], [
+            html.text(
+              "○ HAZARD DAMAGE: -" <> int.to_string(risk_effects.damage_taken),
+            ),
+          ])
+        False -> html.div([], [])
+      },
+      case risk_effects.points_gained > 0 {
+        True ->
+          html.div([attribute.class("text-gray-700")], [
+            html.text(
+              "● ENHANCED DATA: +" <> int.to_string(risk_effects.points_gained),
+            ),
+          ])
+        False -> html.div([], [])
+      },
+      case list.is_empty(risk_effects.special_orbs) {
+        True -> html.div([], [])
+        False ->
+          html.div([attribute.class("text-gray-700")], [
+            html.text(
+              "◈ SPECIAL EFFECTS: "
+              <> int.to_string(list.length(risk_effects.special_orbs))
+              <> " activated",
+            ),
+          ])
+      },
+    ]),
+  ])
 }
 
 // Marketplace Components

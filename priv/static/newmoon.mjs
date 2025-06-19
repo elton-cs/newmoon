@@ -7654,14 +7654,16 @@ function game_header() {
     toList([
       h1(
         toList([
-          class$("text-3xl font-light text-black mb-2 tracking-wide")
+          class$(
+            "text-3xl font-light text-black mb-2 tracking-wide uppercase"
+          )
         ]),
         toList([text3("NEW MOON")])
       ),
       p(
         toList([
           class$(
-            "text-sm text-gray-500 mb-6 font-light tracking-wider"
+            "text-sm text-gray-500 mb-6 font-light tracking-wider uppercase"
           )
         ]),
         toList([text3("DEEP SPACE EXPLORATION")])
@@ -7743,7 +7745,7 @@ function status_stat_card(status_effects) {
     ])
   );
 }
-function marketplace_item_card(symbol, name, price, can_afford, purchase_msg) {
+function marketplace_item_card(symbol, name, price, can_afford, is_selected, select_msg, purchase_msg) {
   let _block;
   if (can_afford) {
     _block = "bg-gray-700 hover:bg-black text-white cursor-pointer";
@@ -7751,8 +7753,15 @@ function marketplace_item_card(symbol, name, price, can_afford, purchase_msg) {
     _block = "bg-gray-300 text-gray-500 cursor-not-allowed";
   }
   let purchase_classes = _block;
+  let _block$1;
+  if (is_selected) {
+    _block$1 = "bg-gray-50 rounded border-2 border-gray-400 p-4 cursor-pointer hover:border-gray-500 transition-colors";
+  } else {
+    _block$1 = "bg-gray-50 rounded border border-gray-100 p-4 cursor-pointer hover:border-gray-300 transition-colors";
+  }
+  let card_classes = _block$1;
   return div(
-    toList([class$("bg-gray-50 rounded border border-gray-100 p-4")]),
+    toList([class$(card_classes), on_click(select_msg)]),
     toList([
       div(
         toList([class$("text-lg font-light mb-1")]),
@@ -8121,12 +8130,18 @@ function status_panel(title, message, bg_class) {
     toList([
       h2(
         toList([
-          class$("text-xl font-light text-black mb-2 tracking-wide")
+          class$(
+            "text-xl font-light text-black mb-2 tracking-wide uppercase"
+          )
         ]),
         toList([text3(title)])
       ),
       p(
-        toList([class$("text-gray-600 text-l font-light")]),
+        toList([
+          class$(
+            "text-gray-600 text-sm font-light tracking-wider uppercase"
+          )
+        ]),
         toList([text3(message)])
       )
     ])
@@ -8139,13 +8154,17 @@ function failure_panel(title, message) {
       h2(
         toList([
           class$(
-            "text-xl font-light text-red-800 mb-2 tracking-wide"
+            "text-xl font-light text-red-800 mb-2 tracking-wide uppercase"
           )
         ]),
         toList([text3(title)])
       ),
       p(
-        toList([class$("text-red-700 text-sm font-light")]),
+        toList([
+          class$(
+            "text-red-700 text-sm font-light tracking-wider uppercase"
+          )
+        ]),
         toList([text3(message)])
       )
     ])
@@ -8155,27 +8174,27 @@ function get_orb_style_classes(orb) {
   if (orb instanceof PointOrb) {
     return ["bg-gray-50", "text-gray-700", "border-gray-200"];
   } else if (orb instanceof BombOrb) {
-    return ["bg-red-50", "text-red-700", "border-red-200"];
+    return ["bg-gray-100", "text-gray-600", "border-gray-300"];
   } else if (orb instanceof HealthOrb) {
-    return ["bg-green-50", "text-green-700", "border-green-200"];
+    return ["bg-gray-50", "text-gray-700", "border-gray-200"];
   } else if (orb instanceof AllCollectorOrb) {
-    return ["bg-purple-50", "text-purple-700", "border-purple-200"];
+    return ["bg-gray-100", "text-gray-600", "border-gray-300"];
   } else if (orb instanceof PointCollectorOrb) {
-    return ["bg-blue-50", "text-blue-700", "border-blue-200"];
+    return ["bg-gray-50", "text-gray-700", "border-gray-200"];
   } else if (orb instanceof BombSurvivorOrb) {
-    return ["bg-orange-50", "text-orange-700", "border-orange-200"];
+    return ["bg-gray-100", "text-gray-600", "border-gray-300"];
   } else if (orb instanceof MultiplierOrb) {
-    return ["bg-yellow-50", "text-yellow-700", "border-yellow-200"];
+    return ["bg-gray-50", "text-gray-700", "border-gray-200"];
   } else if (orb instanceof NextPointMultiplierOrb) {
-    return ["bg-orange-50", "text-orange-700", "border-orange-200"];
+    return ["bg-gray-100", "text-gray-600", "border-gray-300"];
   } else if (orb instanceof BombImmunityOrb) {
-    return ["bg-cyan-50", "text-cyan-700", "border-cyan-200"];
+    return ["bg-gray-50", "text-gray-700", "border-gray-200"];
   } else if (orb instanceof ChoiceOrb) {
-    return ["bg-indigo-50", "text-indigo-700", "border-indigo-200"];
+    return ["bg-gray-100", "text-gray-600", "border-gray-300"];
   } else if (orb instanceof RiskOrb) {
-    return ["bg-red-100", "text-red-800", "border-red-300"];
+    return ["bg-gray-200", "text-gray-500", "border-gray-400"];
   } else {
-    return ["bg-teal-50", "text-teal-700", "border-teal-200"];
+    return ["bg-gray-50", "text-gray-700", "border-gray-200"];
   }
 }
 function format_duration_for_dev(duration) {
@@ -8467,14 +8486,14 @@ function risk_orbs_display(risk_orbs) {
   return div(
     toList([
       class$(
-        "p-4 bg-red-50 border border-red-200 rounded text-center"
+        "p-4 bg-gray-50 border border-gray-200 rounded text-center"
       )
     ]),
     toList([
       div(
         toList([
           class$(
-            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light"
+            "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light"
           )
         ]),
         toList([text3("YOUR DESTINY AWAITS")])
@@ -8518,14 +8537,14 @@ function risk_orbs_progress_display(all_risk_orbs, remaining_risk_orbs) {
   return div(
     toList([
       class$(
-        "p-4 bg-red-50 border border-red-200 rounded text-center"
+        "p-4 bg-gray-50 border border-gray-200 rounded text-center"
       )
     ]),
     toList([
       div(
         toList([
           class$(
-            "text-sm text-red-700 uppercase tracking-wider mb-3 font-light"
+            "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light"
           )
         ]),
         toList([text3("YOUR DESTINY AWAITS")])
@@ -8583,7 +8602,7 @@ function risk_extract_button(is_disabled) {
           if (is_disabled) {
             return "bg-gray-400 text-gray-600 font-light py-4 px-6 rounded-lg w-full cursor-not-allowed";
           } else {
-            return "bg-red-600 hover:bg-red-700 text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide w-full";
+            return "bg-gray-700 hover:bg-black text-white font-light py-4 px-6 rounded-lg transition-colors tracking-wide w-full";
           }
         })()
       ),
@@ -8595,14 +8614,12 @@ function risk_extract_button(is_disabled) {
 }
 function risk_effects_summary(risk_effects) {
   return div(
-    toList([
-      class$("p-4 bg-green-50 border border-green-200 rounded")
-    ]),
+    toList([class$("p-4 bg-gray-50 border border-gray-200 rounded")]),
     toList([
       div(
         toList([
           class$(
-            "text-sm text-green-700 uppercase tracking-wider mb-3 font-light"
+            "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light"
           )
         ]),
         toList([text3("ACCUMULATED EFFECTS")])
@@ -8614,7 +8631,7 @@ function risk_effects_summary(risk_effects) {
             let $ = risk_effects.health_gained > 0;
             if ($) {
               return div(
-                toList([class$("text-green-800")]),
+                toList([class$("text-gray-700")]),
                 toList([
                   text3(
                     "\u25C7 SYSTEMS RESTORED: +" + to_string(
@@ -8631,7 +8648,7 @@ function risk_effects_summary(risk_effects) {
             let $ = risk_effects.damage_taken > 0;
             if ($) {
               return div(
-                toList([class$("text-red-800")]),
+                toList([class$("text-gray-600")]),
                 toList([
                   text3(
                     "\u25CB HAZARD DAMAGE: -" + to_string(
@@ -8648,7 +8665,7 @@ function risk_effects_summary(risk_effects) {
             let $ = risk_effects.points_gained > 0;
             if ($) {
               return div(
-                toList([class$("text-green-800")]),
+                toList([class$("text-gray-700")]),
                 toList([
                   text3(
                     "\u25CF ENHANCED DATA: +" + to_string(
@@ -8667,7 +8684,7 @@ function risk_effects_summary(risk_effects) {
               return div(toList([]), toList([]));
             } else {
               return div(
-                toList([class$("text-green-800")]),
+                toList([class$("text-gray-700")]),
                 toList([
                   text3(
                     "\u25C8 SPECIAL EFFECTS: " + to_string(
@@ -8787,37 +8804,79 @@ function get_marketplace_symbol(orb) {
     return "\u25CE";
   }
 }
-function render_marketplace_grid(credits, marketplace_selection) {
+function render_marketplace_grid(credits, marketplace_selection, selected_item) {
   let item_cards = index_map(
     marketplace_selection,
     (item, index3) => {
       let can_afford = credits >= item.price;
       let symbol = get_marketplace_symbol(item.orb);
+      let _block;
+      if (selected_item instanceof Some) {
+        let selected_index = selected_item[0];
+        _block = selected_index === index3;
+      } else {
+        _block = false;
+      }
+      let is_selected = _block;
       return marketplace_item_card(
         symbol,
         item.name,
         item.price,
         can_afford,
+        is_selected,
+        new SelectMarketplaceItem(index3),
         new PurchaseItem(index3)
       );
     }
   );
   return marketplace_grid(item_cards);
 }
+function get_item_at_index_view(items, index3) {
+  let _pipe = drop(items, index3);
+  let _pipe$1 = first(_pipe);
+  return from_result(_pipe$1);
+}
 function render_marketplace_view(model) {
-  return fragment2(
-    toList([
-      status_panel(
+  let _block;
+  let $ = model.selected_marketplace_item;
+  if ($ instanceof Some) {
+    let selected_index = $[0];
+    let $1 = get_item_at_index_view(model.marketplace_selection, selected_index);
+    if ($1 instanceof Some) {
+      let item = $1[0];
+      _block = status_panel(
+        item.name,
+        item.description + " \u2022 Price: " + to_string(item.price) + " \u25C7",
+        "bg-gray-50 border-gray-200"
+      );
+    } else {
+      _block = status_panel(
         marketplace_title,
         "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
         "bg-gray-50 border-gray-200"
-      ),
+      );
+    }
+  } else {
+    _block = status_panel(
+      marketplace_title,
+      "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
+      "bg-gray-50 border-gray-200"
+    );
+  }
+  let content_panel = _block;
+  return fragment2(
+    toList([
+      content_panel,
       status_panel(
         "CREDITS",
         available_credits_message(model.credits),
         "bg-gray-50 border-gray-200"
       ),
-      render_marketplace_grid(model.credits, model.marketplace_selection),
+      render_marketplace_grid(
+        model.credits,
+        model.marketplace_selection,
+        model.selected_marketplace_item
+      ),
       primary_button(
         continue_to_next_sector_text,
         new ContinueToNextLevel()
@@ -8884,7 +8943,7 @@ function render_risk_accept_view() {
       status_panel(
         "THE VOID BECKONS",
         "A Void Portal has been detected. This portal will extract 5 specimens simultaneously from the container. If you survive all extractions, any data will award double points. Do you dare enter the void?",
-        "bg-red-50 border-red-200"
+        "bg-gray-50 border-gray-200"
       ),
       primary_button("ENTER VOID", new AcceptRisk(true)),
       secondary_button("AVOID VOID", new AcceptRisk(false))
@@ -8897,7 +8956,7 @@ function render_risk_reveal_view(risk_orbs) {
       status_panel(
         "BEHOLD YOUR DESTINY",
         "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
-        "bg-orange-50 border-orange-200"
+        "bg-gray-50 border-gray-200"
       ),
       risk_orbs_display(risk_orbs),
       primary_button("FACE THE UNKNOWN", new AcceptFate())
@@ -8912,7 +8971,7 @@ function render_risk_playing_view(last_orb, last_orb_message, risk_orbs, risk_or
       status_panel(
         "RISK MODE ACTIVE",
         "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
-        "bg-red-50 border-red-200"
+        "bg-gray-50 border-gray-200"
       ),
       risk_orbs_progress_display(risk_original_orbs, risk_orbs),
       orb_result_display(last_orb, last_orb_message),
@@ -8926,7 +8985,7 @@ function render_risk_survived_view(risk_accumulated_effects, _) {
       status_panel(
         "RISK EFFECTS ACCUMULATED",
         "All specimens have been extracted from the void. The accumulated effects await consumption.",
-        "bg-orange-50 border-orange-200"
+        "bg-gray-50 border-gray-200"
       ),
       risk_effects_summary(risk_accumulated_effects),
       primary_button("CONSUME", new ApplyRiskEffects())
@@ -8941,7 +9000,7 @@ function render_risk_consumed_view(milestone, points) {
         status_panel(
           "YOU SURVIVED THE VOID",
           "The void's power flows through you. Your gamble has paid off with enhanced rewards.",
-          "bg-green-50 border-green-200"
+          "bg-gray-50 border-gray-200"
         ),
         success_button(
           "CONTINUE MISSION",
@@ -8955,7 +9014,7 @@ function render_risk_consumed_view(milestone, points) {
         status_panel(
           "YOU SURVIVED THE VOID",
           "The void's power flows through you. Your survival instincts have kept you alive.",
-          "bg-green-50 border-green-200"
+          "bg-gray-50 border-gray-200"
         ),
         primary_button(
           "CONTINUE MISSION",

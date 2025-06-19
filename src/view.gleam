@@ -324,18 +324,45 @@ fn render_game_complete_view(
 
 // Marketplace View - orb purchasing functionality
 fn render_marketplace_view(model: types.Model) -> Element(Msg) {
+  let content_panel = case model.selected_marketplace_item {
+    None ->
+      ui.status_panel(
+        display.marketplace_title,
+        "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
+        "bg-gray-50 border-gray-200",
+      )
+    Some(selected_index) ->
+      case get_item_at_index_view(model.marketplace_selection, selected_index) {
+        Some(item) ->
+          ui.status_panel(
+            item.name,
+            item.description
+              <> " • Price: "
+              <> int.to_string(item.price)
+              <> " ◇",
+            "bg-gray-50 border-gray-200",
+          )
+        None ->
+          ui.status_panel(
+            display.marketplace_title,
+            "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
+            "bg-gray-50 border-gray-200",
+          )
+      }
+  }
+
   element.fragment([
-    ui.status_panel(
-      display.marketplace_title,
-      "SPEND YOUR ACCUMULATED CREDITS TO ACQUIRE ORBITAL SAMPLES",
-      "bg-gray-50 border-gray-200",
-    ),
+    content_panel,
     ui.status_panel(
       "CREDITS",
       display.available_credits_message(model.credits),
       "bg-gray-50 border-gray-200",
     ),
-    render_marketplace_grid(model.credits, model.marketplace_selection),
+    render_marketplace_grid(
+      model.credits,
+      model.marketplace_selection,
+      model.selected_marketplace_item,
+    ),
     ui.primary_button(display.continue_to_next_sector_text, ContinueToNextLevel),
   ])
 }
@@ -344,17 +371,24 @@ fn render_marketplace_view(model: types.Model) -> Element(Msg) {
 fn render_marketplace_grid(
   credits: Int,
   marketplace_selection: List(MarketplaceItem),
+  selected_item: option.Option(Int),
 ) -> Element(Msg) {
   let item_cards =
     list.index_map(marketplace_selection, fn(item, index) {
       let can_afford = credits >= item.price
       let symbol = get_marketplace_symbol(item.orb)
+      let is_selected = case selected_item {
+        Some(selected_index) -> selected_index == index
+        None -> False
+      }
 
       ui.marketplace_item_card(
         symbol,
         item.name,
         item.price,
         can_afford,
+        is_selected,
+        SelectMarketplaceItem(index),
         PurchaseItem(index),
       )
     })
@@ -378,6 +412,16 @@ fn get_marketplace_symbol(orb: types.Orb) -> String {
     types.RiskOrb -> "⚠"
     types.PointRecoveryOrb -> "◎"
   }
+}
+
+// Helper function to get item at index for view
+fn get_item_at_index_view(
+  items: List(MarketplaceItem),
+  index: Int,
+) -> option.Option(MarketplaceItem) {
+  list.drop(items, index)
+  |> list.first
+  |> option.from_result
 }
 
 // Main Menu View - no model data needed
@@ -406,7 +450,7 @@ fn render_risk_accept_view() -> Element(Msg) {
     ui.status_panel(
       "THE VOID BECKONS",
       "A Void Portal has been detected. This portal will extract 5 specimens simultaneously from the container. If you survive all extractions, any data will award double points. Do you dare enter the void?",
-      "bg-red-50 border-red-200",
+      "bg-gray-50 border-gray-200",
     ),
     ui.primary_button("ENTER VOID", AcceptRisk(True)),
     ui.secondary_button("AVOID VOID", AcceptRisk(False)),
@@ -418,7 +462,7 @@ fn render_risk_reveal_view(risk_orbs: List(types.Orb)) -> Element(Msg) {
     ui.status_panel(
       "BEHOLD YOUR DESTINY",
       "The void has revealed the specimens that await you. Face them one by one, and survive to claim your doubled rewards.",
-      "bg-orange-50 border-orange-200",
+      "bg-gray-50 border-gray-200",
     ),
     ui.risk_orbs_display(risk_orbs),
     ui.primary_button("FACE THE UNKNOWN", AcceptFate),
@@ -440,7 +484,7 @@ fn render_risk_playing_view(
     ui.status_panel(
       "RISK MODE ACTIVE",
       "You are in the void. Extract each specimen to survive and claim your enhanced rewards.",
-      "bg-red-50 border-red-200",
+      "bg-gray-50 border-gray-200",
     ),
     ui.risk_orbs_progress_display(risk_original_orbs, risk_orbs),
     ui.orb_result_display(last_orb, last_orb_message),
@@ -456,7 +500,7 @@ fn render_risk_survived_view(
     ui.status_panel(
       "RISK EFFECTS ACCUMULATED",
       "All specimens have been extracted from the void. The accumulated effects await consumption.",
-      "bg-orange-50 border-orange-200",
+      "bg-gray-50 border-gray-200",
     ),
     ui.risk_effects_summary(risk_accumulated_effects),
     ui.primary_button("CONSUME", ApplyRiskEffects),
@@ -470,7 +514,7 @@ fn render_risk_consumed_view(milestone: Int, points: Int) -> Element(Msg) {
         ui.status_panel(
           "YOU SURVIVED THE VOID",
           "The void's power flows through you. Your gamble has paid off with enhanced rewards.",
-          "bg-green-50 border-green-200",
+          "bg-gray-50 border-gray-200",
         ),
         ui.success_button("CONTINUE MISSION", ContinueAfterRiskConsumption),
       ])
@@ -479,7 +523,7 @@ fn render_risk_consumed_view(milestone: Int, points: Int) -> Element(Msg) {
         ui.status_panel(
           "YOU SURVIVED THE VOID",
           "The void's power flows through you. Your survival instincts have kept you alive.",
-          "bg-green-50 border-green-200",
+          "bg-gray-50 border-gray-200",
         ),
         ui.primary_button("CONTINUE MISSION", ContinueAfterRiskConsumption),
       ])
