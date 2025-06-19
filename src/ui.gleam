@@ -895,7 +895,7 @@ pub fn risk_orbs_display(risk_orbs: List(Orb)) -> Element(Msg) {
             "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light",
           ),
         ],
-        [html.text("YOUR DESTINY AWAITS")],
+        [html.text("VOID SPECIMENS REVEALED")],
       ),
       html.div(
         [attribute.class("grid grid-cols-5 gap-2")],
@@ -913,12 +913,14 @@ pub fn risk_orbs_display(risk_orbs: List(Orb)) -> Element(Msg) {
               ),
             ],
             [
-              html.div([attribute.class("font-bold mb-1")], [
-                html.text(int.to_string(index + 1)),
-              ]),
-              html.div([attribute.class("text-xs")], [
-                html.text(display.orb_display_name(orb)),
-              ]),
+              html.div(
+                [attribute.class("font-light mb-1 uppercase tracking-wider")],
+                [html.text(int.to_string(index + 1))],
+              ),
+              html.div(
+                [attribute.class("text-xs font-light uppercase tracking-wider")],
+                [html.text(display.orb_choice_display(orb))],
+              ),
             ],
           )
         }),
@@ -947,7 +949,7 @@ pub fn risk_orbs_progress_display(
             "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light",
           ),
         ],
-        [html.text("YOUR DESTINY AWAITS")],
+        [html.text("VOID EXTRACTION PROGRESS")],
       ),
       html.div(
         [attribute.class("grid grid-cols-5 gap-2")],
@@ -973,12 +975,14 @@ pub fn risk_orbs_progress_display(
               ),
             ],
             [
-              html.div([attribute.class("font-bold mb-1")], [
-                html.text(int.to_string(index + 1)),
-              ]),
-              html.div([attribute.class("text-xs")], [
-                html.text(display.orb_display_name(orb)),
-              ]),
+              html.div(
+                [attribute.class("font-light mb-1 uppercase tracking-wider")],
+                [html.text(int.to_string(index + 1))],
+              ),
+              html.div(
+                [attribute.class("text-xs font-light uppercase tracking-wider")],
+                [html.text(display.orb_choice_display(orb))],
+              ),
             ],
           )
         }),

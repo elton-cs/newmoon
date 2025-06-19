@@ -5096,33 +5096,6 @@ var PurchaseItem = class extends CustomType {
 };
 
 // build/dev/javascript/newmoon/display.mjs
-function orb_display_name(orb) {
-  if (orb instanceof PointOrb) {
-    return "Data";
-  } else if (orb instanceof BombOrb) {
-    return "Hazard";
-  } else if (orb instanceof HealthOrb) {
-    return "Health";
-  } else if (orb instanceof AllCollectorOrb) {
-    return "All Collector";
-  } else if (orb instanceof PointCollectorOrb) {
-    return "Point Collector";
-  } else if (orb instanceof BombSurvivorOrb) {
-    return "Bomb Survivor";
-  } else if (orb instanceof MultiplierOrb) {
-    return "Full Amplifier";
-  } else if (orb instanceof NextPointMultiplierOrb) {
-    return "Single Amplifier";
-  } else if (orb instanceof BombImmunityOrb) {
-    return "Shield Generator";
-  } else if (orb instanceof ChoiceOrb) {
-    return "Choice Portal";
-  } else if (orb instanceof RiskOrb) {
-    return "Void Portal";
-  } else {
-    return "Point Recovery";
-  }
-}
 function orb_choice_display(orb) {
   if (orb instanceof PointOrb) {
     let value = orb[0];
@@ -8555,7 +8528,7 @@ function risk_orbs_display(risk_orbs) {
             "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light"
           )
         ]),
-        toList([text3("YOUR DESTINY AWAITS")])
+        toList([text3("VOID SPECIMENS REVEALED")])
       ),
       div(
         toList([class$("grid grid-cols-5 gap-2")]),
@@ -8574,12 +8547,20 @@ function risk_orbs_display(risk_orbs) {
               ]),
               toList([
                 div(
-                  toList([class$("font-bold mb-1")]),
+                  toList([
+                    class$(
+                      "font-light mb-1 uppercase tracking-wider"
+                    )
+                  ]),
                   toList([text3(to_string(index3 + 1))])
                 ),
                 div(
-                  toList([class$("text-xs")]),
-                  toList([text3(orb_display_name(orb))])
+                  toList([
+                    class$(
+                      "text-xs font-light uppercase tracking-wider"
+                    )
+                  ]),
+                  toList([text3(orb_choice_display(orb))])
                 )
               ])
             );
@@ -8606,7 +8587,7 @@ function risk_orbs_progress_display(all_risk_orbs, remaining_risk_orbs) {
             "text-sm text-gray-600 uppercase tracking-wider mb-3 font-light"
           )
         ]),
-        toList([text3("YOUR DESTINY AWAITS")])
+        toList([text3("VOID EXTRACTION PROGRESS")])
       ),
       div(
         toList([class$("grid grid-cols-5 gap-2")]),
@@ -8638,12 +8619,20 @@ function risk_orbs_progress_display(all_risk_orbs, remaining_risk_orbs) {
               ]),
               toList([
                 div(
-                  toList([class$("font-bold mb-1")]),
+                  toList([
+                    class$(
+                      "font-light mb-1 uppercase tracking-wider"
+                    )
+                  ]),
                   toList([text3(to_string(index3 + 1))])
                 ),
                 div(
-                  toList([class$("text-xs")]),
-                  toList([text3(orb_display_name(orb))])
+                  toList([
+                    class$(
+                      "text-xs font-light uppercase tracking-wider"
+                    )
+                  ]),
+                  toList([text3(orb_choice_display(orb))])
                 )
               ])
             );
